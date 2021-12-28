@@ -1,3 +1,5 @@
+include "dependencies.lua"
+
 workspace "GameGuy"
 	architecture "x86_64"
 	startproject "GBZ80"
@@ -16,4 +18,11 @@ workspace "GameGuy"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+group "Dependencies"
+	include "GameGuy/vendor/Glad"
+	include "GameGuy/vendor/GLFW"
+	include "GameGuy/vendor/imgui"
+group ""
+
 include "GBZ80"
+include "GameGuy"

@@ -1,0 +1,7 @@
+[submodule "GameGuy\\vendor\\GLFW"]
+	path = GameGuy\\vendor\\GLFW
+	url = https://github.com/salvorizza/glfw
+[submodule "GameGuy\\vendor\\imgui"]
+	path = GameGuy\\vendor\\imgui
+	url = https://github.com/salvorizza/
+	branch = docking
