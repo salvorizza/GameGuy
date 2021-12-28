@@ -202,6 +202,8 @@ void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
 void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 	uint8_t opcode = instruction->opcode;
+	uint8_t prefix = instruction->opcode;
+
 	if (opcode == 0x06 || opcode == 0x0E || opcode == 0x16 || opcode == 0x1E || opcode == 0x26 || opcode == 0x2E) {
 		instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
@@ -960,7 +962,1148 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "ADC A,$%04X", instruction->n);
 				break;
+		}
+	}
+	else if (opcode == 0x97 || opcode == 90 || opcode == 0x91 || opcode == 0x92 || opcode == 0x93 || opcode == 0x94 || opcode == 0x95 || opcode == 0x96 || opcode == 0xD6) {
+		instruction->execute_function = &gbz80_cpu_alu8_sub_r_r;
+		instruction->cycles = 4;
 
+		switch (opcode) {
+			case 0x97:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "SUB A,A");
+				break;
+
+			case 0x90:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "SUB A,B");
+				break;
+
+			case 0x91:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "SUB A,C");
+				break;
+
+			case 0x92:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "SUB A,D");
+				break;
+
+			case 0x93:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "SUB A,E");
+				break;
+
+			case 0x94:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "SUB A,H");
+				break;
+
+			case 0x95:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "SUB A,L");
+				break;
+
+			case 0x96:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "SUB A,(HL)");
+				break;
+
+			case 0xD6:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->execute_function = &gbz80_cpu_alu8_sub_r_n;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "SUB A,$%04X", instruction->n);
+				break;
+		}
+	}
+	else if (opcode == 0x9F || opcode == 0x98 || opcode == 0x99 || opcode == 0x9A || opcode == 0x9B || opcode == 0x9C || opcode == 0x9D || opcode == 0x9E || opcode == 0xDE) {
+		instruction->execute_function = &gbz80_cpu_alu8_sbc_r_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0x9F:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "SBC A,A");
+				break;
+
+			case 0x98:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "SBC A,B");
+				break;
+
+			case 0x99:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "SBC A,C");
+				break;
+
+			case 0x9A:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "SBC A,D");
+				break;
+
+			case 0x9B:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "SBC A,E");
+				break;
+
+			case 0x9C:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "SBC A,H");
+				break;
+
+			case 0x9D:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "SBC A,L");
+				break;
+
+			case 0x9E:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "SBC A,(HL)");
+				break;
+
+			case 0xDE:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->execute_function = &gbz80_cpu_alu8_sbc_r_n;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "SBC A,$%04X", instruction->n);
+				break;
+		}
+	}
+	else if (opcode == 0xA7 || opcode == 0xA0 || opcode == 0xA1 || opcode == 0xA2 || opcode == 0xA3 || opcode == 0xA4 || opcode == 0xA5 || opcode == 0xA6 || opcode == 0xE6) {
+		instruction->execute_function = &gbz80_cpu_alu8_and_r_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0xA7:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "AND A");
+				break;
+
+			case 0xA0:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "AND B");
+				break;
+
+			case 0xA1:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "AND C");
+				break;
+
+			case 0xA2:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "AND D");
+				break;
+
+			case 0xA3:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "AND E");
+				break;
+
+			case 0xA4:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "AND H");
+				break;
+
+			case 0xA5:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "AND L");
+				break;
+
+			case 0xA6:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "AND (HL)");
+				break;
+
+			case 0xE6:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->execute_function = &gbz80_cpu_alu8_and_r_n;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "AND $%04X", instruction->n);
+				break;
+		}
+	}
+	else if (opcode == 0xB7 || opcode == 0xB0 || opcode == 0xB1 || opcode == 0xB2 || opcode == 0xB3 || opcode == 0xB4 || opcode == 0xB5 || opcode == 0xB6 || opcode == 0xF6) {
+		instruction->execute_function = &gbz80_cpu_alu8_or_r_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0xB7:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "OR A");
+				break;
+
+			case 0xB0:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "OR B");
+				break;
+
+			case 0xB1:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "OR C");
+				break;
+
+			case 0xB2:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "OR D");
+				break;
+
+			case 0xB3:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "OR E");
+				break;
+
+			case 0xB4:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "OR H");
+				break;
+
+			case 0xB5:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "OR L");
+				break;
+
+			case 0xB6:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "OR (HL)");
+				break;
+
+			case 0xF6:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->execute_function = &gbz80_cpu_alu8_or_r_n;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "OR $%04X", instruction->n);
+				break;
+		}
+	}
+	else if (opcode == 0xAF || opcode == 0xA8 || opcode == 0xA9 || opcode == 0xAA || opcode == 0xAB || opcode == 0xAC || opcode == 0xAD || opcode == 0xAE || opcode == 0xEE) {
+		instruction->execute_function = &gbz80_cpu_alu8_xor_r_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0xAF:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "XOR A");
+				break;
+
+			case 0xA8:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "XOR B");
+				break;
+
+			case 0xA9:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "XOR C");
+				break;
+
+			case 0xAA:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "XOR D");
+				break;
+
+			case 0xAB:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "XOR E");
+				break;
+
+			case 0xAC:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "XOR H");
+				break;
+
+			case 0xAD:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "XOR L");
+				break;
+
+			case 0xAE:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "XOR (HL)");
+				break;
+
+			case 0xEE:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->execute_function = &gbz80_cpu_alu8_xor_r_n;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "XOR $%04X", instruction->n);
+				break;
+		}
+	}
+	else if (opcode == 0xBF || opcode == 0xB8 || opcode == 0xB9 || opcode == 0xBA || opcode == 0xBB || opcode == 0xBC || opcode == 0xBD || opcode == 0xBE || opcode == 0xFE) {
+		instruction->execute_function = &gbz80_cpu_alu8_cp_r_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0xBF:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "CP A");
+				break;
+
+			case 0xB8:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "CP B");
+				break;
+
+			case 0xB9:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "XOR C");
+				break;
+
+			case 0xBA:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "CP D");
+				break;
+
+			case 0xBB:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "CP E");
+				break;
+
+			case 0xBC:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "CP H");
+				break;
+
+			case 0xBD:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "CP L");
+				break;
+
+			case 0xBE:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "CP (HL)");
+				break;
+
+			case 0xFE:
+				instruction->left_r = GBZ80_REGISTER_A;
+				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->execute_function = &gbz80_cpu_alu8_cp_r_n;
+				instruction->cycles = 8;
+				sprintf(instruction->disassembled_name, "CP $%04X", instruction->n);
+				break;
+		}
+	}
+	else if (opcode == 0x3C || opcode == 0x04 || opcode == 0x0C || opcode == 0x14 || opcode == 0x1C || opcode == 0x24 || opcode == 0x2C || opcode == 0x34) {
+		instruction->execute_function = &gbz80_cpu_alu8_inc_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0x3C:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "INC A");
+				break;
+
+			case 0x04:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "INC B");
+				break;
+
+			case 0x0C:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "INC C");
+				break;
+
+			case 0x14:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "INC D");
+				break;
+
+			case 0x1C:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "INC E");
+				break;
+
+			case 0x24:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "INC H");
+				break;
+
+			case 0x2C:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "INC L");
+				break;
+
+			case 0x34:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 12;
+				sprintf(instruction->disassembled_name, "INC (HL)");
+				break;
+		}
+	}
+	else if (opcode == 0x3D || opcode == 0x05 || opcode == 0x0D || opcode == 0x15 || opcode == 0x1D || opcode == 0x25 || opcode == 0x2D || opcode == 0x35) {
+		instruction->execute_function = &gbz80_cpu_alu8_dec_r;
+		instruction->cycles = 4;
+
+		switch (opcode) {
+			case 0x3D:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "DEC A");
+				break;
+
+			case 0x05:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "DEC B");
+				break;
+
+			case 0x0D:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "DEC C");
+				break;
+
+			case 0x15:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "DEC D");
+				break;
+
+			case 0x1D:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "DEC E");
+				break;
+
+			case 0x25:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "DEC H");
+				break;
+
+			case 0x2D:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "DEC L");
+				break;
+
+			case 0x35:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 12;
+				sprintf(instruction->disassembled_name, "DEC (HL)");
+				break;
+		}
+	}
+	else if (opcode == 0x09 || opcode == 0x19 || opcode == 0x29 || opcode == 0x39) {
+		instruction->execute_function = &gbz80_cpu_alu16_add_hl_r;
+		instruction->cycles = 8;
+		switch (opcode) {
+			case 0x09:
+				instruction->right_r = GBZ80_REGISTER_BC;
+				sprintf(instruction->disassembled_name, "ADD HL,BC");
+				break;
+
+			case 0x19:
+				instruction->right_r = GBZ80_REGISTER_DE;
+				sprintf(instruction->disassembled_name, "ADD HL,DE");
+				break;
+
+			case 0x29:
+				instruction->right_r = GBZ80_REGISTER_HL;
+				sprintf(instruction->disassembled_name, "ADD HL,HL");
+				break;
+
+			case 0x39:
+				instruction->right_r = GBZ80_REGISTER_SP;
+				sprintf(instruction->disassembled_name, "ADD HL,SP");
+				break;
+		}
+	}
+	else if (opcode == 0xE8) {
+		instruction->execute_function = &gbz80_cpu_alu16_add_sp_nn;
+		instruction->cycles = 16;
+		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
+		sprintf(instruction->disassembled_name, "SP SP,$%04X", instruction->d);
+	}
+	else if (opcode == 0x03 || opcode == 0x13 || opcode == 0x23 || opcode == 0x33) {
+		instruction->execute_function = &gbz80_cpu_alu16_inc_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x03:
+				instruction->left_r = GBZ80_REGISTER_BC;
+				sprintf(instruction->disassembled_name, "INC BC");
+				break;
+
+			case 0x13:
+				instruction->left_r = GBZ80_REGISTER_DE;
+				sprintf(instruction->disassembled_name, "INC DE");
+				break;
+
+			case 0x23:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				sprintf(instruction->disassembled_name, "INC HL");
+				break;
+
+			case 0x33:
+				instruction->left_r = GBZ80_REGISTER_SP;
+				sprintf(instruction->disassembled_name, "INC SP");
+				break;
+		}
+	}
+	else if (opcode == 0x0B || opcode == 0x1B || opcode == 0x2B || opcode == 0x3B) {
+		instruction->execute_function = &gbz80_cpu_alu16_dec_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x0B:
+				instruction->left_r = GBZ80_REGISTER_BC;
+				sprintf(instruction->disassembled_name, "DEC BC");
+				break;
+
+			case 0x1B:
+				instruction->left_r = GBZ80_REGISTER_DE;
+				sprintf(instruction->disassembled_name, "DEC DE");
+				break;
+
+			case 0x2B:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				sprintf(instruction->disassembled_name, "DEC HL");
+				break;
+
+			case 0x3B:
+				instruction->left_r = GBZ80_REGISTER_SP;
+				sprintf(instruction->disassembled_name, "DEC SP");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x37 || opcode == 0x30 || opcode == 0x31 || opcode == 0x32 || opcode == 0x33 || opcode == 0x34 || opcode == 0x35 || opcode == 0x36)) {
+		instruction->execute_function = &gbz80_cpu_misc_swap;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x37:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "SWAP A");
+				break;
+
+			case 0x30:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "SWAP B");
+				break;
+
+			case 0x31:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "SWAP C");
+				break;
+
+			case 0x32:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "SWAP D");
+				break;
+
+			case 0x33:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "SWAP E");
+				break;
+
+			case 0x34:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "SWAP H");
+				break;
+
+			case 0x35:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "SWAP L");
+				break;
+
+			case 0x36:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				sprintf(instruction->disassembled_name, "SWAP (HL)");
+				instruction->cycles = 16;
+				break;
+		}
+	}
+	else if (opcode == 0x27) {
+		instruction->execute_function = &gbz80_cpu_misc_daa;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "DAA");
+	}
+	else if (opcode == 0x2F) {
+		instruction->execute_function = &gbz80_cpu_misc_cpl;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "CPL");
+	}
+	else if (opcode == 0x3F) {
+		instruction->execute_function = &gbz80_cpu_misc_ccf;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "CCF");
+	}
+	else if (opcode == 0x37) {
+		instruction->execute_function = &gbz80_cpu_misc_scf;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "SCF");
+	}
+	else if (opcode == 0x00) {
+		instruction->execute_function = &gbz80_cpu_misc_nop;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "NOP");
+	}
+	else if (opcode == 0x10) {
+		uint8_t n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+		if (n == 0x00) {
+			instruction->execute_function = &gbz80_cpu_misc_stop;
+			instruction->cycles = 4;
+			sprintf(instruction->disassembled_name, "STOP");
+		}
+	}
+	else if (opcode == 0xF3) {
+		instruction->execute_function = &gbz80_cpu_misc_di;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "DI");
+	}
+	else if (opcode == 0xFB) {
+		instruction->execute_function = &gbz80_cpu_misc_ei;
+		instruction->cycles = 4;
+		sprintf(instruction->disassembled_name, "EI");
+	}
+	else if (opcode == 0x07) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
+		instruction->cycles = 4;
+		instruction->left_r = GBZ80_REGISTER_A;
+		sprintf(instruction->disassembled_name, "RLCA");
+	}
+	else if (opcode == 0x17) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
+		instruction->cycles = 4;
+		instruction->left_r = GBZ80_REGISTER_A;
+		sprintf(instruction->disassembled_name, "RLA");
+	}
+	else if (opcode == 0x0F) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
+		instruction->cycles = 4;
+		instruction->left_r = GBZ80_REGISTER_A;
+		sprintf(instruction->disassembled_name, "RRCA");
+	}
+	else if (opcode == 0x1F) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
+		instruction->cycles = 4;
+		instruction->left_r = GBZ80_REGISTER_A;
+		sprintf(instruction->disassembled_name, "RRA");
+	}
+	else if (prefix == 0xCB && (opcode == 0x07 || opcode == 0x00 || opcode == 0x01 || opcode == 0x02 || opcode == 0x03 || opcode == 0x04 || opcode == 0x05 || opcode == 0x06)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x07:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "RLC A");
+				break;
+
+			case 0x00:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "RLC B");
+				break;
+
+			case 0x01:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "RLC C");
+				break;
+
+			case 0x02:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "RLC D");
+				break;
+
+			case 0x03:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "RLC E");
+				break;
+
+			case 0x04:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "RLC H");
+				break;
+
+			case 0x05:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "RLC L");
+				break;
+
+			case 0x06:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "RLC (HL)");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x17 || opcode == 0x10 || opcode == 0x11 || opcode == 0x12 || opcode == 0x13 || opcode == 0x14 || opcode == 0x15 || opcode == 0x16)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x17:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "RL A");
+				break;
+
+			case 0x10:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "RL B");
+				break;
+
+			case 0x11:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "RL C");
+				break;
+
+			case 0x12:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "RL D");
+				break;
+
+			case 0x13:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "RL E");
+				break;
+
+			case 0x14:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "RL H");
+				break;
+
+			case 0x15:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "RL L");
+				break;
+
+			case 0x16:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "RL (HL)");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x0F || opcode == 0x08 || opcode == 0x09 || opcode == 0x0A || opcode == 0x0B || opcode == 0x0C || opcode == 0x0D || opcode == 0x0E)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x0F:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "RRC A");
+				break;
+
+			case 0x08:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "RRC B");
+				break;
+
+			case 0x09:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "RRC C");
+				break;
+
+			case 0x0A:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "RRC D");
+				break;
+
+			case 0x0B:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "RRC E");
+				break;
+
+			case 0x0C:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "RRC H");
+				break;
+
+			case 0x0D:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "RRC L");
+				break;
+
+			case 0x0E:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "RRC (HL)");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x1F || opcode == 0x18 || opcode == 0x19 || opcode == 0x1A || opcode == 0x1B || opcode == 0x1C || opcode == 0x1D || opcode == 0x1E)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x1F:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "RR A");
+				break;
+
+			case 0x18:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "RR B");
+				break;
+
+			case 0x19:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "RR C");
+				break;
+
+			case 0x1A:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "RR D");
+				break;
+
+			case 0x1B:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "RR E");
+				break;
+
+			case 0x1C:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "RR H");
+				break;
+
+			case 0x1D:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "RR L");
+				break;
+
+			case 0x1E:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "RR (HL)");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x27 || opcode == 0x20 || opcode == 0x21 || opcode == 0x22 || opcode == 0x23 || opcode == 0x24 || opcode == 0x25 || opcode == 0x26)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_sla_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+		case 0x27:
+			instruction->left_r = GBZ80_REGISTER_A;
+			sprintf(instruction->disassembled_name, "SLA A");
+			break;
+
+		case 0x20:
+			instruction->left_r = GBZ80_REGISTER_B;
+			sprintf(instruction->disassembled_name, "SLA B");
+			break;
+
+		case 0x21:
+			instruction->left_r = GBZ80_REGISTER_C;
+			sprintf(instruction->disassembled_name, "SLA C");
+			break;
+
+		case 0x22:
+			instruction->left_r = GBZ80_REGISTER_D;
+			sprintf(instruction->disassembled_name, "SLA D");
+			break;
+
+		case 0x23:
+			instruction->left_r = GBZ80_REGISTER_E;
+			sprintf(instruction->disassembled_name, "SLA E");
+			break;
+
+		case 0x24:
+			instruction->left_r = GBZ80_REGISTER_H;
+			sprintf(instruction->disassembled_name, "SLA H");
+			break;
+
+		case 0x25:
+			instruction->left_r = GBZ80_REGISTER_L;
+			sprintf(instruction->disassembled_name, "SLA L");
+			break;
+
+		case 0x26:
+			instruction->left_r = GBZ80_REGISTER_HL;
+			instruction->cycles = 16;
+			sprintf(instruction->disassembled_name, "SLA (HL)");
+			break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x2F || opcode == 0x28 || opcode == 0x29 || opcode == 0x2A || opcode == 0x2B || opcode == 0x2C || opcode == 0x2D || opcode == 0x2E)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_sra_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x2F:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "SRA A");
+				break;
+
+			case 0x28:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "SRA B");
+				break;
+
+			case 0x29:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "SRA C");
+				break;
+
+			case 0x2A:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "SRA D");
+				break;
+
+			case 0x2B:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "SRA E");
+				break;
+
+			case 0x2C:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "SRA H");
+				break;
+
+			case 0x2D:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "SRA L");
+				break;
+
+			case 0x2E:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "SRA (HL)");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode == 0x3F || opcode == 0x38 || opcode == 0x39 || opcode == 0x3A || opcode == 0x3B || opcode == 0x3C || opcode == 0x3D || opcode == 0x3E)) {
+		instruction->execute_function = &gbz80_cpu_rtsh_srl_r;
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0x3F:
+				instruction->left_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "SRL A");
+				break;
+
+			case 0x38:
+				instruction->left_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "SRL B");
+				break;
+
+			case 0x39:
+				instruction->left_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "SRL C");
+				break;
+
+			case 0x3A:
+				instruction->left_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "SRL D");
+				break;
+
+			case 0x3B:
+				instruction->left_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "SRL E");
+				break;
+
+			case 0x3C:
+				instruction->left_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "SRL H");
+				break;
+
+			case 0x3D:
+				instruction->left_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "SRL L");
+				break;
+
+			case 0x3E:
+				instruction->left_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "SRL (HL)");
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode >= 0x40 && opcode <= 0x7F)) {
+		instruction->execute_function = &gbz80_cpu_bitw_bit_b_r;
+		instruction->cycles = 8;
+		instruction->n = (opcode >> 3) & 0x7;
+
+		switch (opcode & 0xC7) {
+			case 0x47:
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "BIT %d,A", instruction->n);
+				break;
+
+			case 0x40:
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "BIT %d,B", instruction->n);
+				break;
+
+			case 0x41:
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "BIT %d,C", instruction->n);
+				break;
+
+			case 0x42:
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "BIT %d,D", instruction->n);
+				break;
+
+			case 0x43:
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "BIT %d,E", instruction->n);
+				break;
+
+			case 0x44:
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "BIT %d,H", instruction->n);
+				break;
+
+			case 0x45:
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "BIT %d,L", instruction->n);
+				break;
+
+			case 0x46:
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "BIT %d,(HL)", instruction->n);
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode >= 0x80 && opcode <= 0xBF)) {
+		instruction->execute_function = &gbz80_cpu_bitw_res_b_r;
+		instruction->cycles = 8;
+		instruction->n = (opcode >> 3) & 0x7;
+
+		switch (opcode & 0xC7) {
+			case 0x87:
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "RES %d,A", instruction->n);
+				break;
+
+			case 0x80:
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "RES %d,B", instruction->n);
+				break;
+
+			case 0x81:
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "RES %d,C", instruction->n);
+				break;
+
+			case 0x82:
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "RES %d,D", instruction->n);
+				break;
+
+			case 0x83:
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "RES %d,E", instruction->n);
+				break;
+
+			case 0x84:
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "RES %d,H", instruction->n);
+				break;
+
+			case 0x85:
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "RES %d,L", instruction->n);
+				break;
+
+			case 0x86:
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "RES %d,(HL)", instruction->n);
+				break;
+		}
+	}
+	else if (prefix == 0xCB && (opcode >= 0xC0 && opcode <= 0xFF)) {
+		instruction->execute_function = &gbz80_cpu_bitw_set_b_r;
+		instruction->cycles = 8;
+		instruction->n = (opcode >> 3) & 0x7;
+
+		switch (opcode & 0xC7) {
+			case 0xC7:
+				instruction->right_r = GBZ80_REGISTER_A;
+				sprintf(instruction->disassembled_name, "SET %d,A", instruction->n);
+				break;
+
+			case 0xC0:
+				instruction->right_r = GBZ80_REGISTER_B;
+				sprintf(instruction->disassembled_name, "SET %d,B", instruction->n);
+				break;
+
+			case 0xC1:
+				instruction->right_r = GBZ80_REGISTER_C;
+				sprintf(instruction->disassembled_name, "SET %d,C", instruction->n);
+				break;
+
+			case 0xC2:
+				instruction->right_r = GBZ80_REGISTER_D;
+				sprintf(instruction->disassembled_name, "SET %d,D", instruction->n);
+				break;
+
+			case 0xC3:
+				instruction->right_r = GBZ80_REGISTER_E;
+				sprintf(instruction->disassembled_name, "SET %d,E", instruction->n);
+				break;
+
+			case 0xC4:
+				instruction->right_r = GBZ80_REGISTER_H;
+				sprintf(instruction->disassembled_name, "SET %d,H", instruction->n);
+				break;
+
+			case 0xC5:
+				instruction->right_r = GBZ80_REGISTER_L;
+				sprintf(instruction->disassembled_name, "SET %d,L", instruction->n);
+				break;
+
+			case 0xC6:
+				instruction->right_r = GBZ80_REGISTER_HL;
+				instruction->cycles = 16;
+				sprintf(instruction->disassembled_name, "SET %d,(HL)", instruction->n);
+				break;
 		}
 	}
 }
@@ -975,11 +2118,11 @@ size_t gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	}
 }
 
-void utility_set_flags(gbz80_cpu_t* cpu, uint16_t result, uint8_t substraction) {
-	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_ZERO, result == 0);
-	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_N, substraction);
-	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_H, result > 0xFF);
-	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_C, result > 0xFFFF);
+void utility_set_flags(gbz80_cpu_t* cpu, uint8_t z, uint8_t n, uint8_t h, uint8_t c) {
+	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_ZERO, z);
+	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_N, n);
+	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_H, h);
+	gbz80_cpu_set_flag(cpu, GBZ80_FLAG_C, c);
 }
 
 void gbz80_cpu_load8_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
@@ -1036,9 +2179,6 @@ void gbz80_cpu_load16_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 void gbz80_cpu_load16_hl_sp_plus_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
 	uint32_t val = sp + instruction->d;
-
-	utility_set_flags(cpu, val, 0);
-
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, (uint16_t)val);
 }
 
@@ -1059,85 +2199,385 @@ void gbz80_cpu_alu8_add_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
-	uint8_t val = lhs + rhs;
-
-	utility_set_flags(cpu, val, 0);
+	uint16_t val = lhs + rhs;
 	
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) + (rhs & 0xf)) & 0x10) == 0x10, val > 0xFF);
+	
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_add_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = instruction->n;
-	uint8_t val = lhs + rhs;
+	uint16_t val = lhs + rhs;
 
-	utility_set_flags(cpu, val, 0);
+	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) + (rhs & 0xf)) & 0x10) == 0x10, val > 0xFF);
 
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_adc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
-	uint8_t val = lhs + rhs + c;
+	uint16_t val = lhs + rhs + c;
 
-	utility_set_flags(cpu, val, 0);
+	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
 
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_adc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = instruction->n;
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
-	uint8_t val = lhs + rhs + c;
+	uint16_t val = lhs + rhs + c;
 
-	utility_set_flags(cpu, val, 0);
+	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
 
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_sub_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
-	uint8_t val = lhs - rhs;
+	int16_t val = lhs - rhs;
 
-	utility_set_flags(cpu, val, 1);
+	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, val < 0x0);
 
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_sub_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = instruction->n;
-	uint8_t val = lhs - rhs;
+	int16_t val = lhs - rhs;
 
-	utility_set_flags(cpu, val, 1);
+	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, val < 0x0);
 
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_sbc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
-	uint8_t val = lhs - (rhs + c);
+	int16_t val = lhs - (rhs + c);
 
-	utility_set_flags(cpu, val, 1);
+	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
 
-	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
 
 void gbz80_cpu_alu8_sbc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t rhs = instruction->n;
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
-	uint8_t val = lhs - (rhs + c);
+	int16_t val = lhs - (rhs + c);
 
-	utility_set_flags(cpu, val, 1);
+	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
+}
+
+void gbz80_cpu_alu8_and_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	uint8_t val = lhs & rhs;
+
+	utility_set_flags(cpu, val == 0, 0, 1, 0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_and_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = instruction->n;
+	uint8_t val = lhs & rhs;
+
+	utility_set_flags(cpu, val == 0, 0, 1, 0);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_or_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	uint8_t val = lhs | rhs;
+
+	utility_set_flags(cpu, val == 0, 0, 0, 0);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_or_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = instruction->n;
+	uint8_t val = lhs | rhs;
+
+	utility_set_flags(cpu, val == 0, 0, 0, 0);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_xor_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	uint8_t val = lhs ^ rhs;
+
+	utility_set_flags(cpu, val == 0, 0, 0, 0);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_xor_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = instruction->n;
+	uint8_t val = lhs ^ rhs;
+
+	utility_set_flags(cpu, val == 0, 0, 0, 0);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_cp_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	uint8_t val = lhs - rhs;
+
+	utility_set_flags(cpu, lhs == rhs, 1, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, lhs < rhs);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_cp_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t rhs = instruction->n;
+	uint8_t val = lhs - rhs;
+
+	utility_set_flags(cpu, lhs == rhs, 1, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, lhs < rhs);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_inc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t val = lhs + 1;
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+
+	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) + (1 & 0xf)) & 0x10) == 0x10, c);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu8_dec_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t lhs = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t val = lhs - 1;
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+
+	utility_set_flags(cpu, val == 0, 1, (((lhs & 0xf) - (1 & 0xf)) & 0x10) == 0x10, c);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu16_add_hl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint16_t lhs = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
+	uint16_t rhs = gbz80_cpu_get_register16(cpu, instruction->right_r);
+	uint32_t val = lhs + rhs;
+	uint8_t z = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO);
+
+	utility_set_flags(cpu, z, 0, val > 0xFFF, val > 0xFFFF);
+
+	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, (uint16_t)val);
+}
+
+void gbz80_cpu_alu16_add_sp_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	uint16_t lhs = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
+	int8_t rhs = instruction->d;
+	uint32_t val = lhs + rhs;
+
+	if (rhs > 0) {
+		utility_set_flags(cpu, 0, 0, val > 0xFFF, val > 0xFFFF);
+	}
+	else {
+		utility_set_flags(cpu, 0, 0, val > 0xFFF, val > 0xFFFF);
+	}
+
+	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, (uint16_t)val);
+}
+
+void gbz80_cpu_alu16_inc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint16_t lhs = gbz80_cpu_get_register16(cpu, instruction->left_r);
+	uint16_t val = lhs + 1;
+	gbz80_cpu_set_register16(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_alu16_dec_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint16_t lhs = gbz80_cpu_get_register16(cpu, instruction->left_r);
+	uint16_t val = lhs - 1;
+	gbz80_cpu_set_register16(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_misc_swap(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	val = ((val & 0xF) << 4) | (val & 0xF);
+	utility_set_flags(cpu, val == 0, 0, 0, 0);
+	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
+}
+
+void gbz80_cpu_misc_daa(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
+	uint8_t h = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_H);
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+	uint8_t n = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_N);
+	uint8_t z = val == 0;
+
+	if ((val & 0xF) > 0x9 || h == 1) {
+		val += 0x06;
+	}
+
+	if (((val >> 8) & 0xF) > 0x9 || c == 1) {
+		val += 0x3C;
+		utility_set_flags(cpu, z, n, 0, 1);
+	}
+	else {
+		utility_set_flags(cpu, z, n, 0, 0);
+	}
+
+	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, val);
+}
+
+void gbz80_cpu_misc_cpl(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
+	uint8_t z = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO);
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+	utility_set_flags(cpu, z, 1, 1, c);
+	val = val ^ 0xFF;
+	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, val);
+}
+
+void gbz80_cpu_misc_ccf(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+	uint8_t z = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO);
+	utility_set_flags(cpu, z, 0, 0, c ^ 1);
+}
+
+void gbz80_cpu_misc_scf(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t z = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO);
+	utility_set_flags(cpu, z, 0, 0, 1);
+}
+
+void gbz80_cpu_misc_nop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+}
+
+void gbz80_cpu_misc_halt(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	//TODO
+}
+
+void gbz80_cpu_misc_stop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	//TODO
+}
+
+void gbz80_cpu_misc_di(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	gbz80_cpu_memory_write8(cpu, 0xFFFF, 0);
+}
+
+void gbz80_cpu_misc_ei(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	gbz80_cpu_memory_write8(cpu, 0xFFFF, 1);
+}
+
+void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t result = (val << 1) | (val >> 7);
+
+	utility_set_flags(cpu, result == 0, 0, 0, (val >> 7) & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_rtsh_rr_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t result = (val >> 1) | (val << 7);
+
+	utility_set_flags(cpu, result == 0, 0, 0, val & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_rtsh_sla_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t result = val << 1;
+
+	utility_set_flags(cpu, result == 0, 0, 0, (val >> 7) & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_rtsh_sra_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t result = val >> 1 | (val & 0x80);
+
+	utility_set_flags(cpu, result == 0, 0, 0, val & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_rtsh_srl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t result = val >> 1;
+
+	utility_set_flags(cpu, result == 0, 0, 0, val & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_bitw_bit_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+	uint8_t bit = (val >> instruction->n) & 0x1;
+
+	utility_set_flags(cpu, bit == 0, 0, 1, c);
+
+}
+
+void gbz80_cpu_bitw_set_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	val |= 1 << instruction->n;
+}
+
+void gbz80_cpu_bitw_res_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
+	val &= ~(1 << instruction->n);
 }
 
 void gbz80_cpu_load16_pop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {

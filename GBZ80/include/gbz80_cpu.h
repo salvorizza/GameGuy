@@ -119,4 +119,39 @@ void gbz80_cpu_alu8_sub_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 void gbz80_cpu_alu8_sub_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 void gbz80_cpu_alu8_sbc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 void gbz80_cpu_alu8_sbc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_and_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_and_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_or_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_or_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_xor_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_xor_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_cp_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_cp_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_inc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu8_dec_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 
+void gbz80_cpu_alu16_add_hl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu16_add_sp_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu16_inc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_alu16_dec_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_misc_swap(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_daa(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_cpl(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_ccf(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_scf(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_nop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction); void gbz80_cpu_misc_nop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_halt(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_stop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_di(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_misc_ei(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtsh_rr_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtsh_sla_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtsh_sra_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtsh_srl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_bitw_bit_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_bitw_set_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_bitw_res_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);

@@ -11,8 +11,6 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-
-
 	GLFWwindow* window = glfwCreateWindow(1280, 720, "GameGuy", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -26,10 +24,9 @@ int main(int argc, char** argv) {
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-	// Setup Platform/Renderer bindings
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 450");
-	// Setup Dear ImGui style
+
 	ImGui::StyleColorsDark();
 
 	while (!glfwWindowShouldClose(window)) {
@@ -42,7 +39,7 @@ int main(int argc, char** argv) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		ImGui::DockSpace();
+		//ImGui::DockSpace();
 
 		ImGui::ShowDemoWindow();
 
