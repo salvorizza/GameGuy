@@ -191,6 +191,7 @@ size_t gbz80_cpu_step(gbz80_cpu_t* cpu)
 
 void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
 {
+	out_instruction->address = cpu->registers.PC;
 	uint8_t opcode = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
 	if (opcode == 0xCB) {
 		out_instruction->prefix = opcode;
@@ -200,11 +201,10 @@ void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
 }
 
 void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
-
 	uint8_t opcode = instruction->opcode;
 	uint8_t prefix = instruction->opcode;
 
-	if (opcode == 0x06 || opcode == 0x0E || opcode == 0x16 || opcode == 0x1E || opcode == 0x26 || opcode == 0x2E) {
+	if (prefix == 0x00 && (opcode == 0x06 || opcode == 0x0E || opcode == 0x16 || opcode == 0x1E || opcode == 0x26 || opcode == 0x2E)) {
 		instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
 		instruction->cycles = 8;
@@ -242,12 +242,12 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (	opcode == 0x7F || opcode == 0x78 || opcode == 0x79 || opcode == 0x7A || opcode == 0x7B || opcode == 0x7C || opcode == 0x7D || opcode == 0x7E || opcode == 0x40 || opcode == 0x41 || 
+	else if (	prefix == 0x00 && (opcode == 0x7F || opcode == 0x78 || opcode == 0x79 || opcode == 0x7A || opcode == 0x7B || opcode == 0x7C || opcode == 0x7D || opcode == 0x7E || opcode == 0x40 || opcode == 0x41 || 
 				opcode == 0x42 || opcode == 0x43 || opcode == 0x44 || opcode == 0x45 || opcode == 0x46 || opcode == 0x48 || opcode == 0x49 || opcode == 0x4A || opcode == 0x4B || opcode == 0x4C || 
 				opcode == 0x4D || opcode == 0x4E || opcode == 0x50 || opcode == 0x51 || opcode == 0x52 || opcode == 0x53 || opcode == 0x54 || opcode == 0x55 || opcode == 0x56 || opcode == 0x58 || 
 				opcode == 0x59 || opcode == 0x5A || opcode == 0x5B || opcode == 0x5C || opcode == 0x5D || opcode == 0x5E || opcode == 0x60 || opcode == 0x61 || opcode == 0x62 || opcode == 0x63 || 
 				opcode == 0x64 || opcode == 0x65 || opcode == 0x66 || opcode == 0x68 || opcode == 0x69 || opcode == 0x6A || opcode == 0x6B || opcode == 0x6C || opcode == 0x6D || opcode == 0x6E || 
-				opcode == 0x70 || opcode == 0x71 || opcode == 0x72 || opcode == 0x73 || opcode == 0x74 || opcode == 0x75 || opcode == 0x36) {
+				opcode == 0x70 || opcode == 0x71 || opcode == 0x72 || opcode == 0x73 || opcode == 0x74 || opcode == 0x75 || opcode == 0x36)) {
 			instruction->execute_function = &gbz80_cpu_load8_r_r;
 			instruction->cycles = 4;
 
@@ -611,7 +611,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			}
 	} 
-	else if (opcode == 0x0A || opcode == 0x1A || opcode == 0x7E || opcode == 0xFA || opcode == 0x3E) {
+	else if (prefix == 0x00 && (opcode == 0x0A || opcode == 0x1A || opcode == 0x7E || opcode == 0xFA || opcode == 0x3E)) {
 		instruction->execute_function = &gbz80_cpu_load8_r_r;
 		instruction->cycles = 8;
 		switch (opcode)
@@ -653,7 +653,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x02 || opcode == 0x12 || opcode == 0x77 || opcode == 0xEA) {
+	else if (prefix == 0x00 && (opcode == 0x02 || opcode == 0x12 || opcode == 0x77 || opcode == 0xEA)) {
 		instruction->execute_function = &gbz80_cpu_load8_r_r;
 		instruction->cycles = 8;
 		switch (opcode)
@@ -687,41 +687,41 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 			}
 		}
 	}
-	else if (opcode == 0xF2) {
+	else if (prefix == 0x00 && (opcode == 0xF2)) {
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
 		instruction->cycles = 8;
 		instruction->n = gbz80_cpu_memory_read8(cpu, 0xFF00 + cpu->registers.C);
 		sprintf(instruction->disassembled_name, "LD A,($FF00+C)");
 		instruction->left_r = GBZ80_REGISTER_A;
 	}
-	else if (opcode == 0xE2) {
+	else if (prefix == 0x00 && (opcode == 0xE2)) {
 		instruction->execute_function = &gbz80_cpu_load8_n_r;
 		instruction->cycles = 8;
 		instruction->nn = 0xFF00 + cpu->registers.C;
 		sprintf(instruction->disassembled_name, "LD ($FF00+C),A");
 		instruction->right_r = GBZ80_REGISTER_A;
 	}
-	else if (opcode == 0x3A) {
+	else if (prefix == 0x00 && (opcode == 0x3A)) {
 		instruction->execute_function = &gbz80_cpu_load8_a_hl_dec;
 		instruction->cycles = 8;
 		sprintf(instruction->disassembled_name, "LD A,(HL-)");
 	}
-	else if (opcode == 0x32) {
+	else if (prefix == 0x00 && (opcode == 0x32)) {
 		instruction->execute_function = &gbz80_cpu_load8_hl_dec_a;
 		instruction->cycles = 8;
 		sprintf(instruction->disassembled_name, "LD (HL-),A");
 	}
-	else if (opcode == 0x2A) {
+	else if (prefix == 0x00 && (opcode == 0x2A)) {
 		instruction->execute_function = &gbz80_cpu_load8_a_hl_inc;
 		instruction->cycles = 8;
 		sprintf(instruction->disassembled_name, "LD A,(HL+)");
 	}
-	else if (opcode == 0x22) {
+	else if (prefix == 0x00 && (opcode == 0x22)) {
 		instruction->execute_function = &gbz80_cpu_load8_hl_inc_a;
 		instruction->cycles = 8;
 		sprintf(instruction->disassembled_name, "LD (HL+),A");
 	}
-	else if (opcode == 0xE0) {
+	else if (prefix == 0x00 && (opcode == 0xE0)) {
 		instruction->execute_function = &gbz80_cpu_load8_n_r;
 		instruction->cycles = 12;
 		uint8_t n = gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
@@ -729,7 +729,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		sprintf(instruction->disassembled_name, "LD ($FF00+$%04X),A",n);
 		instruction->right_r = GBZ80_REGISTER_A;
 	}
-	else if (opcode == 0xE0) {
+	else if (prefix == 0x00 && (opcode == 0xE0)) {
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
 		instruction->cycles = 12;
 		uint8_t n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
@@ -737,7 +737,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		sprintf(instruction->disassembled_name, "LD A,($FF00+$%04X)", n);
 		instruction->right_r = GBZ80_REGISTER_A;
 	}
-	else if (opcode == 0x01 || opcode == 0x11 || opcode == 0x21 || opcode == 0x31) {
+	else if (prefix == 0x00 && (opcode == 0x01 || opcode == 0x11 || opcode == 0x21 || opcode == 0x31)) {
 		instruction->execute_function = &gbz80_cpu_load16_r_nn;
 		instruction->cycles = 12;
 		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
@@ -765,27 +765,27 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xF9) {
+	else if (prefix == 0x00 && (opcode == 0xF9)) {
 		instruction->execute_function = &gbz80_cpu_load16_r_r;
 		instruction->cycles = 8;
 		sprintf(instruction->disassembled_name, "LD SP,HL");
 		instruction->left_r = GBZ80_REGISTER_SP;
 		instruction->right_r = GBZ80_REGISTER_HL;
 	}
-	else if (opcode == 0xF8) {
+	else if (prefix == 0x00 && (opcode == 0xF8)) {
 		instruction->execute_function = &gbz80_cpu_load16_hl_sp_plus_n;
 		instruction->cycles = 12;
 		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
 		sprintf(instruction->disassembled_name, "LDHL SP,$%04X", instruction->d);
 	}
-	else if (opcode == 0x08) {
+	else if (prefix == 0x00 && (opcode == 0x08)) {
 		instruction->execute_function = &gbz80_cpu_load16_nn_r;
 		instruction->cycles = 20;
 		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
 		cpu->registers.PC += 2;
 		sprintf(instruction->disassembled_name, "LD ($%04X),SP", instruction->nn);
 	}
-	else if (opcode == 0xF5 || opcode == 0xC5 || opcode == 0xD5 || opcode == 0xE5) {
+	else if (prefix == 0x00 && (opcode == 0xF5 || opcode == 0xC5 || opcode == 0xD5 || opcode == 0xE5)) {
 		instruction->execute_function = &gbz80_cpu_load16_push;
 		instruction->cycles = 16;
 
@@ -811,7 +811,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xF1 || opcode == 0xC1 || opcode == 0xD1 || opcode == 0xE1) {
+	else if (prefix == 0x00 && (opcode == 0xF1 || opcode == 0xC1 || opcode == 0xD1 || opcode == 0xE1)) {
 		instruction->execute_function = &gbz80_cpu_load16_pop;
 		instruction->cycles = 12;
 
@@ -837,7 +837,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 			break;
 		}
 	}
-	else if (opcode == 0x87 || opcode == 0x80 || opcode == 0x81 || opcode == 0x82 || opcode == 0x83 || opcode == 0x84 || opcode == 0x85 || opcode == 0x86 || opcode == 0xC6) {
+	else if (prefix == 0x00 && (opcode == 0x87 || opcode == 0x80 || opcode == 0x81 || opcode == 0x82 || opcode == 0x83 || opcode == 0x84 || opcode == 0x85 || opcode == 0x86 || opcode == 0xC6)) {
 		instruction->execute_function = &gbz80_cpu_alu8_add_r_r;
 		instruction->cycles = 4;
 		
@@ -901,7 +901,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 			
 		}
 	}
-	else if (opcode == 0x8F || opcode == 0x88 || opcode == 0x89 || opcode == 0x8A || opcode == 0x8B || opcode == 0x8C || opcode == 0x8D || opcode == 0x8E || opcode == 0xCE) {
+	else if (prefix == 0x00 && (opcode == 0x8F || opcode == 0x88 || opcode == 0x89 || opcode == 0x8A || opcode == 0x8B || opcode == 0x8C || opcode == 0x8D || opcode == 0x8E || opcode == 0xCE)) {
 		instruction->execute_function = &gbz80_cpu_alu8_adc_r_r;
 		instruction->cycles = 4;
 
@@ -964,7 +964,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x97 || opcode == 90 || opcode == 0x91 || opcode == 0x92 || opcode == 0x93 || opcode == 0x94 || opcode == 0x95 || opcode == 0x96 || opcode == 0xD6) {
+	else if (prefix == 0x00 && (opcode == 0x97 || opcode == 90 || opcode == 0x91 || opcode == 0x92 || opcode == 0x93 || opcode == 0x94 || opcode == 0x95 || opcode == 0x96 || opcode == 0xD6)) {
 		instruction->execute_function = &gbz80_cpu_alu8_sub_r_r;
 		instruction->cycles = 4;
 
@@ -1027,7 +1027,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x9F || opcode == 0x98 || opcode == 0x99 || opcode == 0x9A || opcode == 0x9B || opcode == 0x9C || opcode == 0x9D || opcode == 0x9E || opcode == 0xDE) {
+	else if (prefix == 0x00 && (opcode == 0x9F || opcode == 0x98 || opcode == 0x99 || opcode == 0x9A || opcode == 0x9B || opcode == 0x9C || opcode == 0x9D || opcode == 0x9E || opcode == 0xDE)) {
 		instruction->execute_function = &gbz80_cpu_alu8_sbc_r_r;
 		instruction->cycles = 4;
 
@@ -1090,7 +1090,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xA7 || opcode == 0xA0 || opcode == 0xA1 || opcode == 0xA2 || opcode == 0xA3 || opcode == 0xA4 || opcode == 0xA5 || opcode == 0xA6 || opcode == 0xE6) {
+	else if (prefix == 0x00 && (opcode == 0xA7 || opcode == 0xA0 || opcode == 0xA1 || opcode == 0xA2 || opcode == 0xA3 || opcode == 0xA4 || opcode == 0xA5 || opcode == 0xA6 || opcode == 0xE6)) {
 		instruction->execute_function = &gbz80_cpu_alu8_and_r_r;
 		instruction->cycles = 4;
 
@@ -1153,7 +1153,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xB7 || opcode == 0xB0 || opcode == 0xB1 || opcode == 0xB2 || opcode == 0xB3 || opcode == 0xB4 || opcode == 0xB5 || opcode == 0xB6 || opcode == 0xF6) {
+	else if (prefix == 0x00 && (opcode == 0xB7 || opcode == 0xB0 || opcode == 0xB1 || opcode == 0xB2 || opcode == 0xB3 || opcode == 0xB4 || opcode == 0xB5 || opcode == 0xB6 || opcode == 0xF6)) {
 		instruction->execute_function = &gbz80_cpu_alu8_or_r_r;
 		instruction->cycles = 4;
 
@@ -1216,7 +1216,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xAF || opcode == 0xA8 || opcode == 0xA9 || opcode == 0xAA || opcode == 0xAB || opcode == 0xAC || opcode == 0xAD || opcode == 0xAE || opcode == 0xEE) {
+	else if (prefix == 0x00 && (opcode == 0xAF || opcode == 0xA8 || opcode == 0xA9 || opcode == 0xAA || opcode == 0xAB || opcode == 0xAC || opcode == 0xAD || opcode == 0xAE || opcode == 0xEE)) {
 		instruction->execute_function = &gbz80_cpu_alu8_xor_r_r;
 		instruction->cycles = 4;
 
@@ -1279,7 +1279,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xBF || opcode == 0xB8 || opcode == 0xB9 || opcode == 0xBA || opcode == 0xBB || opcode == 0xBC || opcode == 0xBD || opcode == 0xBE || opcode == 0xFE) {
+	else if (prefix == 0x00 && (opcode == 0xBF || opcode == 0xB8 || opcode == 0xB9 || opcode == 0xBA || opcode == 0xBB || opcode == 0xBC || opcode == 0xBD || opcode == 0xBE || opcode == 0xFE)) {
 		instruction->execute_function = &gbz80_cpu_alu8_cp_r_r;
 		instruction->cycles = 4;
 
@@ -1342,7 +1342,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x3C || opcode == 0x04 || opcode == 0x0C || opcode == 0x14 || opcode == 0x1C || opcode == 0x24 || opcode == 0x2C || opcode == 0x34) {
+	else if (prefix == 0x00 && (opcode == 0x3C || opcode == 0x04 || opcode == 0x0C || opcode == 0x14 || opcode == 0x1C || opcode == 0x24 || opcode == 0x2C || opcode == 0x34)) {
 		instruction->execute_function = &gbz80_cpu_alu8_inc_r;
 		instruction->cycles = 4;
 
@@ -1389,7 +1389,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x3D || opcode == 0x05 || opcode == 0x0D || opcode == 0x15 || opcode == 0x1D || opcode == 0x25 || opcode == 0x2D || opcode == 0x35) {
+	else if (prefix == 0x00 && (opcode == 0x3D || opcode == 0x05 || opcode == 0x0D || opcode == 0x15 || opcode == 0x1D || opcode == 0x25 || opcode == 0x2D || opcode == 0x35)) {
 		instruction->execute_function = &gbz80_cpu_alu8_dec_r;
 		instruction->cycles = 4;
 
@@ -1436,7 +1436,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x09 || opcode == 0x19 || opcode == 0x29 || opcode == 0x39) {
+	else if (prefix == 0x00 && (opcode == 0x09 || opcode == 0x19 || opcode == 0x29 || opcode == 0x39)) {
 		instruction->execute_function = &gbz80_cpu_alu16_add_hl_r;
 		instruction->cycles = 8;
 		switch (opcode) {
@@ -1461,13 +1461,13 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0xE8) {
+	else if (prefix == 0x00 && (opcode == 0xE8)) {
 		instruction->execute_function = &gbz80_cpu_alu16_add_sp_nn;
 		instruction->cycles = 16;
 		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
 		sprintf(instruction->disassembled_name, "SP SP,$%04X", instruction->d);
 	}
-	else if (opcode == 0x03 || opcode == 0x13 || opcode == 0x23 || opcode == 0x33) {
+	else if (prefix == 0x00 && (opcode == 0x03 || opcode == 0x13 || opcode == 0x23 || opcode == 0x33)) {
 		instruction->execute_function = &gbz80_cpu_alu16_inc_r;
 		instruction->cycles = 8;
 
@@ -1493,7 +1493,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x0B || opcode == 0x1B || opcode == 0x2B || opcode == 0x3B) {
+	else if (prefix == 0x00 && (opcode == 0x0B || opcode == 0x1B || opcode == 0x2B || opcode == 0x3B)) {
 		instruction->execute_function = &gbz80_cpu_alu16_dec_r;
 		instruction->cycles = 8;
 
@@ -1566,32 +1566,32 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
-	else if (opcode == 0x27) {
+	else if (prefix == 0x00 && (opcode == 0x27)) {
 		instruction->execute_function = &gbz80_cpu_misc_daa;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "DAA");
 	}
-	else if (opcode == 0x2F) {
+	else if (prefix == 0x00 && (opcode == 0x2F)) {
 		instruction->execute_function = &gbz80_cpu_misc_cpl;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "CPL");
 	}
-	else if (opcode == 0x3F) {
+	else if (prefix == 0x00 && (opcode == 0x3F)) {
 		instruction->execute_function = &gbz80_cpu_misc_ccf;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "CCF");
 	}
-	else if (opcode == 0x37) {
+	else if (prefix == 0x00 && (opcode == 0x37)) {
 		instruction->execute_function = &gbz80_cpu_misc_scf;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "SCF");
 	}
-	else if (opcode == 0x00) {
+	else if (prefix == 0x00 && (opcode == 0x00)) {
 		instruction->execute_function = &gbz80_cpu_misc_nop;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "NOP");
 	}
-	else if (opcode == 0x10) {
+	else if (prefix == 0x00 && (opcode == 0x10)) {
 		uint8_t n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
 		if (n == 0x00) {
 			instruction->execute_function = &gbz80_cpu_misc_stop;
@@ -1599,35 +1599,35 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 			sprintf(instruction->disassembled_name, "STOP");
 		}
 	}
-	else if (opcode == 0xF3) {
+	else if (prefix == 0x00 && (opcode == 0xF3)) {
 		instruction->execute_function = &gbz80_cpu_misc_di;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "DI");
 	}
-	else if (opcode == 0xFB) {
+	else if (prefix == 0x00 && (opcode == 0xFB)) {
 		instruction->execute_function = &gbz80_cpu_misc_ei;
 		instruction->cycles = 4;
 		sprintf(instruction->disassembled_name, "EI");
 	}
-	else if (opcode == 0x07) {
+	else if (prefix == 0x00 && (opcode == 0x07)) {
 		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
 		instruction->cycles = 4;
 		instruction->left_r = GBZ80_REGISTER_A;
 		sprintf(instruction->disassembled_name, "RLCA");
 	}
-	else if (opcode == 0x17) {
+	else if (prefix == 0x00 && (opcode == 0x17)) {
 		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
 		instruction->cycles = 4;
 		instruction->left_r = GBZ80_REGISTER_A;
 		sprintf(instruction->disassembled_name, "RLA");
 	}
-	else if (opcode == 0x0F) {
+	else if (prefix == 0x00 && (opcode == 0x0F)) {
 		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
 		instruction->cycles = 4;
 		instruction->left_r = GBZ80_REGISTER_A;
 		sprintf(instruction->disassembled_name, "RRCA");
 	}
-	else if (opcode == 0x1F) {
+	else if (prefix == 0x00 && (opcode == 0x1F)) {
 		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
 		instruction->cycles = 4;
 		instruction->left_r = GBZ80_REGISTER_A;
@@ -2106,6 +2106,147 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 		}
 	}
+	else if (prefix == 0x00 && (opcode == 0xC3)) {
+		instruction->execute_function = &gbz80_cpu_jumps_jp_nn;
+		instruction->cycles = 12;
+		instruction->nn = gbz80_cpu_memory_read16(cpu,cpu->registers.PC);
+		sprintf(instruction->disassembled_name, "JP $%04X", instruction->nn);
+		cpu->registers.PC += 2;
+	}
+	else if (prefix == 0x00 && (opcode >= 0xC2 || opcode == 0xCA || opcode == 0xD2 || opcode == 0xDA)) {
+		instruction->cycles = 12;
+		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		cpu->registers.PC += 2;
+
+		switch (opcode) {
+			case 0xC2:
+				instruction->execute_function = &gbz80_cpu_jumps_jpnz_nn;
+				sprintf(instruction->disassembled_name, "JP NZ,$%04X", instruction->nn);
+				break;
+
+			case 0xCA:
+				instruction->execute_function = &gbz80_cpu_jumps_jpz_nn;
+				sprintf(instruction->disassembled_name, "JP Z,$%04X", instruction->nn);
+				break;
+
+			case 0xD2:
+				instruction->execute_function = &gbz80_cpu_jumps_jpnc_nn;
+				sprintf(instruction->disassembled_name, "JP NC,$%04X", instruction->nn);
+				break;
+
+			case 0xDA:
+				instruction->execute_function = &gbz80_cpu_jumps_jpc_nn;
+				sprintf(instruction->disassembled_name, "JP C,$%04X", instruction->nn);
+				break;
+		}
+	}
+	else if (prefix == 0x00 && (opcode >= 0xE9)) {
+		instruction->cycles = 4;
+		instruction->execute_function = &gbz80_cpu_jumps_jp_hl;
+		sprintf(instruction->disassembled_name, "JP (HL)");
+	}
+	else if (prefix == 0x00 && (opcode >= 0x18)) {
+		instruction->cycles = 8;
+		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
+		instruction->execute_function = &gbz80_cpu_jumps_jr_d;
+		sprintf(instruction->disassembled_name, "JR $%04X", instruction->address + instruction->d + 2);
+	}
+	else if (prefix == 0x00 && (opcode >= 0x20 || opcode == 0x28 || opcode == 0x30 || opcode == 0x38)) {
+		instruction->cycles = 8;
+		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+
+		switch (opcode) {
+			case 0x20:
+				instruction->execute_function = &gbz80_cpu_jumps_jrnz_d;
+				sprintf(instruction->disassembled_name, "JR NZ,$%04X", instruction->address + instruction->d + 2);
+				break;
+
+			case 0x28:
+				instruction->execute_function = &gbz80_cpu_jumps_jrz_d;
+				sprintf(instruction->disassembled_name, "JR Z,$%04X", instruction->address + instruction->d + 2);
+				break;
+
+			case 0x30:
+				instruction->execute_function = &gbz80_cpu_jumps_jrnc_d;
+				sprintf(instruction->disassembled_name, "JR NC,$%04X", instruction->address + instruction->d + 2);
+				break;
+
+			case 0x38:
+				instruction->execute_function = &gbz80_cpu_jumps_jrc_d;
+				sprintf(instruction->disassembled_name, "JR C,$%04X", instruction->address + instruction->d + 2);
+				break;
+		}
+	}
+	else if (prefix == 0x00 && (opcode >= 0xCD)) {
+		instruction->cycles = 12;
+		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		instruction->execute_function = &gbz80_cpu_calls_call_nn;
+		sprintf(instruction->disassembled_name, "CALL $%04X", instruction->nn);
+		cpu->registers.PC += 2;
+	}
+	else if (prefix == 0x00 && (opcode >= 0xC4 || opcode == 0xCC || opcode == 0xD4 || opcode == 0xDC)) {
+		instruction->cycles = 12;
+		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+
+		switch (opcode) {
+			case 0xC4:
+				instruction->execute_function = &gbz80_cpu_calls_callnz_nn;
+				sprintf(instruction->disassembled_name, "CALL NZ,$%04X", instruction->nn);
+				break;
+
+			case 0xCC:
+				instruction->execute_function = &gbz80_cpu_calls_callz_nn;
+				sprintf(instruction->disassembled_name, "CALL Z,$%04X", instruction->nn);
+				break;
+
+			case 0xD4:
+				instruction->execute_function = &gbz80_cpu_calls_callnc_nn;
+				sprintf(instruction->disassembled_name, "CALL NC,$%04X", instruction->nn);
+				break;
+
+			case 0xDC:
+				instruction->execute_function = &gbz80_cpu_calls_callc_nn;
+				sprintf(instruction->disassembled_name, "CALL C,$%04X", instruction->nn);
+				break;
+		}
+
+		cpu->registers.PC += 2;
+	}
+	else if (prefix == 0x00 && (opcode >= 0xC9)) {
+		instruction->cycles = 8;
+		instruction->execute_function = &gbz80_cpu_rtrns_ret;
+		sprintf(instruction->disassembled_name, "RET");
+	}
+	else if (prefix == 0x00 && (opcode >= 0xC0 || opcode == 0xC8 || opcode == 0xD0 || opcode == 0xD8)) {
+		instruction->cycles = 8;
+
+		switch (opcode) {
+			case 0xC0:
+				instruction->execute_function = &gbz80_cpu_rtrns_retnz;
+				sprintf(instruction->disassembled_name, "RET NZ");
+				break;
+
+			case 0xC8:
+				instruction->execute_function = &gbz80_cpu_rtrns_retz;
+				sprintf(instruction->disassembled_name, "RET Z");
+				break;
+
+			case 0xD0:
+				instruction->execute_function = &gbz80_cpu_rtrns_retnc;
+				sprintf(instruction->disassembled_name, "RET NC");
+				break;
+
+			case 0xD8:
+				instruction->execute_function = &gbz80_cpu_rtrns_retc;
+				sprintf(instruction->disassembled_name, "RET C");
+				break;
+		}
+	}
+	else if (prefix == 0x00 && (opcode >= 0xD9)) {
+		instruction->cycles = 8;
+		instruction->execute_function = &gbz80_cpu_rtrns_reti;
+		sprintf(instruction->disassembled_name, "RETI");
+	}
 }
 
 size_t gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
@@ -2193,6 +2334,14 @@ void gbz80_cpu_load16_push(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 	gbz80_cpu_memory_write16(cpu, sp - 2, nn);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp - 2);
+}
+
+void gbz80_cpu_load16_pop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
+	uint16_t nn = gbz80_cpu_memory_read16(cpu, sp);
+
+	gbz80_cpu_set_register16(cpu, instruction->left_r, nn);
+	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp + 2);
 }
 
 void gbz80_cpu_alu8_add_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
@@ -2450,7 +2599,7 @@ void gbz80_cpu_misc_daa(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 		val += 0x06;
 	}
 
-	if (((val >> 8) & 0xF) > 0x9 || c == 1) {
+	if (((val >> 4) & 0xF) > 0x9 || c == 1) {
 		val += 0x3C;
 		utility_set_flags(cpu, z, n, 0, 1);
 	}
@@ -2580,10 +2729,155 @@ void gbz80_cpu_bitw_res_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	val &= ~(1 << instruction->n);
 }
 
-void gbz80_cpu_load16_pop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+void gbz80_cpu_jumps_jp_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	cpu->registers.PC = instruction->nn;
+}
+
+void gbz80_cpu_jumps_jpnz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
+		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jpz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
+		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jpnc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
+		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jpc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
+		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jp_hl(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	cpu->registers.PC = gbz80_cpu_get_register16(cpu,GBZ80_REGISTER_HL);
+}
+
+void gbz80_cpu_jumps_jr_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	cpu->registers.PC = instruction->address + instruction->d + 2;
+}
+
+void gbz80_cpu_jumps_jrnz_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
+		gbz80_cpu_jumps_jr_d(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jrz_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
+		gbz80_cpu_jumps_jr_d(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jrnc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
+		gbz80_cpu_jumps_jr_d(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_jumps_jrc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
+		gbz80_cpu_jumps_jr_d(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_calls_call_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
+	gbz80_cpu_memory_write16(cpu, sp - 2, cpu->registers.PC);
+	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp - 2);
+	cpu->registers.PC = instruction->nn;
+}
+
+void gbz80_cpu_calls_callnz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
+		gbz80_cpu_calls_call_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_calls_callz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
+		gbz80_cpu_calls_call_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_calls_callnc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
+		gbz80_cpu_calls_call_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_calls_callc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
+		gbz80_cpu_calls_call_nn(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_rsts_rst_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
+	gbz80_cpu_memory_write16(cpu, sp - 2, instruction->address);
+	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp - 2);
+	cpu->registers.PC = 0x0000 + instruction->n;
+}
+
+void gbz80_cpu_rtrns_ret(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
 	uint16_t nn = gbz80_cpu_memory_read16(cpu, sp);
-
-	gbz80_cpu_set_register16(cpu, instruction->left_r, nn);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp + 2);
+	cpu->registers.PC = nn;
+}
+
+void gbz80_cpu_rtrns_retnz(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
+{
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
+		gbz80_cpu_rtrns_ret(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_rtrns_retz(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
+		gbz80_cpu_rtrns_ret(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_rtrns_retnc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
+		gbz80_cpu_rtrns_ret(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_rtrns_retc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
+		gbz80_cpu_rtrns_ret(cpu, instruction);
+	}
+}
+
+void gbz80_cpu_rtrns_reti(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	gbz80_cpu_rtrns_ret(cpu, instruction);
+	gbz80_cpu_misc_ei(cpu, instruction);
 }

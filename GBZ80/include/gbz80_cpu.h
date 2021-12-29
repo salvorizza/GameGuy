@@ -61,6 +61,7 @@ typedef struct gbz80_cpu_t{
 typedef struct gbz80_instruction_t gbz80_instruction_t;
 typedef void(*gbz80_execute_function_t)(gbz80_cpu_t*, gbz80_instruction_t*);
 typedef struct gbz80_instruction_t {
+	uint16_t address;
 	uint8_t prefix;
 	uint8_t opcode;
 	uint8_t n;
@@ -155,3 +156,31 @@ void gbz80_cpu_rtsh_srl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 void gbz80_cpu_bitw_bit_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 void gbz80_cpu_bitw_set_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 void gbz80_cpu_bitw_res_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_jumps_jp_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jpnz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jpz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jpnc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jpc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jp_hl(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_jumps_jr_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jrnz_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jrz_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jrnc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_jumps_jrc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_calls_call_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_calls_callnz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_calls_callz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_calls_callnc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_calls_callc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_rsts_rst_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+
+void gbz80_cpu_rtrns_ret(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtrns_retnz(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtrns_retz(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtrns_retnc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtrns_retc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+void gbz80_cpu_rtrns_reti(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
