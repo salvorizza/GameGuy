@@ -1,7 +1,5 @@
 #include "gbz80.h"
 
-
-
 gbz80_t* gbz80_create() {
 	gbz80_t* instance = (gbz80_t*)malloc(sizeof(gbz80_t));
 	if (instance != NULL){

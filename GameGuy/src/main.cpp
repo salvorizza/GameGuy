@@ -1,65 +1,79 @@
-#include <GLFW/glfw3.h>
-#include <glad/glad.h>
+#include "Application/ApplicationManager.h"
+#include "Panels/MemoryEditorPanel.h"
+
 #include <imgui.h>
+#include "gbz80.h"
 
-#define IMGUI_IMPL_OPENGL_LOADER_GLAD
-#include <backends/imgui_impl_glfw.cpp>
-#include <backends/imgui_impl_opengl3.cpp>
+class GameGuyApp : public GameGuy::Application {
+public:
+	GameGuyApp() 
+		: GameGuy::Application("Game Guy")
+	{
+		mGBZ80Instance = gbz80_create();
+		gbz80_cartridge_t* cartridge = gbz80_cartridge_read_from_file("commons/roms/tetris.gb");
+		gbz80_load_cartridge(mGBZ80Instance, cartridge);
+		gbz80_cartridge_destroy(cartridge);
 
-int main(int argc, char** argv) {
-	if (!glfwInit()) {
-		return -1;
+		mMemoryEditorPanel.setInstance(mGBZ80Instance);
 	}
 
-	GLFWwindow* window = glfwCreateWindow(1280, 720, "GameGuy", NULL, NULL);
-	glfwMakeContextCurrent(window);
-	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-	glfwSwapInterval(1);
+	~GameGuyApp() {
+		gbz80_destroy(mGBZ80Instance);
+	}
 
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	virtual void onUpdate() override {
 
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 450");
+	}
 
-	ImGui::StyleColorsDark();
-
-	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
-
-		glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+	virtual void onRender() override {
+		glClearColor(1, 0, 1, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
+	}
 
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
+	virtual void onImGuiRender() override {
+		static bool p_open = true;
 
-		//ImGui::DockSpace();
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->WorkPos);
+		ImGui::SetNextWindowSize(viewport->WorkSize);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::Begin("GameGuy", &p_open, window_flags);
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
+		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
-		ImGui::ShowDemoWindow();
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("Tools"))
+			{
+				if (ImGui::MenuItem("Memory Editor", "CTRL+M")) {
+					mMemoryEditorPanel.open();
+				}
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
 		}
 
-		glfwSwapBuffers(window);
+		ImGui::End();
+
+		mMemoryEditorPanel.render();
 	}
 
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
+private:
+	gbz80_t* mGBZ80Instance;
+	GameGuy::MemoryEditorPanel mMemoryEditorPanel;
+};
 
-	glfwDestroyWindow(window);
-	glfwTerminate();
+int main(int argc, char** argv) {
+	GameGuy::ApplicationManager appManager;
+	appManager.run(std::make_shared<GameGuyApp>());
+	return 0;
 }

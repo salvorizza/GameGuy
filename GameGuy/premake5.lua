@@ -21,7 +21,9 @@ project "GameGuy"
 	
 	includedirs
 	{
+		"include",
 		"%{wks.location}/GBZ80/include",
+		"%{wks.location}/GBZ80/src",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.ImGui}",
 		"%{IncludeDir.Glad}"

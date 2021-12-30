@@ -2212,6 +2212,46 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 		cpu->registers.PC += 2;
 	}
+	else if (prefix == 0x00 && (opcode >= 0xC7 || opcode == 0xCF || opcode == 0xD7 || opcode == 0xDF || opcode == 0xE7 || opcode == 0xEF || opcode == 0xF7 || opcode == 0xFF)) {
+		instruction->cycles = 32;
+		instruction->execute_function = &gbz80_cpu_rsts_rst_n;
+
+		switch (opcode) {
+			case 0xC7:
+				instruction->n = 0x00;
+				break;
+
+			case 0xCF:
+				instruction->n = 0x08;
+				break;
+
+			case 0xD7:
+				instruction->n = 0x10;
+				break;
+
+			case 0xDF:
+				instruction->n = 0x18;
+				break;
+
+			case 0xE7:
+				instruction->n = 0x20;
+				break;
+
+			case 0xEF:
+				instruction->n = 0x28;
+				break;
+
+			case 0xF7:
+				instruction->n = 0x30;
+				break;
+
+			case 0xFF:
+				instruction->n = 0x38;
+				break;
+		}
+
+		sprintf(instruction->disassembled_name, "RST $%04X", instruction->n);
+	}
 	else if (prefix == 0x00 && (opcode >= 0xC9)) {
 		instruction->cycles = 8;
 		instruction->execute_function = &gbz80_cpu_rtrns_ret;

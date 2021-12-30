@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\GBZ80\include;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -98,7 +98,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\GBZ80\include;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -120,7 +120,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\GBZ80\include;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -138,6 +138,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Application\Application.h" />
+    <ClInclude Include="include\Application\ApplicationManager.h" />
+    <ClInclude Include="include\Panels\DisassemblerPanel.h" />
+    <ClInclude Include="include\Panels\MemoryEditorPanel.h" />
+    <ClInclude Include="include\Panels\Panel.h" />
+    <ClInclude Include="include\Window\ImGuiManager.h" />
+    <ClInclude Include="include\Window\Window.h" />
+    <ClInclude Include="src\Panels\Panel.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Application\ApplicationManager.cpp" />
+    <ClCompile Include="src\Panels\MemoryEditorPanel.cpp" />
+    <ClCompile Include="src\Window\ImGuiManager.cpp" />
+    <ClCompile Include="src\Window\Window.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
