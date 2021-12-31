@@ -41,9 +41,11 @@ extern "C" {
 			};
 		};
 		gbz80_cpu_t cpu;
+		size_t cartridge_code_size;
 	} gbz80_t;
 
 	gbz80_t* gbz80_create();
+	void gbz80_init(gbz80_t* instance);
 	void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom);
 	size_t gbz80_step(gbz80_t* instance);
 	void gbz80_destroy(gbz80_t* rom);

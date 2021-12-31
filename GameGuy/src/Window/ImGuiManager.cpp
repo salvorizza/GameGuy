@@ -1,4 +1,5 @@
 #include "Window/ImGuiManager.h"
+#include "Window/FontAwesome5.h"
 
 #include <imgui.h>
 
@@ -22,9 +23,12 @@ namespace GameGuy{
 
 		setDarkThemeColors();
 
-		float fontSize = 18.0f;
-		io.Fonts->AddFontFromFileTTF("commons/fonts/opensans/OpenSans-Bold.ttf", fontSize);
+		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+		ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
+
+		float fontSize = 17.0f;
 		io.FontDefault = io.Fonts->AddFontFromFileTTF("commons/fonts/opensans/OpenSans-Regular.ttf", fontSize);
+		io.Fonts->AddFontFromFileTTF("commons/fonts/fontawesome/" FONT_ICON_FILE_NAME_FAS, 16.0f, &icons_config, icons_ranges);
 
 	}
 

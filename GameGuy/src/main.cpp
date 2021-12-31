@@ -1,5 +1,7 @@
 #include "Application/ApplicationManager.h"
 #include "Panels/MemoryEditorPanel.h"
+#include "Panels/DisassemblerPanel.h"
+#include "Panels/CPUStatusPanel.h"
 
 #include <imgui.h>
 #include "gbz80.h"
@@ -10,11 +12,11 @@ public:
 		: GameGuy::Application("Game Guy")
 	{
 		mGBZ80Instance = gbz80_create();
-		gbz80_cartridge_t* cartridge = gbz80_cartridge_read_from_file("commons/roms/tetris.gb");
-		gbz80_load_cartridge(mGBZ80Instance, cartridge);
-		gbz80_cartridge_destroy(cartridge);
+		gbz80_init(mGBZ80Instance);
 
 		mMemoryEditorPanel.setInstance(mGBZ80Instance);
+		mDisassemblerPanel.setInstance(mGBZ80Instance);
+		mCPUStatusPanel.setInstance(mGBZ80Instance);
 	}
 
 	~GameGuyApp() {
@@ -53,9 +55,9 @@ public:
 		{
 			if (ImGui::BeginMenu("Tools"))
 			{
-				if (ImGui::MenuItem("Memory Editor", "CTRL+M")) {
-					mMemoryEditorPanel.open();
-				}
+				if (ImGui::MenuItem("Memory Editor", "CTRL+M")) mMemoryEditorPanel.open();
+				if (ImGui::MenuItem("Disassembler", "CTRL+D")) mDisassemblerPanel.open();
+				if (ImGui::MenuItem("CPU Status", "CTRL+R")) mCPUStatusPanel.open();
 
 				ImGui::EndMenu();
 			}
@@ -65,11 +67,16 @@ public:
 		ImGui::End();
 
 		mMemoryEditorPanel.render();
+		mDisassemblerPanel.render();
+		mCPUStatusPanel.render();
 	}
 
 private:
 	gbz80_t* mGBZ80Instance;
 	GameGuy::MemoryEditorPanel mMemoryEditorPanel;
+	GameGuy::DisassemblerPanel mDisassemblerPanel;
+	GameGuy::CPUStatusPanel mCPUStatusPanel;
+
 };
 
 int main(int argc, char** argv) {

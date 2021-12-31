@@ -140,16 +140,20 @@
   <ItemGroup>
     <ClInclude Include="include\Application\Application.h" />
     <ClInclude Include="include\Application\ApplicationManager.h" />
+    <ClInclude Include="include\Panels\CPUStatusPanel.h" />
     <ClInclude Include="include\Panels\DisassemblerPanel.h" />
     <ClInclude Include="include\Panels\MemoryEditorPanel.h" />
     <ClInclude Include="include\Panels\Panel.h" />
     <ClInclude Include="include\Window\ImGuiManager.h" />
     <ClInclude Include="include\Window\Window.h" />
-    <ClInclude Include="src\Panels\Panel.cpp" />
+    <ClInclude Include="include\Window\FontAwesome5.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application\ApplicationManager.cpp" />
+    <ClCompile Include="src\Panels\CPUStatusPanel.cpp" />
+    <ClCompile Include="src\Panels\DisassemblerPanel.cpp" />
     <ClCompile Include="src\Panels\MemoryEditorPanel.cpp" />
+    <ClCompile Include="src\Panels\Panel.cpp" />
     <ClCompile Include="src\Window\ImGuiManager.cpp" />
     <ClCompile Include="src\Window\Window.cpp" />
     <ClCompile Include="src\main.cpp" />

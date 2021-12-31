@@ -4,9 +4,10 @@
 
 namespace GameGuy {
 
-	Panel::Panel(const std::string& name)
+	Panel::Panel(const std::string& name, bool hasMenuBar)
 		:	mName(name),
-			mOpen(false)
+			mOpen(true),
+			mHasMenuBar(hasMenuBar)
 	{}
 
 	Panel::~Panel()
@@ -21,7 +22,11 @@ namespace GameGuy {
 	void Panel::render()
 	{
 		if (mOpen) {
-			ImGui::Begin(mName.c_str(), &mOpen);
+			ImGuiWindowFlags window_flags = 0;
+			if (mHasMenuBar) {
+				window_flags |= ImGuiWindowFlags_MenuBar;
+			}
+			ImGui::Begin(mName.c_str(), &mOpen, window_flags);
 			onImGuiRender();
 			ImGui::End();
 		}
