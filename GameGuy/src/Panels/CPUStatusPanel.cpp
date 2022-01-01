@@ -20,7 +20,7 @@ namespace GameGuy {
 		float availWidth = ImGui::GetContentRegionAvail().x;
 		float oneCharSize = ImGui::CalcTextSize("A").x;
 
-		if (ImGui::BeginTable("CPUStatusTable", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
+		if (ImGui::BeginTable("CPUStatusTable", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Hideable)) {
 			ImGui::TableSetupColumn("16 bit Register", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33);
 			ImGui::TableSetupColumn("Hi", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33);
 			ImGui::TableSetupColumn("Lo", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33);
@@ -30,33 +30,33 @@ namespace GameGuy {
 			ImGui::TableNextColumn();
 			ImGui::TextUnformatted("AF");
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_A));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_A));
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", mInstance->cpu.registers.flags);
+			ImGui::Text("0x%02X", mInstance->cpu.registers.flags);
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TextUnformatted("BC");
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_B));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_B));
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_C));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_C));
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TextUnformatted("DE");
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_D));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_D));
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_E));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_E));
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::TextUnformatted("HL");
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_H));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_H));
 			ImGui::TableNextColumn();
-			ImGui::Text("%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_L));
+			ImGui::Text("0x%02X", gbz80_cpu_get_register8(&mInstance->cpu, GBZ80_REGISTER_L));
 
 			ImGui::EndTable();
 		}

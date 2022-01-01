@@ -14,7 +14,7 @@ void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
 		return;
 	}
 
-	cpu->registers.flags ^= val << (uint8_t)flag;
+	cpu->registers.flags = (cpu->registers.flags & ~(1 << (uint8_t)flag)) | (val << (uint8_t)flag);
 }
 
 uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag){
@@ -2701,7 +2701,7 @@ void gbz80_cpu_misc_ccf(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	uint8_t z = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO);
-	utility_set_flags(cpu, z, 0, 0, c ^ 1);
+	utility_set_flags(cpu, z, 0, 0, (~c) & 0x1);
 }
 
 void gbz80_cpu_misc_scf(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)

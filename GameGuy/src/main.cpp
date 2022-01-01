@@ -24,7 +24,7 @@ public:
 	}
 
 	virtual void onUpdate() override {
-
+		mDisassemblerPanel.onUpdate();
 	}
 
 	virtual void onRender() override {
