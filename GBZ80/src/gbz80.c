@@ -2,17 +2,22 @@
 
 gbz80_t* gbz80_create() {
 	gbz80_t* instance = (gbz80_t*)malloc(sizeof(gbz80_t));
-	if (instance != NULL){
-		memset(instance->memory_map, 0, GBZ80_MEMORY_SIZE);
-	}
 	return instance;
 }
 
-void gbz80_init(gbz80_t* instance)
-{
-	gbz80_cpu_init(&instance->cpu, instance->memory_map, GBZ80_MEMORY_SIZE);
-}
 
+void gbz80_init(gbz80_t* instance, const char* bios_path) {
+	FILE* f = fopen(bios_path, "rb");
+	if (f) {
+		fread(instance->bootstrap_rom, BYTE(256), 1, f);
+		fclose(f);
+	}
+
+	memset(instance->memory_map, 0, GBZ80_MEMORY_SIZE);
+	instance->bootstrap_mode = 1;
+	gbz80_cpu_init(&instance->cpu, instance);
+	gbz80_ppu_init(&instance->ppu, instance);
+}
 
 void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 {
@@ -27,7 +32,9 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 }
 
 size_t gbz80_step(gbz80_t* instance) {
-	return gbz80_cpu_step(&instance->cpu);
+	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
+	gbz80_ppu_step(&instance->ppu, num_cycles);
+	return num_cycles;
 }
 
 void gbz80_destroy(gbz80_t* instance)

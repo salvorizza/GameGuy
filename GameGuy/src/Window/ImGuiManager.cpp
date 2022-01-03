@@ -29,7 +29,6 @@ namespace GameGuy{
 		float fontSize = 17.0f;
 		io.FontDefault = io.Fonts->AddFontFromFileTTF("commons/fonts/opensans/OpenSans-Regular.ttf", fontSize);
 		io.Fonts->AddFontFromFileTTF("commons/fonts/fontawesome/" FONT_ICON_FILE_NAME_FAS, 14.0f, &icons_config, icons_ranges);
-
 	}
 
 	ImGuiManager::~ImGuiManager()

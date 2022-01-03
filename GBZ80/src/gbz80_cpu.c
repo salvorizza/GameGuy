@@ -1,11 +1,10 @@
 #include "gbz80_cpu.h"
 
-void gbz80_cpu_init(gbz80_cpu_t* cpu, uint8_t* memory, size_t memory_size) {
+#include "gbz80.h"
+
+void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance) {
 	memset(cpu, 0, sizeof(gbz80_cpu_t));
-	cpu->memory = memory;
-	cpu->memory_size = memory_size;
-	cpu->registers.PC = 0x0000;
-	cpu->registers.SP = 0x0000;
+	cpu->instance = instance;
 }
 
 void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
@@ -13,8 +12,7 @@ void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
 		assert(0 && "Flag has been set to a suspicious value");
 		return;
 	}
-
-	cpu->registers.flags = (cpu->registers.flags & ~(1 << (uint8_t)flag)) | (val << (uint8_t)flag);
+	common_change8_bit(&(cpu->registers.flags), (uint8_t)flag, val);
 }
 
 uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag){
@@ -22,11 +20,23 @@ uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag){
 }
 
 uint8_t gbz80_cpu_memory_read8(gbz80_cpu_t* cpu, uint16_t address) {
-	return cpu->memory[address];
+	if (cpu->instance->bootstrap_mode == 1 && address <= 0xFF) {
+		return cpu->instance->bootstrap_rom[address];
+	} else {
+		return cpu->instance->memory_map[address];
+	}
 }
 
 void gbz80_cpu_memory_write8(gbz80_cpu_t* cpu, uint16_t address, uint8_t val) {
-	cpu->memory[address] = val;
+	if (cpu->instance->bootstrap_mode == 1 && address <= 0xFF) {
+		cpu->instance->bootstrap_rom[address] = val;
+	} else {
+		if (address == 0xFF50 && cpu->instance->bootstrap_mode == 1 && val == 1) {
+			cpu->instance->bootstrap_mode = 0;
+		}
+		cpu->instance->memory_map[address] = val;
+	}
+
 }
 
 uint16_t gbz80_cpu_memory_read16(gbz80_cpu_t* cpu, uint16_t address) {
@@ -180,8 +190,8 @@ size_t gbz80_cpu_step(gbz80_cpu_t* cpu)
 {
 	size_t clock_cycles;
 	gbz80_instruction_t instruction;
-	memset(&instruction, 0, sizeof(gbz80_instruction_t));
 
+	memset(&instruction, 0, sizeof(gbz80_instruction_t));
 	gbz80_cpu_fetch(cpu, &instruction);
 	gbz80_cpu_decode(cpu, &instruction);
 	clock_cycles = gbz80_cpu_execute(cpu, &instruction);
@@ -2329,7 +2339,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 size_t gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	if (instruction->execute_function != NULL) {
 		instruction->execute_function(cpu, instruction);
-		return instruction->cycles;
+		return instruction->cycles / 4;
 	}
 	else {
 		return 1;

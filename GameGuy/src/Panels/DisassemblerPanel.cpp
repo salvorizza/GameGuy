@@ -15,7 +15,8 @@ namespace GameGuy {
 			mInstance(NULL),
 			mDebugState(DebugState::Idle),
 			mPrevDebugState(DebugState::None),
-			mScrollToCurrent(false)
+			mScrollToCurrent(false),
+			mDebugTab(DebugTab::BootRom)
 	{
 	}
 
@@ -23,25 +24,14 @@ namespace GameGuy {
 	{
 	}
 
-	void DisassemblerPanel::disassembleFile(const char* filePath)
+	void DisassemblerPanel::disassembleBootRom()
 	{
-		FILE* f = fopen(filePath, "rb");
-		if (f) {
-			fseek(f, 0, SEEK_END);
-			size_t codeSize = ftell(f);
-			fseek(f, 0, SEEK_SET);
-
-			fread(mInstance->memory_map, codeSize, 1, f);
-			fclose(f);
-
-			mInstance->cpu.registers.PC = 0x0000;
-			disassemble(mInstance->memory_map, mInstance->memory_map + codeSize);
-		}
+		disassemble(mInstructionsBootRom, mInstance->bootstrap_rom, mInstance->bootstrap_rom + BYTE(256));
 	}
 
-	void DisassemblerPanel::disassembleInstance()
+	void DisassemblerPanel::disassembleCartridge()
 	{
-		disassemble(mInstance->rom_bank_0, mInstance->rom_bank_0 + mInstance->cartridge_code_size);
+		disassemble(mInstructionsCartridge, mInstance->rom_bank_0, mInstance->rom_bank_0 + mInstance->cartridge_code_size);
 	} 
 
 	void DisassemblerPanel::onUpdate()
@@ -49,7 +39,7 @@ namespace GameGuy {
 		switch (mDebugState) {
 			case DebugState::Start:
 				setDebugState(DebugState::Running);
-				mInstance->cpu.registers.PC = mInstructions.begin()->first;
+				mInstance->cpu.registers.PC = getCurrentInstructionMap().begin()->first;
 				break;
 
 			case DebugState::Running:
@@ -57,11 +47,20 @@ namespace GameGuy {
 					gbz80_step(mInstance);
 					mPrevDebugState = DebugState::Step;
 				}
-				if(mInstructions.find(mInstance->cpu.registers.PC) != mInstructions.end()){
-					if (mInstructions[mInstance->cpu.registers.PC].Breakpoint)
+				if(getCurrentInstructionMap().find(mInstance->cpu.registers.PC) != getCurrentInstructionMap().end()){
+					if (getCurrentInstructionMap()[mInstance->cpu.registers.PC].Breakpoint)
 						setDebugState(DebugState::Breakpoint);
-					else
-						gbz80_step(mInstance);
+					else {
+						for (int i = 0; i < 5000; i++) {
+							if (getCurrentInstructionMap()[mInstance->cpu.registers.PC].Breakpoint) {
+								setDebugState(DebugState::Breakpoint);
+								break;
+							}
+							else {
+								gbz80_step(mInstance);
+							}
+						}
+					}
 				}
 				else {
 					setDebugState(DebugState::Stop);
@@ -69,7 +68,7 @@ namespace GameGuy {
 				break;
 
 			case DebugState::Step:
-				if (mInstructions.find(mInstance->cpu.registers.PC) != mInstructions.end()) {
+				if (getCurrentInstructionMap().find(mInstance->cpu.registers.PC) != getCurrentInstructionMap().end()) {
 					gbz80_step(mInstance);
 					mScrollToCurrent = true;
 					setDebugState(DebugState::Breakpoint);
@@ -92,7 +91,8 @@ namespace GameGuy {
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open")) {
-					disassembleFile("commons/roms/main.obj");
+					disassembleBootRom();
+					//disassembleCartridge();
 				}
 
 				ImGui::EndMenu();
@@ -144,6 +144,22 @@ namespace GameGuy {
 
 		ImGui::PopStyleColor(3);
 
+
+		if (ImGui::BeginTabBar("SelectDisassembleRom"))
+		{
+			if (ImGui::BeginTabItem("Bootstrap Rom"))
+			{
+				mDebugTab = DebugTab::BootRom;
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Cartridge"))
+			{
+				mDebugTab = DebugTab::Cartridge;
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+
 		ImGui::BeginChild("Disas");
 		if (ImGui::BeginTable("Disassembly Table", 4, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, bulletSize);
@@ -154,7 +170,8 @@ namespace GameGuy {
 
 
 			uint32_t i = 1;
-			for (auto& [address, debugInstruction] : mInstructions) {
+			auto& instructionMap = getCurrentInstructionMap();
+			for (auto& [address, debugInstruction] : instructionMap) {
 				
 				
 				ImGui::TableNextRow();
@@ -199,15 +216,15 @@ namespace GameGuy {
 		ImGui::EndChild();
 	}
 
-	void DisassemblerPanel::disassemble(uint8_t* base, uint8_t* end){
-		mInstructions.clear();
+	void DisassemblerPanel::disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionsMap,uint8_t* base, uint8_t* end){
+		instructionsMap.clear();
 
-		while (&mInstance->memory_map[mInstance->cpu.registers.PC] <= end) {
+		while (&base[mInstance->cpu.registers.PC] <= end) {
 			gbz80_instruction_t instruction;
 			gbz80_cpu_fetch(&mInstance->cpu, &instruction);
 			gbz80_cpu_decode(&mInstance->cpu, &instruction);
 
-			mInstructions.emplace(instruction.address, instruction.disassembled_name);
+			instructionsMap.emplace(instruction.address, instruction.disassembled_name);
 		}
 	}
 

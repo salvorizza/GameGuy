@@ -12,7 +12,7 @@ public:
 		: GameGuy::Application("Game Guy")
 	{
 		mGBZ80Instance = gbz80_create();
-		gbz80_init(mGBZ80Instance);
+		gbz80_init(mGBZ80Instance, "commons/roms/gb_bios.bin");
 
 		mMemoryEditorPanel.setInstance(mGBZ80Instance);
 		mDisassemblerPanel.setInstance(mGBZ80Instance);

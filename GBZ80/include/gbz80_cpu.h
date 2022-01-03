@@ -6,6 +6,8 @@ extern "C" {
 
 #include "common.h"
 
+	typedef struct gbz80_t gbz80_t;
+
 	typedef enum gbz80_flag_t {
 		GBZ80_FLAG_ZERO = 7,
 		GBZ80_FLAG_N = 6,
@@ -56,9 +58,7 @@ extern "C" {
 		uint16_t PC;
 	} gbz80_registers_t;
 	typedef struct gbz80_cpu_t {
-		uint8_t* memory;
-		size_t memory_size;
-
+		gbz80_t* instance;
 		gbz80_registers_t registers;
 	} gbz80_cpu_t;
 
@@ -80,7 +80,7 @@ extern "C" {
 	} gbz80_instruction_t;
 
 
-	void gbz80_cpu_init(gbz80_cpu_t* cpu, uint8_t* memory, size_t memory_size);
+	void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance);
 	void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val);
 
 	uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag);

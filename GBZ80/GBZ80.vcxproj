@@ -133,11 +133,14 @@
     <ClInclude Include="include\gbz80.h" />
     <ClInclude Include="include\gbz80_cartridge.h" />
     <ClInclude Include="include\gbz80_cpu.h" />
+    <ClInclude Include="include\gbz80_ppu.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\common.c" />
     <ClCompile Include="src\gbz80.c" />
     <ClCompile Include="src\gbz80_cartridge.c" />
     <ClCompile Include="src\gbz80_cpu.c" />
+    <ClCompile Include="src\gbz80_ppu.c" />
     <ClCompile Include="src\main.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

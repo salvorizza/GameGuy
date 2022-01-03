@@ -7,8 +7,11 @@ extern "C" {
 #include "common.h"
 #include "gbz80_cartridge.h"
 #include "gbz80_cpu.h"
+#include "gbz80_ppu.h"
 
+#define GBZ80_CLOCK_HERTZ 4194304
 #define GBZ80_MEMORY_SIZE KIBI(64)
+#define GBZ80_ROM_SIZE BYTE(256)
 
 	typedef struct gbz80_video_ram_t {
 		union {
@@ -40,12 +43,15 @@ extern "C" {
 				uint8_t interrupt_enable_registers[BYTE(0x1)];
 			};
 		};
+		uint8_t bootstrap_mode;
+		uint8_t bootstrap_rom[GBZ80_ROM_SIZE];
 		gbz80_cpu_t cpu;
+		gbz80_ppu_t ppu;
 		size_t cartridge_code_size;
 	} gbz80_t;
 
 	gbz80_t* gbz80_create();
-	void gbz80_init(gbz80_t* instance);
+	void gbz80_init(gbz80_t* instance, const char* bios_path);
 	void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom);
 	size_t gbz80_step(gbz80_t* instance);
 	void gbz80_destroy(gbz80_t* rom);

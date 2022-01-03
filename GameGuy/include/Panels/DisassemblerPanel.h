@@ -15,8 +15,8 @@ namespace GameGuy {
 
 		void setInstance(gbz80_t* pInstance) { mInstance = pInstance; }
 
-		void disassembleFile(const char* filePath);
-		void disassembleInstance();
+		void disassembleBootRom();
+		void disassembleCartridge();
 
 		void onUpdate();
 
@@ -49,8 +49,14 @@ namespace GameGuy {
 			Stop
 		};
 
+		enum class DebugTab {
+			BootRom,
+			Cartridge
+		};
+
 	private:
-		void disassemble(uint8_t* base, uint8_t* end);
+		void disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionMap, uint8_t* base, uint8_t* end);
+		std::map<uint16_t, DisassemblerPanel::DebugInstruction>& getCurrentInstructionMap() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRom : mInstructionsCartridge; }
 
 		void onPlay();
 		void onStop();
@@ -58,12 +64,14 @@ namespace GameGuy {
 
 		void setDebugState(DebugState debugState) { mPrevDebugState = mDebugState; mDebugState = debugState; }
 
-	
-
 		gbz80_t* mInstance;
-		std::map<uint16_t,DebugInstruction> mInstructions;
+		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsCartridge;
+		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsBootRom;
+
 		DebugState mDebugState;
 		DebugState mPrevDebugState;
+		DebugTab mDebugTab;
+
 		bool mScrollToCurrent;
 	};
 
