@@ -2339,7 +2339,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 size_t gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	if (instruction->execute_function != NULL) {
 		instruction->execute_function(cpu, instruction);
-		return instruction->cycles / 4;
+		return instruction->cycles;
 	}
 	else {
 		return 1;

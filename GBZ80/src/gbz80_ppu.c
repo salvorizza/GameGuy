@@ -7,6 +7,7 @@
 #define NUM_DOTS_ZERO (NUM_DOTS_THREE + 204)
 #define NUM_DOTS_ONE (NUM_DOTS_ZERO * 144) + 4560
 
+
 void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	memset(ppu, 0, sizeof(gbz80_ppu_t));
 	ppu->instance = instance;
@@ -29,13 +30,16 @@ void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
 		for (size_t num_cycle = 0; num_cycle < num_cycles_passed; num_cycle++) {
 			uint32_t time_span = (ppu->num_dots % NUM_DOTS_ZERO) + 1;
 
-			if (ly >= 0 && ly <= 143) {
+			if (ly >= 0 && ly < 143) {
 				if (time_span <= NUM_DOTS_TWO) {
 					gbz80_ppu_update_stat_register(ppu, 2, ly);
 				}
 				else if (time_span <= NUM_DOTS_THREE) {
-					uint8_t scy = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF42);
-					uint8_t scx = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF43);
+					if (time_span == NUM_DOTS_THREE) {
+						if (common_get8_bit(lcdc, 0) == 1) {
+							gbz80_ppu_draw_background(ppu, ly);
+						}
+					}
 
 					gbz80_ppu_update_stat_register(ppu, 3, ly);
 				}
@@ -76,4 +80,25 @@ void gbz80_ppu_update_stat_register(gbz80_ppu_t* ppu, uint8_t mode, uint8_t ly) 
 	common_change8_bit(&stat, 2, ly == lyc);
 
 	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF41, stat);
+}
+
+void gbz80_ppu_draw_background(gbz80_ppu_t* ppu, uint8_t ly) {
+	uint8_t scy = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF42);
+	uint8_t scx = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF43);
+
+	uint8_t start_memory_index = (scy + (ly / 8)) * 32 + scx;
+	for (uint8_t tile_index = 0; tile_index < 20; tile_index++) {
+		uint8_t current_tile_index = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0x9800 + (start_memory_index + tile_index));
+		uint8_t tile_line_index = ly % 8;
+		uint8_t low_byte = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0x8000 + current_tile_index);
+		uint8_t high_byte = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0x8000 + (current_tile_index + 1));
+
+		for (uint8_t bit_index = 8; bit_index > 0; bit_index--) {
+			uint8_t colorID = (common_get8_bit(high_byte, bit_index - 1) << 1) | common_get8_bit(low_byte, bit_index - 1);
+
+			ppu->lcd[(ly * 160) + (tile_index * 8 + bit_index)] = colorID;
+		}
+
+		current_tile_index += 2;
+	}
 }

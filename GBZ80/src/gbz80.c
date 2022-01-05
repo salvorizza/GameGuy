@@ -33,8 +33,8 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 }
 
 size_t gbz80_step(gbz80_t* instance) {
-	gbz80_ppu_step(&instance->ppu, 1);
 	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
+	gbz80_ppu_step(&instance->ppu, num_cycles);
 	return num_cycles;
 }
 
