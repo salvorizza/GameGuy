@@ -37,11 +37,11 @@ namespace GameGuy {
 		float cellSize = oneCharSize * 2;
 		float contentCellsWidth = availWidth - addressingSize;
 		float numCellsFl = contentCellsWidth / (cellSize + 8);
-		int32_t numCells = floor(numCellsFl);
+		int32_t numCells = (int32_t)floor(numCellsFl);
 
 		uint32_t numRows = 0;
 		if (numCells >= 0) {
-			numRows = round((float)0x10000 / numCells);
+			numRows = (uint32_t)round((float)0x10000 / numCells);
 		}
 		else {
 			numRows = 0;
@@ -50,7 +50,7 @@ namespace GameGuy {
 
 		if (ImGui::BeginTable("Memory Table", numCells + 1, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersOuter)) {
 			ImGui::TableSetupColumn(" ", ImGuiTableColumnFlags_WidthFixed, addressingSize);
-			for (uint32_t column = 0; column < numCells; column++) {
+			for (uint32_t column = 0; column < (uint32_t)numCells; column++) {
 				static char hex[3];
 				sprintf(hex, "%02X", column);
 				ImGui::TableSetupColumn(hex, ImGuiTableColumnFlags_WidthFixed, cellSize);

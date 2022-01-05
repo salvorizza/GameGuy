@@ -1657,7 +1657,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		sprintf(instruction->disassembled_name, "EI");
 	}
 	else if (prefix == 0x00 && (opcode == 0x07)) {
-		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
+		instruction->execute_function = &gbz80_cpu_rtsh_rlc_r;
 		instruction->cycles = 4;
 		instruction->left_r = GBZ80_REGISTER_A;
 		sprintf(instruction->disassembled_name, "RLCA");
@@ -1669,7 +1669,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		sprintf(instruction->disassembled_name, "RLA");
 	}
 	else if (prefix == 0x00 && (opcode == 0x0F)) {
-		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
+		instruction->execute_function = &gbz80_cpu_rtsh_rrc_r;
 		instruction->cycles = 4;
 		instruction->left_r = GBZ80_REGISTER_A;
 		sprintf(instruction->disassembled_name, "RRCA");
@@ -1681,7 +1681,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		sprintf(instruction->disassembled_name, "RRA");
 	}
 	else if (prefix == 0xCB && (opcode == 0x07 || opcode == 0x00 || opcode == 0x01 || opcode == 0x02 || opcode == 0x03 || opcode == 0x04 || opcode == 0x05 || opcode == 0x06)) {
-		instruction->execute_function = &gbz80_cpu_rtsh_rl_r;
+		instruction->execute_function = &gbz80_cpu_rtsh_rlc_r;
 		instruction->cycles = 8;
 
 		switch (opcode) {
@@ -1775,7 +1775,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		}
 	}
 	else if (prefix == 0xCB && (opcode == 0x0F || opcode == 0x08 || opcode == 0x09 || opcode == 0x0A || opcode == 0x0B || opcode == 0x0C || opcode == 0x0D || opcode == 0x0E)) {
-		instruction->execute_function = &gbz80_cpu_rtsh_rr_r;
+		instruction->execute_function = &gbz80_cpu_rtsh_rrc_r;
 		instruction->cycles = 8;
 
 		switch (opcode) {
@@ -2437,7 +2437,7 @@ void gbz80_cpu_alu8_add_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
 	uint16_t val = lhs + rhs;
 	
-	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) + (rhs & 0xf)) & 0x10) == 0x10, val > 0xFF);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) + (rhs & 0xf)) & 0x10) == 0x10, val > 0xFF);
 	
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2447,7 +2447,7 @@ void gbz80_cpu_alu8_add_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t rhs = instruction->n;
 	uint16_t val = lhs + rhs;
 
-	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) + (rhs & 0xf)) & 0x10) == 0x10, val > 0xFF);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) + (rhs & 0xf)) & 0x10) == 0x10, val > 0xFF);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2458,7 +2458,7 @@ void gbz80_cpu_alu8_adc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	uint16_t val = lhs + rhs + c;
 
-	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2469,7 +2469,7 @@ void gbz80_cpu_alu8_adc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	uint16_t val = lhs + rhs + c;
 
-	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2479,7 +2479,7 @@ void gbz80_cpu_alu8_sub_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t rhs = gbz80_cpu_get_register8(cpu, instruction->right_r);
 	int16_t val = lhs - rhs;
 
-	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, val < 0x0);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, val < 0x0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2489,7 +2489,7 @@ void gbz80_cpu_alu8_sub_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t rhs = instruction->n;
 	int16_t val = lhs - rhs;
 
-	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, val < 0x0);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) - (rhs & 0xf)) & 0x10) == 0x10, val < 0x0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2500,7 +2500,7 @@ void gbz80_cpu_alu8_sbc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	int16_t val = lhs - (rhs + c);
 
-	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2511,7 +2511,7 @@ void gbz80_cpu_alu8_sbc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	int16_t val = lhs - (rhs + c);
 
-	utility_set_flags(cpu, val == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2747,6 +2747,16 @@ void gbz80_cpu_misc_ei(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+	uint8_t result = (val << 1) | c;
+
+	utility_set_flags(cpu, result == 0, 0, 0, (val >> 7) & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_rtsh_rlc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t result = (val << 1) | (val >> 7);
 
 	utility_set_flags(cpu, result == 0, 0, 0, (val >> 7) & 0x1);
@@ -2754,8 +2764,19 @@ void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
 }
 
+
 void gbz80_cpu_rtsh_rr_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
+	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
+	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
+	uint8_t result = (val >> 1) | (c << 7);
+
+	utility_set_flags(cpu, result == 0, 0, 0, val & 0x1);
+
+	gbz80_cpu_set_register8(cpu, instruction->left_r, result);
+}
+
+void gbz80_cpu_rtsh_rrc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
 	uint8_t result = (val >> 1) | (val << 7);
 

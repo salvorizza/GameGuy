@@ -11,7 +11,7 @@ void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	memset(ppu, 0, sizeof(gbz80_ppu_t));
 	ppu->instance = instance;
 	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF44, 0x0000);
-	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF40, 0x91);
+	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF40, 0x00);
 
 }
 
@@ -21,9 +21,13 @@ void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
 	if (common_get8_bit(lcdc, 7) == 1) {
 		uint8_t ly = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF44);
 
+		if (ly == 153) {
+			ly = 0;
+			ppu->num_dots = 0;
+		}
+
 		for (size_t num_cycle = 0; num_cycle < num_cycles_passed; num_cycle++) {
 			uint32_t time_span = (ppu->num_dots % NUM_DOTS_ZERO) + 1;
-			uint8_t reset = 0;
 
 			if (ly >= 0 && ly <= 143) {
 				if (time_span <= NUM_DOTS_TWO) {
@@ -48,21 +52,11 @@ void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
 						ly++;
 					}
 					gbz80_ppu_update_stat_register(ppu, 1, ly);
-					if (ly == 153) {
-						ly = 0;
-						reset = 1;
-					}
+					
 				}
 			}
 
-			if (reset == 0) {
-				ppu->num_dots++;
-			}
-			else {
-				ppu->num_dots = 0;
-				reset = 0;
-			}
-
+			ppu->num_dots++;
 		}
 	}
 	else {
@@ -77,9 +71,9 @@ void gbz80_ppu_update_stat_register(gbz80_ppu_t* ppu, uint8_t mode, uint8_t ly) 
 	uint8_t lyc = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF4A);
 	uint8_t stat = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF41);
 
-	common_set8_bit(&stat, 0, mode & 0x1);
-	common_set8_bit(&stat, 1, (mode >> 1) & 0x1);
-	common_set8_bit(&stat, 2, ly == lyc);
+	common_change8_bit(&stat, 0, mode & 0x1);
+	common_change8_bit(&stat, 1, (mode >> 1) & 0x1);
+	common_change8_bit(&stat, 2, ly == lyc);
 
 	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF41, stat);
 }

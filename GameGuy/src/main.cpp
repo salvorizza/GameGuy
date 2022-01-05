@@ -13,6 +13,9 @@ public:
 	{
 		mGBZ80Instance = gbz80_create();
 		gbz80_init(mGBZ80Instance, "commons/roms/gb_bios.bin");
+		gbz80_cartridge_t* cartridge = gbz80_cartridge_read_from_file("commons/roms/tetris.gb");
+		gbz80_load_cartridge(mGBZ80Instance, cartridge);
+		gbz80_cartridge_destroy(cartridge);
 
 		mMemoryEditorPanel.setInstance(mGBZ80Instance);
 		mDisassemblerPanel.setInstance(mGBZ80Instance);

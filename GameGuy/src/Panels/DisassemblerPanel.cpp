@@ -92,7 +92,7 @@ namespace GameGuy {
 			{
 				if (ImGui::MenuItem("Open")) {
 					disassembleBootRom();
-					//disassembleCartridge();
+					disassembleCartridge();
 				}
 
 				ImGui::EndMenu();
@@ -187,7 +187,7 @@ namespace GameGuy {
 
 
 				ImGui::TableNextColumn();
-				ImGui::PushStyleColor(ImGuiCol_Text, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7, 0.7, 0.7, 1.0));
+				ImGui::PushStyleColor(ImGuiCol_Text, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));

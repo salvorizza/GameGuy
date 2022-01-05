@@ -15,6 +15,7 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 
 	memset(instance->memory_map, 0, GBZ80_MEMORY_SIZE);
 	instance->bootstrap_mode = 1;
+	instance->cartridge_code_size = 0;
 	gbz80_cpu_init(&instance->cpu, instance);
 	gbz80_ppu_init(&instance->ppu, instance);
 }
@@ -32,8 +33,8 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 }
 
 size_t gbz80_step(gbz80_t* instance) {
+	gbz80_ppu_step(&instance->ppu, 1);
 	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
-	gbz80_ppu_step(&instance->ppu, num_cycles);
 	return num_cycles;
 }
 

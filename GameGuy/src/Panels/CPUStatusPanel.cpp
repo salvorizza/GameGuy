@@ -21,9 +21,9 @@ namespace GameGuy {
 		float oneCharSize = ImGui::CalcTextSize("A").x;
 
 		if (ImGui::BeginTable("CPUStatusTable", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Hideable)) {
-			ImGui::TableSetupColumn("16 bit Register", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33);
-			ImGui::TableSetupColumn("Hi", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33);
-			ImGui::TableSetupColumn("Lo", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33);
+			ImGui::TableSetupColumn("16 bit Register", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33f);
+			ImGui::TableSetupColumn("Hi", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33f);
+			ImGui::TableSetupColumn("Lo", ImGuiTableColumnFlags_WidthFixed, availWidth * 0.33f);
 			ImGui::TableHeadersRow();
 
 			ImGui::TableNextRow();
