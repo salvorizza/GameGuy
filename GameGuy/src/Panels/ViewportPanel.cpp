@@ -8,18 +8,32 @@ namespace GameGuy {
 
 
 	ViewportPanel::ViewportPanel()
-		: Panel("Viewport", false, true)
+		: Panel("Viewport", false, true),
+			mInstance(NULL),
+			mResizeWidth(0),
+			mResizeHeight(0),
+			mNeedResize(false)
 	{}
 
 	ViewportPanel::~ViewportPanel()
 	{}
 
-	void ViewportPanel::onRender()
+	void ViewportPanel::startFrame()
 	{
 		if (mFBO) {
+			if (mNeedResize) {
+				mFBO->resize(mResizeWidth, mResizeHeight);
+				//glViewport(-mResizeWidth / 2.0f, mResizeHeight / 2.0f, mResizeWidth / 2.0f, -mResizeHeight / 2.0f);
+				glViewport(0, 0, mResizeWidth, mResizeHeight);
+				mNeedResize = false;
+			}
 			mFBO->bind();
-			glClearColor(0, 1, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
+		}
+	}
+
+	void ViewportPanel::endFrame()
+	{
+		if (mFBO) {
 			mFBO->unbind();
 		}
 	}
@@ -36,19 +50,35 @@ namespace GameGuy {
 		if (size.y > size.x) {
 			newSize.x = size.x;
 			newSize.y = size.x * (144.0f / 160.0f);
-			offsetY = (size.y - newSize.y) / 2;
 		}
 		else {
 			newSize.x = size.y * (160.0f / 144.0f);
 			newSize.y = size.y;
-			offsetX = (size.x - newSize.x) / 2;
 		}
 
+		float scale = std::min(size.x / 160.0f, size.y / 144.0f);
+		newSize.x = 160.0f * scale;
+		newSize.y = 144.0f * scale;
+		offsetX = (size.x - newSize.x) / 2;
+		offsetY = (size.y - newSize.y) / 2;
 
 		if (!mFBO) {
-			mFBO = std::make_shared<FrameBuffer>(newSize.x, newSize.y);
+			uint32_t newWidth = (uint32_t)floor(size.x);
+			uint32_t newHeight = (uint32_t)floor(size.y);
+			mFBO = std::make_shared<FrameBuffer>(newWidth, newHeight);
 		}
+		else {
+			uint32_t newWidth = (uint32_t)floor(size.x);
+			uint32_t newHeight = (uint32_t)floor(size.y);
+			uint32_t fboWidth, fboHeight;
 
+			mFBO->getSize(fboWidth, fboHeight);
+			if (newWidth != fboWidth || newHeight != fboHeight) {
+				mResizeWidth = newWidth;
+				mResizeHeight = newHeight;
+				mNeedResize = true;
+			}
+		}
 		
 		uint64_t textureID = mFBO->getColorAttachment();
 		ImVec2 cursorPos = ImGui::GetCursorPos();

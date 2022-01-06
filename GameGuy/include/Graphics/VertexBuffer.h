@@ -9,7 +9,8 @@ namespace GameGuy {
 	enum class ShaderType {
 		Float,
 		Float2,
-		Float4
+		Float4,
+		Uint4
 	};
 
 	struct BufferElement {

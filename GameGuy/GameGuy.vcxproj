@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -98,7 +98,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -120,7 +120,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -140,8 +140,10 @@
   <ItemGroup>
     <ClInclude Include="include\Application\Application.h" />
     <ClInclude Include="include\Application\ApplicationManager.h" />
+    <ClInclude Include="include\Graphics\BatchRenderer.h" />
     <ClInclude Include="include\Graphics\FrameBuffer.h" />
     <ClInclude Include="include\Graphics\IndexBuffer.h" />
+    <ClInclude Include="include\Graphics\Shader.h" />
     <ClInclude Include="include\Graphics\VertexArray.h" />
     <ClInclude Include="include\Graphics\VertexBuffer.h" />
     <ClInclude Include="include\Panels\CPUStatusPanel.h" />
@@ -149,14 +151,16 @@
     <ClInclude Include="include\Panels\MemoryEditorPanel.h" />
     <ClInclude Include="include\Panels\Panel.h" />
     <ClInclude Include="include\Panels\ViewportPanel.h" />
+    <ClInclude Include="include\Window\FontAwesome5.h" />
     <ClInclude Include="include\Window\ImGuiManager.h" />
     <ClInclude Include="include\Window\Window.h" />
-    <ClInclude Include="include\Window\FontAwesome5.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application\ApplicationManager.cpp" />
+    <ClCompile Include="src\Graphics\BatchRenderer.cpp" />
     <ClCompile Include="src\Graphics\FrameBuffer.cpp" />
     <ClCompile Include="src\Graphics\IndexBuffer.cpp" />
+    <ClCompile Include="src\Graphics\Shader.cpp" />
     <ClCompile Include="src\Graphics\VertexArray.cpp" />
     <ClCompile Include="src\Graphics\VertexBuffer.cpp" />
     <ClCompile Include="src\Panels\CPUStatusPanel.cpp" />

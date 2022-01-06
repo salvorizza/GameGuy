@@ -18,13 +18,16 @@ namespace GameGuy {
 			height = mHeight;
 		}
 
+		uint32_t width() const { return mWidth; }
+		uint32_t height() const { return mHeight; }
+
 		uint32_t getColorAttachment() const { return mColorAttachment; }
 		
 	private:
 		void invalidate();
 	private:
 		uint32_t mRendererID;
-		uint32_t mColorAttachment;
+		uint32_t mColorAttachment, mColorAttachmentMS;
 		int32_t mWidth, mHeight;
 	};
 

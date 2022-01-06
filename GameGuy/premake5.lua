@@ -26,7 +26,8 @@ project "GameGuy"
 		"%{wks.location}/GBZ80/src",
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.ImGui}",
-		"%{IncludeDir.Glad}"
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.glm}"
 	}
 
 	links

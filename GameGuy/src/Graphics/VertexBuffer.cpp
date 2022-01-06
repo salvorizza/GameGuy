@@ -17,6 +17,7 @@ namespace GameGuy {
 			case ShaderType::Float: return 4;
 			case ShaderType::Float2: return 4 * 2;
 			case ShaderType::Float4: return 4 * 4;
+			case ShaderType::Uint4: return 4;
 		}
 		return 0;
 	}
@@ -29,7 +30,9 @@ namespace GameGuy {
 	BufferLayout::BufferLayout(std::initializer_list<BufferElement> list) 
 		:	mBufferElements(list),
 			mStride(0)
-	{}
+	{
+		calculateOffsetsAndStride();
+	}
 
 	BufferLayout::~BufferLayout() {
 		mBufferElements.clear();

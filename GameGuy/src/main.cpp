@@ -4,8 +4,7 @@
 #include "Panels/CPUStatusPanel.h"
 #include "Panels/ViewportPanel.h"
 
-#include "Graphics/VertexArray.h"
-#include "Graphics/FrameBuffer.h"
+#include "Graphics/BatchRenderer.h"
 
 #include <imgui.h>
 #include "gbz80.h"
@@ -31,27 +30,8 @@ public:
 		gbz80_load_cartridge(mGBZ80Instance, cartridge);
 		gbz80_cartridge_destroy(cartridge);
 
-		float data[] = {
-			0.0f,0.5f,1.0f,0.0f,0.0f,1.0f,
-			0.5f,-0.5f,0.0f,1.0f,0.0f,1.0f,
-			-0.5f,-0.5f,0.0f,0.0f,1.0f,1.0f
-		};
+		mBatchRenderer = std::make_shared<BatchRenderer>();
 
-		uint32_t indices[] = {
-			0,1,2
-		};
-
-		mVBO = std::make_shared<VertexBuffer>();
-		mIBO = std::make_shared<IndexBuffer>(indices,sizeof(indices) / sizeof(uint32_t));
-		mVBO->setLayout({
-				BufferElement("Position", ShaderType::Float2),
-				BufferElement("Color", ShaderType::Float4)
-		});
-		mVBO->setData(data, sizeof(data), VertexBufferDataUsage::Dynamic);
-
-		mVAO = std::make_shared<VertexArray>();
-		mVAO->addVertexBuffer(mVBO);
-		mVAO->setIndexBuffer(mIBO);
 
 		mMemoryEditorPanel.setInstance(mGBZ80Instance);
 		mDisassemblerPanel.setInstance(mGBZ80Instance);
@@ -64,7 +44,33 @@ public:
 	}
 
 	virtual void onRender() override {
-		mViewportPanel.onRender();
+		mViewportPanel.startFrame();
+		glClearColor(1, 0, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		mProjectionMatrix = glm::ortho(0.0f, (float)mViewportPanel.width(), (float)mViewportPanel.height(), 0.0f);
+		mBatchRenderer->begin(mProjectionMatrix);
+
+		float cellWidth = (float)mViewportPanel.width() / 160.0f;
+		float cellHeight = (float)mViewportPanel.height() / 144.0f;
+		for (size_t y = 0; y < 144; y++) {
+			for (size_t x = 0; x < 160; x++) {
+				uint8_t col = mGBZ80Instance->ppu.lcd[y * 160 + x];
+				glm::vec4 color;
+				switch (col) {
+					case 0: color = { 1,1,1,1 }; break;
+					case 1: color = { .82f,.82f,.82f,1 }; break;
+					case 2: color = { .37f,.37f,.37f,1 }; break;
+					case 3: color = { 0,0,0,1 }; break;
+				}
+
+				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth,cellHeight }, { 1,1,1,1 });
+			}
+		}
+
+		mBatchRenderer->end();
+
+		mViewportPanel.endFrame();
 	}
 
 	virtual void onImGuiRender() override {
@@ -113,11 +119,9 @@ private:
 	DisassemblerPanel mDisassemblerPanel;
 	CPUStatusPanel mCPUStatusPanel;
 	ViewportPanel mViewportPanel;
+	glm::mat4 mProjectionMatrix;
 
-	std::shared_ptr<VertexArray> mVAO;
-	std::shared_ptr<VertexBuffer> mVBO;
-	std::shared_ptr<IndexBuffer> mIBO;
-
+	std::shared_ptr<BatchRenderer> mBatchRenderer;
 };
 
 int main(int argc, char** argv) {

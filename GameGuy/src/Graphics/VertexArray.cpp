@@ -9,6 +9,7 @@ namespace GameGuy {
 			case ShaderType::Float: return GL_FLOAT;
 			case ShaderType::Float2: return GL_FLOAT;
 			case ShaderType::Float4: return GL_FLOAT;
+			case ShaderType::Uint4: return GL_UNSIGNED_BYTE;
 		}
 		return 0;
 	}
@@ -18,6 +19,7 @@ namespace GameGuy {
 			case ShaderType::Float: return 1;
 			case ShaderType::Float2: return 2;
 			case ShaderType::Float4: return 4;
+			case ShaderType::Uint4: return 4;
 		}
 		return 0;
 	}
@@ -43,9 +45,11 @@ namespace GameGuy {
 	{
 		const BufferLayout& layout = vbo->getLayout();
 		size_t attribIndex = mVertexBuffers.size();
+
 		for (const BufferElement& bufferElement : layout) {
 			glEnableVertexAttribArray(attribIndex);
 			glVertexAttribPointer(attribIndex, getShaderDataTypeNumComponents(bufferElement.Type), getShaderDataTypeOpenGLPrimitiveType(bufferElement.Type), bufferElement.Normalized, layout.getStride(), (const void*)bufferElement.Offset);
+			attribIndex++;
 		}
 	}
 
