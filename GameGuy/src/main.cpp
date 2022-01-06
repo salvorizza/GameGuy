@@ -64,7 +64,7 @@ public:
 					case 3: color = { 0,0,0,1 }; break;
 				}
 
-				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth,cellHeight }, { 1,1,1,1 });
+				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth,cellHeight }, color);
 			}
 		}
 
