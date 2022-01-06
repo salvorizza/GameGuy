@@ -2,28 +2,61 @@
 #include "Panels/MemoryEditorPanel.h"
 #include "Panels/DisassemblerPanel.h"
 #include "Panels/CPUStatusPanel.h"
+#include "Panels/ViewportPanel.h"
+
+#include "Graphics/VertexArray.h"
+#include "Graphics/FrameBuffer.h"
 
 #include <imgui.h>
 #include "gbz80.h"
 
-class GameGuyApp : public GameGuy::Application {
+using namespace GameGuy;
+
+
+class GameGuyApp : public Application {
 public:
 	GameGuyApp() 
-		: GameGuy::Application("Game Guy")
-	{
+		:	Application("Game Guy"),
+			mGBZ80Instance(NULL)
+	{}
+
+	~GameGuyApp() {
+		gbz80_destroy(mGBZ80Instance);
+	}
+
+	virtual void onSetup() override {
 		mGBZ80Instance = gbz80_create();
 		gbz80_init(mGBZ80Instance, "commons/roms/gb_bios.bin");
 		gbz80_cartridge_t* cartridge = gbz80_cartridge_read_from_file("commons/roms/tetris.gb");
 		gbz80_load_cartridge(mGBZ80Instance, cartridge);
 		gbz80_cartridge_destroy(cartridge);
 
+		float data[] = {
+			0.0f,0.5f,1.0f,0.0f,0.0f,1.0f,
+			0.5f,-0.5f,0.0f,1.0f,0.0f,1.0f,
+			-0.5f,-0.5f,0.0f,0.0f,1.0f,1.0f
+		};
+
+		uint32_t indices[] = {
+			0,1,2
+		};
+
+		mVBO = std::make_shared<VertexBuffer>();
+		mIBO = std::make_shared<IndexBuffer>(indices,sizeof(indices) / sizeof(uint32_t));
+		mVBO->setLayout({
+				BufferElement("Position", ShaderType::Float2),
+				BufferElement("Color", ShaderType::Float4)
+		});
+		mVBO->setData(data, sizeof(data), VertexBufferDataUsage::Dynamic);
+
+		mVAO = std::make_shared<VertexArray>();
+		mVAO->addVertexBuffer(mVBO);
+		mVAO->setIndexBuffer(mIBO);
+
 		mMemoryEditorPanel.setInstance(mGBZ80Instance);
 		mDisassemblerPanel.setInstance(mGBZ80Instance);
 		mCPUStatusPanel.setInstance(mGBZ80Instance);
-	}
-
-	~GameGuyApp() {
-		gbz80_destroy(mGBZ80Instance);
+		mViewportPanel.setInstance(mGBZ80Instance);
 	}
 
 	virtual void onUpdate() override {
@@ -31,8 +64,7 @@ public:
 	}
 
 	virtual void onRender() override {
-		glClearColor(1, 0, 1, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		mViewportPanel.onRender();
 	}
 
 	virtual void onImGuiRender() override {
@@ -72,18 +104,24 @@ public:
 		mMemoryEditorPanel.render();
 		mDisassemblerPanel.render();
 		mCPUStatusPanel.render();
+		mViewportPanel.render();
 	}
 
 private:
 	gbz80_t* mGBZ80Instance;
-	GameGuy::MemoryEditorPanel mMemoryEditorPanel;
-	GameGuy::DisassemblerPanel mDisassemblerPanel;
-	GameGuy::CPUStatusPanel mCPUStatusPanel;
+	MemoryEditorPanel mMemoryEditorPanel;
+	DisassemblerPanel mDisassemblerPanel;
+	CPUStatusPanel mCPUStatusPanel;
+	ViewportPanel mViewportPanel;
+
+	std::shared_ptr<VertexArray> mVAO;
+	std::shared_ptr<VertexBuffer> mVBO;
+	std::shared_ptr<IndexBuffer> mIBO;
 
 };
 
 int main(int argc, char** argv) {
-	GameGuy::ApplicationManager appManager;
+	ApplicationManager appManager;
 	appManager.run(std::make_shared<GameGuyApp>());
 	return 0;
 }

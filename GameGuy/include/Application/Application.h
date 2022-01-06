@@ -9,6 +9,7 @@ namespace GameGuy {
 		Application(const std::string& name) : mName(name) {}
 		virtual ~Application() = default;
 
+		virtual void onSetup() = 0;
 		virtual void onUpdate() = 0;
 		virtual void onRender() = 0;
 		virtual void onImGuiRender() = 0;

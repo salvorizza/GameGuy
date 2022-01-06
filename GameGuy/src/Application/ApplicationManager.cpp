@@ -15,6 +15,8 @@ namespace GameGuy {
 		mWindow = std::make_shared<Window>(mApplication->getName(), 1280, 720);
 		mImGuiManager = std::make_shared<ImGuiManager>(mWindow);
 
+		mApplication->onSetup();
+
 		mWindow->show();
 		while (!mWindow->isClosed()) {
 			mApplication->onUpdate();

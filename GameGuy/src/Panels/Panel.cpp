@@ -4,10 +4,11 @@
 
 namespace GameGuy {
 
-	Panel::Panel(const std::string& name, bool hasMenuBar)
+	Panel::Panel(const std::string& name, bool hasMenuBar, bool noPadding)
 		:	mName(name),
 			mOpen(true),
-			mHasMenuBar(hasMenuBar)
+			mHasMenuBar(hasMenuBar),
+			mNoPadding(noPadding)
 	{}
 
 	Panel::~Panel()
@@ -26,9 +27,16 @@ namespace GameGuy {
 			if (mHasMenuBar) {
 				window_flags |= ImGuiWindowFlags_MenuBar;
 			}
+
+			if (mNoPadding) {
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+			}
 			ImGui::Begin(mName.c_str(), &mOpen, window_flags);
 			onImGuiRender();
 			ImGui::End();
+			if (mNoPadding) {
+				ImGui::PopStyleVar(1);
+			}
 		}
 	}
 
