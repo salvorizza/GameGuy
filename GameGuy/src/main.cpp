@@ -53,10 +53,11 @@ public:
 
 		float cellWidth = (float)mViewportPanel.width() / 160.0f;
 		float cellHeight = (float)mViewportPanel.height() / 144.0f;
+		glm::vec4 color;
+
 		for (size_t y = 0; y < 144; y++) {
 			for (size_t x = 0; x < 160; x++) {
 				uint8_t col = mGBZ80Instance->ppu.lcd[y * 160 + x];
-				glm::vec4 color;
 				switch (col) {
 					case 0: color = { 1,1,1,1 }; break;
 					case 1: color = { .82f,.82f,.82f,1 }; break;

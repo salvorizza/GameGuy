@@ -21,6 +21,7 @@ extern "C" {
 	void gbz80_ppu_update_stat_register(gbz80_ppu_t* ppu, uint8_t mode, uint8_t ly);
 
 	void gbz80_ppu_draw_background(gbz80_ppu_t* ppu, uint8_t ly);
+	void gbz80_ppu_draw_sprites(gbz80_ppu_t* ppu, uint8_t ly);
 
 #ifdef __cplusplus
 }
