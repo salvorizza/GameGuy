@@ -1,7 +1,7 @@
 #include "Panels/ViewportPanel.h"
 
-#include <glad/glad.h>
 #include <imgui.h>
+#include <glad/glad.h>
 
 namespace GameGuy {
 
@@ -23,11 +23,12 @@ namespace GameGuy {
 		if (mFBO) {
 			if (mNeedResize) {
 				mFBO->resize(mResizeWidth, mResizeHeight);
-				//glViewport(-mResizeWidth / 2.0f, mResizeHeight / 2.0f, mResizeWidth / 2.0f, -mResizeHeight / 2.0f);
-				glViewport(0, 0, mResizeWidth, mResizeHeight);
 				mNeedResize = false;
 			}
 			mFBO->bind();
+
+			glViewport(0, 0, mFBO->width(), mFBO->height());
+
 		}
 	}
 

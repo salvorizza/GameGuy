@@ -148,8 +148,10 @@
     <ClInclude Include="include\Graphics\VertexBuffer.h" />
     <ClInclude Include="include\Panels\CPUStatusPanel.h" />
     <ClInclude Include="include\Panels\DisassemblerPanel.h" />
+    <ClInclude Include="include\Panels\MemoryEditor.h" />
     <ClInclude Include="include\Panels\MemoryEditorPanel.h" />
     <ClInclude Include="include\Panels\Panel.h" />
+    <ClInclude Include="include\Panels\TileMapViewerPanel.h" />
     <ClInclude Include="include\Panels\ViewportPanel.h" />
     <ClInclude Include="include\Window\FontAwesome5.h" />
     <ClInclude Include="include\Window\ImGuiManager.h" />
@@ -167,6 +169,7 @@
     <ClCompile Include="src\Panels\DisassemblerPanel.cpp" />
     <ClCompile Include="src\Panels\MemoryEditorPanel.cpp" />
     <ClCompile Include="src\Panels\Panel.cpp" />
+    <ClCompile Include="src\Panels\TileMapViewerPanel.cpp" />
     <ClCompile Include="src\Panels\ViewportPanel.cpp" />
     <ClCompile Include="src\Window\ImGuiManager.cpp" />
     <ClCompile Include="src\Window\Window.cpp" />

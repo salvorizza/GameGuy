@@ -16,7 +16,8 @@ namespace GameGuy {
 			mDebugState(DebugState::Idle),
 			mPrevDebugState(DebugState::None),
 			mScrollToCurrent(false),
-			mDebugTab(DebugTab::BootRom)
+			mDebugTab(DebugTab::BootRom),
+			mSelectTab(DebugTab::None)
 	{
 	}
 
@@ -26,12 +27,18 @@ namespace GameGuy {
 
 	void DisassemblerPanel::disassembleBootRom()
 	{
+		mInstructionsBootRomKeys.clear();
 		disassemble(mInstructionsBootRom, mInstance->bootstrap_rom, mInstance->bootstrap_rom + BYTE(256));
+		for (auto& [address, debugInstruction] : mInstructionsBootRom)
+			mInstructionsBootRomKeys.push_back(address);
 	}
 
 	void DisassemblerPanel::disassembleCartridge()
 	{
-		disassemble(mInstructionsCartridge, mInstance->rom_bank_0, mInstance->rom_bank_0 + mInstance->cartridge_code_size);
+		mInstructionsCartridgeKeys.clear();
+		disassemble(mInstructionsCartridge, mInstance->memory_map, mInstance->rom_bank_0 + mInstance->cartridge_code_size);
+		for (auto& [address, debugInstruction] : mInstructionsCartridge)
+			mInstructionsCartridgeKeys.push_back(address);
 	} 
 
 	void DisassemblerPanel::onUpdate()
@@ -52,6 +59,11 @@ namespace GameGuy {
 						setDebugState(DebugState::Breakpoint);
 					else {
 						for (int i = 0; i < 5000; i++) {
+							if (mDebugTab == DebugTab::BootRom && mInstance->bootstrap_mode == 0) {
+								mSelectTab = DebugTab::Cartridge;
+								break;
+							}
+
 							if (getCurrentInstructionMap()[mInstance->cpu.registers.PC].Breakpoint) {
 								setDebugState(DebugState::Breakpoint);
 								break;
@@ -144,21 +156,37 @@ namespace GameGuy {
 
 		ImGui::PopStyleColor(3);
 
+		static bool p_open = true;
+		static bool p_open_2 = true;
 
 		if (ImGui::BeginTabBar("SelectDisassembleRom"))
 		{
-			if (ImGui::BeginTabItem("Bootstrap Rom"))
+			ImGuiTabItemFlags flag = ImGuiTabItemFlags_None;
+			if (mSelectTab == DebugTab::BootRom) {
+				flag = ImGuiTabItemFlags_SetSelected;
+				mSelectTab = DebugTab::None;
+			}
+
+			if (ImGui::BeginTabItem("Bootstrap Rom", &p_open, flag))
 			{
 				mDebugTab = DebugTab::BootRom;
 				ImGui::EndTabItem();
 			}
-			if (ImGui::BeginTabItem("Cartridge"))
+
+			flag = ImGuiTabItemFlags_None;
+			if (mSelectTab == DebugTab::Cartridge) {
+				flag = ImGuiTabItemFlags_SetSelected;
+				mSelectTab = DebugTab::None;
+			}
+			if (ImGui::BeginTabItem("Cartridge", &p_open, flag))
 			{
 				mDebugTab = DebugTab::Cartridge;
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
 		}
+
+		ImGui::ShowDemoWindow();
 
 		ImGui::BeginChild("Disas");
 		if (ImGui::BeginTable("Disassembly Table", 4, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
@@ -168,48 +196,56 @@ namespace GameGuy {
 			ImGui::TableSetupColumn("Instruction", ImGuiTableColumnFlags_WidthFixed, contentCellsWidth);
 			ImGui::TableHeadersRow();
 
+		
 
 			uint32_t i = 1;
 			auto& instructionMap = getCurrentInstructionMap();
-			for (auto& [address, debugInstruction] : instructionMap) {
-				
-				
-				ImGui::TableNextRow();
-				if (mDebugState != DebugState::Idle &&  address == mInstance->cpu.registers.PC) {
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, IM_COL32(230, 100, 120, 125));
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(180, 50, 70, 125));
+			auto& keys = getCurrentInstructionMapKeys();
+			ImGuiListClipper clipper;
 
-					if (mScrollToCurrent) {
-						ImGui::SetScrollHereY(0.75);
-						mScrollToCurrent = false;
+			clipper.Begin(instructionMap.size());
+			while (clipper.Step())
+			{
+				for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++) {
+					auto& it = instructionMap.find(keys[row]);
+
+					uint16_t address = it->first;
+					DebugInstruction& debugInstruction = it->second;
+
+					ImGui::TableNextRow();
+					if (mDebugState != DebugState::Idle && address == mInstance->cpu.registers.PC) {
+						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, IM_COL32(230, 100, 120, 125));
+						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(180, 50, 70, 125));
+
+						if (mScrollToCurrent) {
+							ImGui::SetScrollHereY(0.75);
+							mScrollToCurrent = false;
+						}
 					}
+
+					ImGui::TableNextColumn();
+					ImGui::PushStyleColor(ImGuiCol_Text, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+					ImGui::PushID(i);
+					if (ImGui::Button(ICON_FA_CIRCLE)) {
+						debugInstruction.Breakpoint = !debugInstruction.Breakpoint;
+					}
+					ImGui::PopID();
+					ImGui::PopStyleColor(4);
+					ImGui::PopStyleVar(1);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("%04u", i);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("0x%04X", address);
+
+					ImGui::TableNextColumn();
+					ImGui::Text("%s", debugInstruction.Instruction.c_str());
 				}
-
-
-				ImGui::TableNextColumn();
-				ImGui::PushStyleColor(ImGuiCol_Text, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
-				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
-				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-				ImGui::PushID(i);
-				if (ImGui::Button(ICON_FA_CIRCLE)) {
-					debugInstruction.Breakpoint = !debugInstruction.Breakpoint;
-				}
-				ImGui::PopID();
-				ImGui::PopStyleColor(4);
-				ImGui::PopStyleVar(1);
-
-				ImGui::TableNextColumn();
-				ImGui::Text("%04u", i);
-
-				ImGui::TableNextColumn();
-				ImGui::Text("0x%04X", address);
-
-				ImGui::TableNextColumn();
-				ImGui::Text("%s", debugInstruction.Instruction.c_str());
-
-				i++;
 			}
 			ImGui::EndTable();
 		}
@@ -219,6 +255,7 @@ namespace GameGuy {
 	void DisassemblerPanel::disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionsMap,uint8_t* base, uint8_t* end){
 		instructionsMap.clear();
 
+		mInstance->cpu.registers.PC = 0;
 		while (&base[mInstance->cpu.registers.PC] <= end) {
 			gbz80_instruction_t instruction;
 			gbz80_cpu_fetch(&mInstance->cpu, &instruction);

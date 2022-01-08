@@ -34,6 +34,9 @@ namespace GameGuy {
 		mVAO = std::make_shared<VertexArray>();
 		mVAO->addVertexBuffer(mVBO);
 		mVAO->setIndexBuffer(mIBO);
+		mVAO->unbind();
+		mVBO->unbind();
+		mIBO->unbind();
 
 		const char* vertexSource = "#version 450 core\n"
 			"layout(location = 0) in vec2 aPos;\n"
@@ -67,6 +70,7 @@ namespace GameGuy {
 	void BatchRenderer::begin(const glm::mat4& projMatrix)
 	{
 		mProjectionMatrix = projMatrix;
+		mVBO->bind();
 		mVerticesBase = (QuadVertex*)mVBO->map();
 		mCurrentVertex = mVerticesBase;
 		mNumIndices = 0;
@@ -80,6 +84,7 @@ namespace GameGuy {
 	void BatchRenderer::flush()
 	{
 		mVBO->unMap();
+		mVBO->unbind();
 
 		mShader->start();
 		mShader->uploadUniform("uProjectionMatrix", mProjectionMatrix);

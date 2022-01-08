@@ -5,6 +5,7 @@
 #include <gbz80.h>
 
 #include <map>
+#include <vector>
 
 namespace GameGuy {
 
@@ -50,6 +51,7 @@ namespace GameGuy {
 		};
 
 		enum class DebugTab {
+			None,
 			BootRom,
 			Cartridge
 		};
@@ -57,6 +59,7 @@ namespace GameGuy {
 	private:
 		void disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionMap, uint8_t* base, uint8_t* end);
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction>& getCurrentInstructionMap() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRom : mInstructionsCartridge; }
+		std::vector<uint16_t>& getCurrentInstructionMapKeys() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRomKeys : mInstructionsCartridgeKeys; }
 
 		void onPlay();
 		void onStop();
@@ -67,10 +70,12 @@ namespace GameGuy {
 		gbz80_t* mInstance;
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsCartridge;
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsBootRom;
+		std::vector<uint16_t> mInstructionsCartridgeKeys;
+		std::vector<uint16_t> mInstructionsBootRomKeys;
 
 		DebugState mDebugState;
 		DebugState mPrevDebugState;
-		DebugTab mDebugTab;
+		DebugTab mDebugTab,mSelectTab;
 
 		bool mScrollToCurrent;
 	};

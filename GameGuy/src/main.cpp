@@ -3,6 +3,7 @@
 #include "Panels/DisassemblerPanel.h"
 #include "Panels/CPUStatusPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "Panels/TileMapViewerPanel.h"
 
 #include "Graphics/BatchRenderer.h"
 
@@ -32,18 +33,21 @@ public:
 
 		mBatchRenderer = std::make_shared<BatchRenderer>();
 
-
+		mTileMapViewerPanel.setInstance(mGBZ80Instance);
 		mMemoryEditorPanel.setInstance(mGBZ80Instance);
 		mDisassemblerPanel.setInstance(mGBZ80Instance);
 		mCPUStatusPanel.setInstance(mGBZ80Instance);
 		mViewportPanel.setInstance(mGBZ80Instance);
+
+		mTileMapViewerPanel.onSetup();
 	}
 
 	virtual void onUpdate() override {
-		mDisassemblerPanel.onUpdate();
 	}
 
 	virtual void onRender() override {
+		mDisassemblerPanel.onUpdate();
+
 		mViewportPanel.startFrame();
 		glClearColor(1, 0, 1, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -72,6 +76,8 @@ public:
 		mBatchRenderer->end();
 
 		mViewportPanel.endFrame();
+
+		mTileMapViewerPanel.onRender();
 	}
 
 	virtual void onImGuiRender() override {
@@ -100,6 +106,9 @@ public:
 				if (ImGui::MenuItem("Memory Editor", "CTRL+M")) mMemoryEditorPanel.open();
 				if (ImGui::MenuItem("Disassembler", "CTRL+D")) mDisassemblerPanel.open();
 				if (ImGui::MenuItem("CPU Status", "CTRL+R")) mCPUStatusPanel.open();
+				if (ImGui::MenuItem("Viewport", "CTRL+O")) mViewportPanel.open();
+				if (ImGui::MenuItem("TIle Map Viewer", "CTRL+T")) mTileMapViewerPanel.open();
+
 
 				ImGui::EndMenu();
 			}
@@ -112,6 +121,7 @@ public:
 		mDisassemblerPanel.render();
 		mCPUStatusPanel.render();
 		mViewportPanel.render();
+		mTileMapViewerPanel.render();
 	}
 
 private:
@@ -120,6 +130,7 @@ private:
 	DisassemblerPanel mDisassemblerPanel;
 	CPUStatusPanel mCPUStatusPanel;
 	ViewportPanel mViewportPanel;
+	TileMapViewerPanel mTileMapViewerPanel;
 	glm::mat4 mProjectionMatrix;
 
 	std::shared_ptr<BatchRenderer> mBatchRenderer;

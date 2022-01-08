@@ -29,7 +29,7 @@ namespace GameGuy {
 	public:
 		static const size_t QUAD_VERTEX_SIZE = sizeof(QuadVertex);
 		static const size_t QUAD_SIZE = QUAD_VERTEX_SIZE * 4;
-		static const size_t MAX_QUADS = 400;
+		static const size_t MAX_QUADS = 70000;
 		static const size_t QUAD_BUFFER_SIZE = QUAD_SIZE * MAX_QUADS;
 		static const size_t QUAD_MAX_NUM_INDICES = MAX_QUADS * 6;
 	private:
