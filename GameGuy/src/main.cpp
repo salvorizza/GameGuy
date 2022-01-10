@@ -4,7 +4,7 @@
 #include "Panels/CPUStatusPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Panels/TileMapViewerPanel.h"
-#include "Application/Timer.h"
+#include "Application/GameBoyVM.h"
 
 #include "Graphics/BatchRenderer.h"
 
@@ -18,37 +18,31 @@ class GameGuyApp : public Application {
 public:
 	GameGuyApp() 
 		:	Application("Game Guy"),
-			mGBZ80Instance(NULL)
+			mProjectionMatrix(glm::identity<glm::mat4>())
 	{}
 
 	~GameGuyApp() {
-		gbz80_destroy(mGBZ80Instance);
 	}
 
 	virtual void onSetup() override {
-		mGBZ80Instance = gbz80_create();
-		gbz80_init(mGBZ80Instance, "commons/roms/gb_bios.bin");
-		gbz80_cartridge_t* cartridge = gbz80_cartridge_read_from_file("commons/roms/tetris.gb");
-		gbz80_load_cartridge(mGBZ80Instance, cartridge);
-		gbz80_cartridge_destroy(cartridge);
-
 		mBatchRenderer = std::make_shared<BatchRenderer>();
 
-		mTileMapViewerPanel.setInstance(mGBZ80Instance);
-		mMemoryEditorPanel.setInstance(mGBZ80Instance);
-		mDisassemblerPanel.setInstance(mGBZ80Instance);
-		mCPUStatusPanel.setInstance(mGBZ80Instance);
-		mViewportPanel.setInstance(mGBZ80Instance);
+		mTileMapViewerPanel.setInstance(mGameBoyVM);
+		mMemoryEditorPanel.setInstance(mGameBoyVM);
+		mDisassemblerPanel.setInstance(mGameBoyVM);
+		mCPUStatusPanel.setInstance(mGameBoyVM);
+		mViewportPanel.setInstance(mGameBoyVM);
 
-		mTimer.init();
+		mGameBoyVM.setBreakFunction(std::bind(&DisassemblerPanel::breakFunction, mDisassemblerPanel, std::placeholders::_1));
+		mDisassemblerPanel.disassembleBootRom();
 	}
 
 	virtual void onUpdate() override {
-		mTimer.update();
+		mGameBoyVM.update();
 	}
 
 	virtual void onRender() override {
-		mDisassemblerPanel.onUpdate();
+		//mDisassemblerPanel.onUpdate();
 
 		mViewportPanel.startFrame();
 		glClearColor(1, 0, 1, 1);
@@ -63,7 +57,7 @@ public:
 
 		for (size_t y = 0; y < 144; y++) {
 			for (size_t x = 0; x < 160; x++) {
-				uint8_t col = mGBZ80Instance->ppu.lcd[y * 160 + x];
+				uint8_t col = ((gbz80_t*)mGameBoyVM)->ppu.lcd[y * 160 + x];
 				switch (col) {
 					case 0: color = { 1,1,1,1 }; break;
 					case 1: color = { .82f,.82f,.82f,1 }; break;
@@ -102,6 +96,16 @@ public:
 
 		if (ImGui::BeginMenuBar())
 		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Open", "CTRL+M")) {
+					mGameBoyVM.loadRom("commons/roms/tetris.gb");
+					mDisassemblerPanel.disassembleCartridge();
+				}
+
+				ImGui::EndMenu();
+			}
+
 			if (ImGui::BeginMenu("Tools"))
 			{
 				if (ImGui::MenuItem("Memory Editor", "CTRL+M")) mMemoryEditorPanel.open();
@@ -113,6 +117,16 @@ public:
 
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Emulation"))
+			{
+				if (ImGui::MenuItem("Play")) mGameBoyVM.setState(VMState::Start);
+				if (ImGui::MenuItem("Stop")) mGameBoyVM.setState(VMState::Stop);
+				if (ImGui::MenuItem("Pause")) mGameBoyVM.setState(VMState::Pause);
+
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenuBar();
 		}
 
@@ -126,7 +140,7 @@ public:
 	}
 
 private:
-	gbz80_t* mGBZ80Instance;
+	GameBoyVM mGameBoyVM;
 	MemoryEditorPanel mMemoryEditorPanel;
 	DisassemblerPanel mDisassemblerPanel;
 	CPUStatusPanel mCPUStatusPanel;

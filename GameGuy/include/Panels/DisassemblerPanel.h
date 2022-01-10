@@ -19,6 +19,8 @@ namespace GameGuy {
 		void disassembleBootRom();
 		void disassembleCartridge();
 
+		bool breakFunction(uint16_t address);
+
 		void onUpdate();
 
 	protected:

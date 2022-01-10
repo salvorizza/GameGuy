@@ -11,7 +11,7 @@ namespace GameGuy {
 
 
 	DisassemblerPanel::DisassemblerPanel()
-		:	Panel("Disassembler", true),
+		:	Panel("Disassembler", false),
 			mInstance(NULL),
 			mDebugState(DebugState::Idle),
 			mPrevDebugState(DebugState::None),
@@ -36,10 +36,18 @@ namespace GameGuy {
 	void DisassemblerPanel::disassembleCartridge()
 	{
 		mInstructionsCartridgeKeys.clear();
+		mInstance->bootstrap_mode = 0;
 		disassemble(mInstructionsCartridge, mInstance->memory_map, mInstance->rom_bank_0 + mInstance->cartridge_code_size);
+		mInstance->bootstrap_mode = 1;
 		for (auto& [address, debugInstruction] : mInstructionsCartridge)
 			mInstructionsCartridgeKeys.push_back(address);
-	} 
+	}
+	bool DisassemblerPanel::breakFunction(uint16_t address)
+	{
+		bool isBreaked = getCurrentInstructionMap()[mInstance->cpu.registers.PC].Breakpoint;
+		return isBreaked;
+	}
+
 
 	void DisassemblerPanel::onUpdate()
 	{
@@ -98,20 +106,6 @@ namespace GameGuy {
 
 	void DisassemblerPanel::onImGuiRender()
 	{
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Open")) {
-					disassembleBootRom();
-					disassembleCartridge();
-				}
-
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
-
 		float availWidth = ImGui::GetContentRegionAvail().x;
 		float oneCharSize = ImGui::CalcTextSize("A").x;
 		float bulletSize = oneCharSize * 2;

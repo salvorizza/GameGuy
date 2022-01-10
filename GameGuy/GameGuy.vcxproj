@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="include\Application\Application.h" />
     <ClInclude Include="include\Application\ApplicationManager.h" />
+    <ClInclude Include="include\Application\GameBoyVM.h" />
     <ClInclude Include="include\Application\Timer.h" />
     <ClInclude Include="include\Graphics\BatchRenderer.h" />
     <ClInclude Include="include\Graphics\FrameBuffer.h" />
@@ -160,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Application\ApplicationManager.cpp" />
+    <ClCompile Include="src\Application\GameBoyVM.cpp" />
     <ClCompile Include="src\Graphics\BatchRenderer.cpp" />
     <ClCompile Include="src\Graphics\FrameBuffer.cpp" />
     <ClCompile Include="src\Graphics\IndexBuffer.cpp" />

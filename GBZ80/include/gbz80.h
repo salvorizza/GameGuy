@@ -54,6 +54,7 @@ extern "C" {
 	void gbz80_init(gbz80_t* instance, const char* bios_path);
 	void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom);
 	size_t gbz80_step(gbz80_t* instance);
+	size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds);
 	void gbz80_destroy(gbz80_t* rom);
 
 #ifdef __cplusplus

@@ -10,6 +10,7 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 	FILE* f = fopen(bios_path, "rb");
 	if (f) {
 		fread(instance->bootstrap_rom, BYTE(256), 1, f);
+
 		fclose(f);
 	}
 
@@ -32,10 +33,15 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 	}
 }
 
-size_t gbz80_step(gbz80_t* instance) {
+size_t gbz80_step(gbz80_t* instance){
 	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
 	gbz80_ppu_step(&instance->ppu, num_cycles);
 	return num_cycles;
+}
+
+size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds)
+{
+	return seconds * GBZ80_CLOCK_HERTZ;
 }
 
 void gbz80_destroy(gbz80_t* instance)
