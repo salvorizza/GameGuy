@@ -108,11 +108,8 @@ void gbz80_ppu_draw_sprites(gbz80_ppu_t* ppu, uint8_t ly) {
 	sprite_data_t sprites[10];
 	uint8_t pixels[8];
 	uint8_t num_sprites;
-	uint8_t bgp = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF47);
-
 
 	gbz80_ppu_gather_oam_sprites_by_line(ppu, ly, sprites, &num_sprites);
-
 	for (sprite_data_t* sprite = sprites; sprite < sprites + num_sprites; sprite++) {
 		uint8_t pixel_line = (ly + 16) - sprite->y;
 		gbz80_ppu_read_tile_pixels_by_line(ppu, sprite->tile_index, pixel_line, pixels);

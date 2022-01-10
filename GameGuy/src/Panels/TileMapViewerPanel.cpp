@@ -17,12 +17,7 @@ namespace GameGuy {
 	{
 	}
 
-	void TileMapViewerPanel::onSetup()
-	{
-		mBatchRenderer = std::make_shared<BatchRenderer>();
-	}
-
-	void TileMapViewerPanel::onRender()
+	void TileMapViewerPanel::onRender(const std::shared_ptr<BatchRenderer>& batchRenderer)
 	{
 		if (mInstance && mFBO) {
 			if (mNeedResize) {
@@ -37,7 +32,7 @@ namespace GameGuy {
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			glm::mat4 projMatrix = glm::ortho(0.0f, (float)mFBO->width(), (float)mFBO->height(), 0.0f);
-			mBatchRenderer->begin(projMatrix);
+			batchRenderer->begin(projMatrix);
 
 			float cellWidth = (float)mFBO->width() / 256.0f;
 			float cellHeight = (float)mFBO->height() / 256.0f;
@@ -61,14 +56,14 @@ namespace GameGuy {
 								case 3: color = { 0,0,0,1 }; break;
 							}
 
-							mBatchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth, cellHeight }, color);
+							batchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth, cellHeight }, color);
 						}
 					}
 
 				}
 			}
 
-			mBatchRenderer->end();
+			batchRenderer->end();
 
 			mFBO->unbind();
 		}

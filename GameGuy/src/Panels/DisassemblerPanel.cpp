@@ -186,8 +186,6 @@ namespace GameGuy {
 			ImGui::EndTabBar();
 		}
 
-		ImGui::ShowDemoWindow();
-
 		ImGui::BeginChild("Disas");
 		if (ImGui::BeginTable("Disassembly Table", 4, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders)) {
 			ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, bulletSize);
@@ -229,7 +227,7 @@ namespace GameGuy {
 					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-					ImGui::PushID(i);
+					ImGui::PushID(row);
 					if (ImGui::Button(ICON_FA_CIRCLE)) {
 						debugInstruction.Breakpoint = !debugInstruction.Breakpoint;
 					}
@@ -238,7 +236,7 @@ namespace GameGuy {
 					ImGui::PopStyleVar(1);
 
 					ImGui::TableNextColumn();
-					ImGui::Text("%04u", i);
+					ImGui::Text("%04u", row + 1);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("0x%04X", address);
@@ -247,6 +245,7 @@ namespace GameGuy {
 					ImGui::Text("%s", debugInstruction.Instruction.c_str());
 				}
 			}
+			clipper.End();
 			ImGui::EndTable();
 		}
 		ImGui::EndChild();

@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="include\Application\Application.h" />
     <ClInclude Include="include\Application\ApplicationManager.h" />
+    <ClInclude Include="include\Application\Timer.h" />
     <ClInclude Include="include\Graphics\BatchRenderer.h" />
     <ClInclude Include="include\Graphics\FrameBuffer.h" />
     <ClInclude Include="include\Graphics\IndexBuffer.h" />

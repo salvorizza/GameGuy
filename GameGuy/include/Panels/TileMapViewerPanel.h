@@ -14,8 +14,7 @@ namespace GameGuy {
 		TileMapViewerPanel();
 		~TileMapViewerPanel();
 
-		void onSetup();
-		void onRender();
+		void onRender(const std::shared_ptr<BatchRenderer>& batchRenderer);
 		void setInstance(gbz80_t* pInstance) { mInstance = pInstance; }
 
 	protected:
@@ -24,7 +23,6 @@ namespace GameGuy {
 	private:
 		gbz80_t* mInstance;
 		std::shared_ptr<FrameBuffer> mFBO;
-		std::shared_ptr<BatchRenderer> mBatchRenderer;
 		uint32_t mResizeWidth, mResizeHeight;
 		bool mNeedResize;
 	};

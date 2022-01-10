@@ -4,6 +4,7 @@
 #include "Panels/CPUStatusPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Panels/TileMapViewerPanel.h"
+#include "Application/Timer.h"
 
 #include "Graphics/BatchRenderer.h"
 
@@ -39,10 +40,11 @@ public:
 		mCPUStatusPanel.setInstance(mGBZ80Instance);
 		mViewportPanel.setInstance(mGBZ80Instance);
 
-		mTileMapViewerPanel.onSetup();
+		mTimer.init();
 	}
 
 	virtual void onUpdate() override {
+		mTimer.update();
 	}
 
 	virtual void onRender() override {
@@ -74,10 +76,9 @@ public:
 		}
 
 		mBatchRenderer->end();
-
 		mViewportPanel.endFrame();
 
-		mTileMapViewerPanel.onRender();
+		mTileMapViewerPanel.onRender(mBatchRenderer);
 	}
 
 	virtual void onImGuiRender() override {
@@ -131,6 +132,7 @@ private:
 	CPUStatusPanel mCPUStatusPanel;
 	ViewportPanel mViewportPanel;
 	TileMapViewerPanel mTileMapViewerPanel;
+	Timer mTimer;
 	glm::mat4 mProjectionMatrix;
 
 	std::shared_ptr<BatchRenderer> mBatchRenderer;
