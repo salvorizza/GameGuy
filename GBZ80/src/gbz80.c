@@ -109,7 +109,7 @@ size_t gbz80_step(gbz80_t* instance){
 
 size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds)
 {
-	return seconds * GBZ80_CLOCK_HERTZ;
+	return (size_t)(seconds * GBZ80_CLOCK_HERTZ);
 }
 
 void gbz80_destroy(gbz80_t* instance)

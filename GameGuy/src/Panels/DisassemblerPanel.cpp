@@ -258,7 +258,7 @@ namespace GameGuy {
 		while (&base[mInstance->cpu.registers.PC] <= end) {
 			gbz80_instruction_t instruction;
 			gbz80_cpu_fetch(&mInstance->cpu, &instruction);
-			gbz80_cpu_decode(&mInstance->cpu, &instruction);
+			gbz80_cpu_decode(&mInstance->cpu, &instruction, 1);
 
 			instructionsMap.emplace(instruction.address, instruction.disassembled_name);
 		}

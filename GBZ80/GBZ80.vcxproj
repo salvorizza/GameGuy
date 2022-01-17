@@ -137,7 +137,6 @@
     <ClInclude Include="include\gbz80_ppu.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\common.c" />
     <ClCompile Include="src\gbz80.c" />
     <ClCompile Include="src\gbz80_apu.c" />
     <ClCompile Include="src\gbz80_cartridge.c" />

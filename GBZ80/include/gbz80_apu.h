@@ -103,9 +103,25 @@ extern "C" {
 	void gbz80_apu_trigger_channel3(gbz80_apu_t* apu);
 	void gbz80_apu_trigger_channel4(gbz80_apu_t* apu);
 
-	void gbz80_apu_init_timer(gbz80_apu_timer_t* timer, size_t period);
-	void gbz80_apu_reset_timer(gbz80_apu_timer_t* timer);
-	uint8_t gbz80_apu_update_timer(gbz80_apu_timer_t* timer);
+	static __forceinline void gbz80_apu_init_timer(gbz80_apu_timer_t* timer, size_t period) {
+		timer->period = period;
+		timer->counter = period;
+	}
+
+	static __forceinline void gbz80_apu_reset_timer(gbz80_apu_timer_t* timer) {
+		timer->counter = timer->period;
+	}
+
+	static __forceinline uint8_t gbz80_apu_update_timer(gbz80_apu_timer_t* timer) {
+		timer->counter--;
+		if (timer->counter == 0) {
+			gbz80_apu_reset_timer(timer);
+			return 1;
+		}
+		return 0;
+	}
+
+	void gbz80_apu_channel_base_init(gbz80_apu_base_channel_t* channel);
 
 	void gbz80_apu_frame_sequencer_init(gbz80_apu_frame_sequencer_t* frame_sequencer);
 	void gbz80_apu_frame_sequencer_update(gbz80_apu_frame_sequencer_t* frame_sequencer);

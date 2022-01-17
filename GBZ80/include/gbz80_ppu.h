@@ -12,7 +12,10 @@ extern "C" {
 
 	typedef struct gbz80_ppu_t {
 		uint8_t lcd[GBZ80_LCD_SIZE];
+
 		uint32_t num_dots;
+
+
 		gbz80_t* instance;
 	} gbz80_ppu_t;
 

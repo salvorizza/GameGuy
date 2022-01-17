@@ -93,7 +93,7 @@ extern "C" {
 	size_t gbz80_cpu_step(gbz80_cpu_t* cpu);
 
 	void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction);
-	void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+	void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_t get_instruction_name);
 	size_t gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 
 	void gbz80_cpu_load8_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
@@ -185,7 +185,6 @@ extern "C" {
 	void gbz80_cpu_rtrns_retnc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtrns_retc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtrns_reti(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
-
 #ifdef __cplusplus
 }
 #endif

@@ -70,18 +70,14 @@ public:
 		mCPUStatusPanel.setInstance(mGameBoyVM);
 		mViewportPanel.setInstance(mGameBoyVM);
 
-		gbz80_set_sample_rate(mGameBoyVM, 48000);
-		gbz80_set_sample_function(mGameBoyVM, &vmSampleFunction);
-
-		mCanFlush = false;
-
 		mGameBoyVM.setBreakFunction(std::bind(&DisassemblerPanel::breakFunction, &mDisassemblerPanel, std::placeholders::_1));
 		mDisassemblerPanel.disassembleBootRom();
 
+		gbz80_set_sample_rate(mGameBoyVM, 48000);
+		gbz80_set_sample_function(mGameBoyVM, &vmSampleFunction);
+		mCanFlush = false;
 		std::vector<std::wstring> devices = AudioManager<int16_t>::Enumerate();
 		mAudioManager = std::make_shared<AudioManager<int16_t>>(devices[0], 44100, 1, 8, 512);
-
-		// Link noise function with sound machine
 		mAudioManager->SetUserFunction(sample);
 	}
 
