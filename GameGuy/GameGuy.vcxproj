@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="include\Application\Application.h" />
     <ClInclude Include="include\Application\ApplicationManager.h" />
+    <ClInclude Include="include\Application\AudioManager.h" />
     <ClInclude Include="include\Application\GameBoyVM.h" />
     <ClInclude Include="include\Application\Timer.h" />
     <ClInclude Include="include\Graphics\BatchRenderer.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="include\Graphics\Shader.h" />
     <ClInclude Include="include\Graphics\VertexArray.h" />
     <ClInclude Include="include\Graphics\VertexBuffer.h" />
+    <ClInclude Include="include\Panels\AudioPanel.h" />
     <ClInclude Include="include\Panels\CPUStatusPanel.h" />
     <ClInclude Include="include\Panels\DisassemblerPanel.h" />
     <ClInclude Include="include\Panels\MemoryEditor.h" />
@@ -168,6 +170,7 @@
     <ClCompile Include="src\Graphics\Shader.cpp" />
     <ClCompile Include="src\Graphics\VertexArray.cpp" />
     <ClCompile Include="src\Graphics\VertexBuffer.cpp" />
+    <ClCompile Include="src\Panels\AudioPanel.cpp" />
     <ClCompile Include="src\Panels\CPUStatusPanel.cpp" />
     <ClCompile Include="src\Panels\DisassemblerPanel.cpp" />
     <ClCompile Include="src\Panels\MemoryEditorPanel.cpp" />

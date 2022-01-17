@@ -11,16 +11,16 @@
 void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	memset(ppu, 0, sizeof(gbz80_ppu_t));
 	ppu->instance = instance;
-	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF44, 0x0000);
-	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF40, 0x00);
+	gbz80_memory_write8(ppu->instance, 0xFF44, 0x0000);
+	gbz80_memory_write8(ppu->instance, 0xFF40, 0x00);
 
 }
 
 void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
-	uint8_t lcdc = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF40);
+	uint8_t lcdc = gbz80_memory_read8(ppu->instance, 0xFF40);
 
 	if (common_get8_bit(lcdc, 7) == 1) {
-		uint8_t ly = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF44);
+		uint8_t ly = gbz80_memory_read8(ppu->instance, 0xFF44);
 
 		if (ly == 153) {
 			ly = 0;
@@ -74,21 +74,21 @@ void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
 }
 
 void gbz80_ppu_update_stat_register(gbz80_ppu_t* ppu, uint8_t mode, uint8_t ly) {
-	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF44, ly);
+	gbz80_memory_write8(ppu->instance, 0xFF44, ly);
 
-	uint8_t lyc = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF4A);
-	uint8_t stat = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF41);
+	uint8_t lyc = gbz80_memory_read8(ppu->instance, 0xFF4A);
+	uint8_t stat = gbz80_memory_read8(ppu->instance, 0xFF41);
 
 	common_change8_bit(&stat, 0, mode & 0x1);
 	common_change8_bit(&stat, 1, (mode >> 1) & 0x1);
 	common_change8_bit(&stat, 2, ly == lyc);
 
-	gbz80_cpu_memory_write8(&ppu->instance->cpu, 0xFF41, stat);
+	gbz80_memory_write8(ppu->instance, 0xFF41, stat);
 }
 
 void gbz80_ppu_draw_background(gbz80_ppu_t* ppu, uint8_t ly) {
-	uint8_t scy = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF42);
-	uint8_t scx = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF43);
+	uint8_t scy = gbz80_memory_read8(ppu->instance, 0xFF42);
+	uint8_t scx = gbz80_memory_read8(ppu->instance, 0xFF43);
 	uint8_t pixels[8];
 	uint8_t tile_y = (scy + ly) / 8;
 	uint8_t pixel_line = (scy + ly) % 8;
@@ -138,7 +138,7 @@ void gbz80_ppu_draw_sprites(gbz80_ppu_t* ppu, uint8_t ly) {
 }
 
 void gbz80_ppu_gather_oam_sprites_by_line(gbz80_ppu_t* ppu, uint8_t ly, sprite_data_t sprites[10], uint8_t* num_sprites) {
-	uint8_t lcdc = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF40);
+	uint8_t lcdc = gbz80_memory_read8(ppu->instance, 0xFF40);
 	*num_sprites = 0;
 
 	for (uint8_t sprite_index = 0; sprite_index < 40; sprite_index++) {
@@ -169,18 +169,18 @@ uint8_t gbz80_ppu_tilemap_read_tile_index_by_coords(gbz80_ppu_t* ppu, uint8_t ti
 	tile_x %= 32;
 	tile_y %= 32;
 
-	return gbz80_cpu_memory_read8(&ppu->instance->cpu, 0x9800 + tile_y * 32 + tile_x);
+	return gbz80_memory_read8(ppu->instance, 0x9800 + tile_y * 32 + tile_x);
 }
 
 uint8_t gbz80_ppu_get_sprite_color(gbz80_ppu_t* ppu, uint8_t palette_number, uint8_t color_id)
 {
-	uint8_t palette = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF48 + palette_number);
+	uint8_t palette = gbz80_memory_read8(ppu->instance, 0xFF48 + palette_number);
 	return gbz80_ppu_get_palette_color(ppu, palette, color_id);
 }
 
 uint8_t gbz80_ppu_get_bgp_color(gbz80_ppu_t* ppu, uint8_t color_id)
 {
-	uint8_t bgp = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF47);
+	uint8_t bgp = gbz80_memory_read8(ppu->instance, 0xFF47);
 	return gbz80_ppu_get_palette_color(ppu, bgp, color_id);
 }
 
@@ -194,7 +194,7 @@ void gbz80_ppu_read_tile_pixels_by_line(gbz80_ppu_t* ppu, uint8_t tile_index, ui
 		return;
 	}
 
-	uint8_t lcdc = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFF40);
+	uint8_t lcdc = gbz80_memory_read8(ppu->instance, 0xFF40);
 	uint16_t read_address = 0x0000;
 	if (common_get8_bit(lcdc, 4) == 1) {
 		read_address = 0x8000 + tile_index * 16 + tile_line * 2;
@@ -202,8 +202,8 @@ void gbz80_ppu_read_tile_pixels_by_line(gbz80_ppu_t* ppu, uint8_t tile_index, ui
 		read_address = 0x9000 + ((int8_t)tile_index) * 16 + tile_line * 2;
 	}
 
-	uint8_t low_byte = gbz80_cpu_memory_read8(&ppu->instance->cpu, read_address);
-	uint8_t high_byte = gbz80_cpu_memory_read8(&ppu->instance->cpu, read_address + 1);
+	uint8_t low_byte = gbz80_memory_read8(ppu->instance, read_address);
+	uint8_t high_byte = gbz80_memory_read8(ppu->instance, read_address + 1);
 	for (uint8_t bit_index = 0; bit_index < 8; bit_index++) {
 		uint8_t colorID = (common_get8_bit(high_byte, bit_index) << 1) | common_get8_bit(low_byte, bit_index);
 
@@ -214,10 +214,10 @@ void gbz80_ppu_read_tile_pixels_by_line(gbz80_ppu_t* ppu, uint8_t tile_index, ui
 sprite_data_t gbz80_ppu_read_sprite(gbz80_ppu_t* ppu, uint8_t sprite_index)
 {
 	sprite_data_t sprite_data;
-	sprite_data.y = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFE00 + sprite_index * 4 + 0);
-	sprite_data.x = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFE00 + sprite_index * 4 + 1);
-	sprite_data.tile_index = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFE00 + sprite_index * 4 + 2);
-	sprite_data.attributes_flags = gbz80_cpu_memory_read8(&ppu->instance->cpu, 0xFE00 + sprite_index * 4 + 3);
+	sprite_data.y = gbz80_memory_read8(ppu->instance, 0xFE00 + sprite_index * 4 + 0);
+	sprite_data.x = gbz80_memory_read8(ppu->instance, 0xFE00 + sprite_index * 4 + 1);
+	sprite_data.tile_index = gbz80_memory_read8(ppu->instance, 0xFE00 + sprite_index * 4 + 2);
+	sprite_data.attributes_flags = gbz80_memory_read8(ppu->instance, 0xFE00 + sprite_index * 4 + 3);
 
 	return sprite_data;
 }

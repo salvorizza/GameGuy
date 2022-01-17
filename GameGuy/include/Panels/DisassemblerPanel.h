@@ -60,8 +60,8 @@ namespace GameGuy {
 
 	private:
 		void disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionMap, uint8_t* base, uint8_t* end);
-		std::map<uint16_t, DisassemblerPanel::DebugInstruction>& getCurrentInstructionMap() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRom : mInstructionsCartridge; }
-		std::vector<uint16_t>& getCurrentInstructionMapKeys() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRomKeys : mInstructionsCartridgeKeys; }
+		inline std::map<uint16_t, DisassemblerPanel::DebugInstruction>& getCurrentInstructionMap() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRom : mInstructionsCartridge; }
+		inline std::vector<uint16_t>& getCurrentInstructionMapKeys() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRomKeys : mInstructionsCartridgeKeys; }
 
 		void onPlay();
 		void onStop();

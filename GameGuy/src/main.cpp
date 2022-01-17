@@ -1,15 +1,22 @@
 #include "Application/ApplicationManager.h"
+#include "Application/GameBoyVM.h"
+
 #include "Panels/MemoryEditorPanel.h"
 #include "Panels/DisassemblerPanel.h"
 #include "Panels/CPUStatusPanel.h"
 #include "Panels/ViewportPanel.h"
 #include "Panels/TileMapViewerPanel.h"
-#include "Application/GameBoyVM.h"
+#include "Panels/AudioPanel.h"
 
 #include "Graphics/BatchRenderer.h"
 
+
 #include <imgui.h>
 #include "gbz80.h"
+
+#include <iostream>
+
+#include "Application/AudioManager.h"
 
 using namespace GameGuy;
 
@@ -19,9 +26,39 @@ public:
 	GameGuyApp() 
 		:	Application("Game Guy"),
 			mProjectionMatrix(glm::identity<glm::mat4>())
-	{}
+	{
+		sInstance = this;
+	}
 
 	~GameGuyApp() {
+		mAudioManager->Stop();
+	}
+
+	static void vmSampleFunction(double left, double right) {
+		sInstance->mAudioPanel.addSample(0, left, right);
+
+		if (!sInstance->mCanFlush) {
+			sInstance->mSamples.push_back(left);
+			if (sInstance->mSamples.size() == 48000) {
+				sInstance->mCanFlush = true;
+			}
+		}
+	}
+
+	static double sample(double dTime) {
+		if (sInstance->mCanFlush) {
+			double sample = sInstance->mSamples.front();
+			sInstance->mSamples.pop_front();
+
+			if (sInstance->mSamples.empty()) {
+				sInstance->mCanFlush = false;
+			}
+
+			return sample;
+		}
+		else {
+			return 0;
+		}
 	}
 
 	virtual void onSetup() override {
@@ -33,16 +70,27 @@ public:
 		mCPUStatusPanel.setInstance(mGameBoyVM);
 		mViewportPanel.setInstance(mGameBoyVM);
 
-		mGameBoyVM.setBreakFunction(std::bind(&DisassemblerPanel::breakFunction, mDisassemblerPanel, std::placeholders::_1));
+		gbz80_set_sample_rate(mGameBoyVM, 48000);
+		gbz80_set_sample_function(mGameBoyVM, &vmSampleFunction);
+
+		mCanFlush = false;
+
+		mGameBoyVM.setBreakFunction(std::bind(&DisassemblerPanel::breakFunction, &mDisassemblerPanel, std::placeholders::_1));
 		mDisassemblerPanel.disassembleBootRom();
+
+		std::vector<std::wstring> devices = AudioManager<int16_t>::Enumerate();
+		mAudioManager = std::make_shared<AudioManager<int16_t>>(devices[0], 44100, 1, 8, 512);
+
+		// Link noise function with sound machine
+		mAudioManager->SetUserFunction(sample);
 	}
 
 	virtual void onUpdate() override {
 		mGameBoyVM.update();
+		mDisassemblerPanel.onUpdate();
 	}
 
 	virtual void onRender() override {
-		//mDisassemblerPanel.onUpdate();
 
 		mViewportPanel.startFrame();
 		glClearColor(1, 0, 1, 1);
@@ -112,7 +160,7 @@ public:
 				if (ImGui::MenuItem("Disassembler", "CTRL+D")) mDisassemblerPanel.open();
 				if (ImGui::MenuItem("CPU Status", "CTRL+R")) mCPUStatusPanel.open();
 				if (ImGui::MenuItem("Viewport", "CTRL+O")) mViewportPanel.open();
-				if (ImGui::MenuItem("TIle Map Viewer", "CTRL+T")) mTileMapViewerPanel.open();
+				if (ImGui::MenuItem("Tile Map Viewer", "CTRL+T")) mTileMapViewerPanel.open();
 
 
 				ImGui::EndMenu();
@@ -137,20 +185,36 @@ public:
 		mCPUStatusPanel.render();
 		mViewportPanel.render();
 		mTileMapViewerPanel.render();
+		mAudioPanel.render();
 	}
 
+
+	public:
+		std::atomic<bool> mCanFlush;
+		std::deque<double> mSamples;
+
+
 private:
+	static GameGuyApp* sInstance;
+
+	AudioPanel mAudioPanel;
 	GameBoyVM mGameBoyVM;
 	MemoryEditorPanel mMemoryEditorPanel;
 	DisassemblerPanel mDisassemblerPanel;
 	CPUStatusPanel mCPUStatusPanel;
 	ViewportPanel mViewportPanel;
 	TileMapViewerPanel mTileMapViewerPanel;
+
 	Timer mTimer;
 	glm::mat4 mProjectionMatrix;
 
 	std::shared_ptr<BatchRenderer> mBatchRenderer;
+	std::shared_ptr<AudioManager<int16_t>> mAudioManager;
+
+	
 };
+
+GameGuyApp* GameGuyApp::sInstance = nullptr;
 
 int main(int argc, char** argv) {
 	ApplicationManager appManager;

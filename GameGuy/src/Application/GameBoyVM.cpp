@@ -42,6 +42,7 @@ namespace GameGuy {
 				size_t cyclesToPass = gbz80_utility_get_num_cycles_from_seconds(mInstance, mTimer.getDeltaTimeInSeconds());
 				for (size_t cyclesPassed = 0; cyclesPassed < cyclesToPass;) {
 					/*if (mBreakFunction(mInstance->cpu.registers.PC)) {
+						setState(VMState::Pause);
 						break;
 					}*/
 					cyclesPassed += gbz80_step(mInstance);

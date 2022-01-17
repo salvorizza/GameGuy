@@ -4,9 +4,9 @@
 
 namespace GameGuy {
 
-	Panel::Panel(const std::string& name, bool hasMenuBar, bool noPadding)
+	Panel::Panel(const std::string& name, bool hasMenuBar, bool noPadding, bool defaultOpen)
 		:	mName(name),
-			mOpen(true),
+			mOpen(defaultOpen),
 			mHasMenuBar(hasMenuBar),
 			mNoPadding(noPadding)
 	{}

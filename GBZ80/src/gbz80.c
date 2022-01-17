@@ -5,6 +5,72 @@ gbz80_t* gbz80_create() {
 	return instance;
 }
 
+uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
+	if (instance->bootstrap_mode == 1 && address <= 0xFF) {
+		return instance->bootstrap_rom[address];
+	}
+	else {
+		return instance->memory_map[address];
+	}
+}
+
+void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
+	if (instance->bootstrap_mode == 1 && address <= 0xFF) {
+		instance->bootstrap_rom[address] = val;
+	}
+	else {
+		if (address == 0xFF50 && instance->bootstrap_mode == 1 && val == 1) {
+			instance->bootstrap_mode = 0;
+		}
+
+		instance->memory_map[address] = val;
+
+		//Trigger events
+		switch (address) {
+		case 0xFF14:
+			if(common_get8_bit(val,7))
+				gbz80_apu_trigger_channel1(&instance->apu);
+			break;
+
+		case 0xFF19:
+			if (common_get8_bit(val, 7))
+				gbz80_apu_trigger_channel2(&instance->apu);
+			break;
+
+		case 0xFF1E:
+			if (common_get8_bit(val, 7))
+				gbz80_apu_trigger_channel3(&instance->apu);
+			break;
+
+		case 0xFF23:
+			if (common_get8_bit(val, 7))
+				gbz80_apu_trigger_channel4(&instance->apu);
+			break;
+		}
+	}
+
+}
+
+uint16_t gbz80_memory_read16(gbz80_t* instance, uint16_t address) {
+	return (uint16_t)gbz80_memory_read8(instance, address + 1) << 8 | gbz80_memory_read8(instance, address);
+}
+
+void gbz80_memory_write16(gbz80_t* instance, uint16_t address, uint16_t val) {
+	gbz80_memory_write8(instance, address, (uint8_t)(val & 0xFF));
+	gbz80_memory_write8(instance, address + 1, (uint8_t)((val >> 8) & 0xFF));
+}
+
+void gbz80_set_sample_rate(gbz80_t* instance, size_t sample_rate)
+{
+	gbz80_apu_init_timer(&instance->apu.sample_timer, GBZ80_APU_FREQ / sample_rate);
+}
+
+void gbz80_set_sample_function(gbz80_t* instance, gbz80_apu_sample_function_t sample_func)
+{
+	instance->apu.sample_function = sample_func;
+	gbz80_apu_reset_timer(&instance->apu.sample_timer);
+
+}
 
 void gbz80_init(gbz80_t* instance, const char* bios_path) {
 	FILE* f = fopen(bios_path, "rb");
@@ -19,6 +85,7 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 	instance->cartridge_code_size = 0;
 	gbz80_cpu_init(&instance->cpu, instance);
 	gbz80_ppu_init(&instance->ppu, instance);
+	gbz80_apu_init(&instance->apu, instance);
 }
 
 void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
@@ -35,7 +102,8 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 
 size_t gbz80_step(gbz80_t* instance){
 	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
-	gbz80_ppu_step(&instance->ppu, num_cycles);
+	gbz80_ppu_step(&instance->ppu, num_cycles * 4);
+	gbz80_apu_step(&instance->apu, num_cycles * 4);
 	return num_cycles;
 }
 

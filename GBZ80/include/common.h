@@ -15,12 +15,16 @@ extern "C" {
 	#define KIBI(x) 1024 * BYTE(x)
 	#define MIBI(x) 1024 * KIBI(x)
 
-	void common_change8_bit(uint8_t* bitset, uint8_t bit_pos, uint8_t bit_val);
 	void common_toggle8_bit(uint8_t* bitset, uint8_t bit_pos);
-	void common_set8_bit(uint8_t* bitset, uint8_t bit_pos);
 	void common_reset8_bit(uint8_t* bitset, uint8_t bit_pos);
+	void common_set8_bit(uint8_t* bitset, uint8_t bit_pos);
+
+	void common_change8_bit(uint8_t* bitset, uint8_t bit_pos, uint8_t bit_val);
+	void common_change8_bit_range(uint8_t* bitset, uint8_t bit_pos_start, uint8_t bit_pos_end, uint8_t val);
+
 
 	uint8_t common_get8_bit(uint8_t bitset, uint8_t bit_pos);
+	uint8_t common_get8_bit_range(uint8_t bitset, uint8_t bit_pos_start, uint8_t bit_pos_end);
 
 #ifdef __cplusplus
 }

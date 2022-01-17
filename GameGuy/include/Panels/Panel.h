@@ -6,7 +6,7 @@ namespace GameGuy {
 
 	class Panel {
 	public:
-		Panel(const std::string& name, bool hasMenuBar, bool noPadding = false);
+		Panel(const std::string& name, bool hasMenuBar, bool noPadding = false, bool defaultOpen = true);
 		~Panel();
 
 		void open();

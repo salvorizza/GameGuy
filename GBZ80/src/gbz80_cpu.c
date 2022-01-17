@@ -19,35 +19,6 @@ uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag){
 	return (cpu->registers.flags >> (uint8_t)flag) & 0x1;
 }
 
-uint8_t gbz80_cpu_memory_read8(gbz80_cpu_t* cpu, uint16_t address) {
-	if (cpu->instance->bootstrap_mode == 1 && address <= 0xFF) {
-		return cpu->instance->bootstrap_rom[address];
-	} else {
-		return cpu->instance->memory_map[address];
-	}
-}
-
-void gbz80_cpu_memory_write8(gbz80_cpu_t* cpu, uint16_t address, uint8_t val) {
-	if (cpu->instance->bootstrap_mode == 1 && address <= 0xFF) {
-		cpu->instance->bootstrap_rom[address] = val;
-	} else {
-		if (address == 0xFF50 && cpu->instance->bootstrap_mode == 1 && val == 1) {
-			cpu->instance->bootstrap_mode = 0;
-		}
-		cpu->instance->memory_map[address] = val;
-	}
-
-}
-
-uint16_t gbz80_cpu_memory_read16(gbz80_cpu_t* cpu, uint16_t address) {
-	return (uint16_t)gbz80_cpu_memory_read8(cpu,address + 1) << 8 | gbz80_cpu_memory_read8(cpu, address);
-}
-
-void gbz80_cpu_memory_write16(gbz80_cpu_t* cpu, uint16_t address, uint16_t val) {
-	gbz80_cpu_memory_write8(cpu, address, (uint8_t)(val & 0xFF));
-	gbz80_cpu_memory_write8(cpu, address + 1, (uint8_t)((val >> 8) & 0xFF));
-}
-
 void gbz80_cpu_set_register8(gbz80_cpu_t* cpu, gbz80_register_t r, uint8_t val) {
 	switch (r)
 	{
@@ -77,19 +48,19 @@ void gbz80_cpu_set_register8(gbz80_cpu_t* cpu, gbz80_register_t r, uint8_t val) 
 			break;
 
 		case GBZ80_REGISTER_AF:
-			gbz80_cpu_memory_write8(cpu, cpu->registers.AF, val);
+			gbz80_memory_write8(cpu->instance, cpu->registers.AF, val);
 			break;
 
 		case GBZ80_REGISTER_BC:
-			gbz80_cpu_memory_write8(cpu, cpu->registers.BC, val);
+			gbz80_memory_write8(cpu->instance, cpu->registers.BC, val);
 			break;
 
 		case GBZ80_REGISTER_DE:
-			gbz80_cpu_memory_write8(cpu, cpu->registers.DE, val);
+			gbz80_memory_write8(cpu->instance, cpu->registers.DE, val);
 			break;
 
 		case GBZ80_REGISTER_HL:
-			gbz80_cpu_memory_write8(cpu, cpu->registers.HL, val);
+			gbz80_memory_write8(cpu->instance, cpu->registers.HL, val);
 			break;
 	default:
 		break;
@@ -124,16 +95,16 @@ uint8_t gbz80_cpu_get_register8(gbz80_cpu_t* cpu, gbz80_register_t r) {
 		return cpu->registers.L;
 
 	case GBZ80_REGISTER_AF:
-		return gbz80_cpu_memory_read8(cpu, cpu->registers.AF);
+		return gbz80_memory_read8(cpu->instance, cpu->registers.AF);
 
 	case GBZ80_REGISTER_BC:
-		return gbz80_cpu_memory_read8(cpu, cpu->registers.BC);
+		return gbz80_memory_read8(cpu->instance, cpu->registers.BC);
 
 	case GBZ80_REGISTER_DE:
-		return gbz80_cpu_memory_read8(cpu, cpu->registers.DE);
+		return gbz80_memory_read8(cpu->instance, cpu->registers.DE);
 
 	case GBZ80_REGISTER_HL:
-		return gbz80_cpu_memory_read8(cpu, cpu->registers.HL);
+		return gbz80_memory_read8(cpu->instance, cpu->registers.HL);
 	}
 
 	return 0;
@@ -202,11 +173,11 @@ size_t gbz80_cpu_step(gbz80_cpu_t* cpu)
 void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
 {
 	out_instruction->address = cpu->registers.PC;
-	uint8_t opcode = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+	uint8_t opcode = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 	out_instruction->prefix = 0x00;
 	if (opcode == 0xCB) {
 		out_instruction->prefix = opcode;
-		opcode = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+		opcode = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 	}
 	out_instruction->opcode = opcode;
 }
@@ -216,7 +187,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t prefix = instruction->prefix;
 
 	if (prefix == 0x00 && (opcode == 0x06 || opcode == 0x0E || opcode == 0x16 || opcode == 0x1E || opcode == 0x26 || opcode == 0x2E)) {
-		instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+		instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
 		instruction->cycles = 8;
 
@@ -649,7 +620,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 					break;
 
 				case 0x36:
-					instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+					instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 					sprintf(instruction->disassembled_name, "LD (HL),$%02X", instruction->n);
 					instruction->execute_function = &gbz80_cpu_load8_r_n;
 					instruction->left_r = GBZ80_REGISTER_HL;
@@ -682,8 +653,8 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 
 			case 0xFA: {
-				uint16_t nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
-				instruction->n = gbz80_cpu_memory_read8(cpu, nn);
+				uint16_t nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
+				instruction->n = gbz80_memory_read8(cpu->instance, nn);
 				sprintf(instruction->disassembled_name, "LD A,($%04X)", nn);
 				instruction->left_r= GBZ80_REGISTER_A;
 				instruction->execute_function = &gbz80_cpu_load8_r_n;
@@ -693,7 +664,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 			}
 
 			case 0x3E:
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				sprintf(instruction->disassembled_name, "LD A,$%02X", instruction->n);
 				instruction->left_r = GBZ80_REGISTER_A;
 				instruction->execute_function = &gbz80_cpu_load8_r_n;
@@ -724,7 +695,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 				break;
 
 			case 0xEA: {
-				instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+				instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 				sprintf(instruction->disassembled_name, "LD ($%04X),A", instruction->nn);
 				instruction->right_r = GBZ80_REGISTER_A;
 				instruction->execute_function = &gbz80_cpu_load8_n_r;
@@ -737,7 +708,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	else if (prefix == 0x00 && (opcode == 0xF2)) {
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
 		instruction->cycles = 8;
-		instruction->n = gbz80_cpu_memory_read8(cpu, 0xFF00 + cpu->registers.C);
+		instruction->n = gbz80_memory_read8(cpu->instance, 0xFF00 + cpu->registers.C);
 		sprintf(instruction->disassembled_name, "LD A,($FF00+C)");
 		instruction->left_r = GBZ80_REGISTER_A;
 	}
@@ -771,7 +742,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	else if (prefix == 0x00 && (opcode == 0xE0)) {
 		instruction->execute_function = &gbz80_cpu_load8_n_r;
 		instruction->cycles = 12;
-		uint8_t n = gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
+		uint8_t n = gbz80_memory_read8(cpu->instance,cpu->registers.PC++);
 		instruction->nn = 0xFF00 + n;
 		sprintf(instruction->disassembled_name, "LD ($FF00+$%02X),A",n);
 		instruction->right_r = GBZ80_REGISTER_A;
@@ -779,15 +750,15 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	else if (prefix == 0x00 && (opcode == 0xF0)) {
 		instruction->execute_function = &gbz80_cpu_load8_r_n;
 		instruction->cycles = 12;
-		uint8_t n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
-		instruction->n = gbz80_cpu_memory_read8(cpu, 0xFF00 + n);
+		uint8_t n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
+		instruction->n = gbz80_memory_read8(cpu->instance, 0xFF00 + n);
 		sprintf(instruction->disassembled_name, "LD A,($FF00+$%02X)", n);
 		instruction->right_r = GBZ80_REGISTER_A;
 	}
 	else if (prefix == 0x00 && (opcode == 0x01 || opcode == 0x11 || opcode == 0x21 || opcode == 0x31)) {
 		instruction->execute_function = &gbz80_cpu_load16_r_nn;
 		instruction->cycles = 12;
-		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 		cpu->registers.PC += 2;
 
 		switch (opcode) {
@@ -822,13 +793,13 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	else if (prefix == 0x00 && (opcode == 0xF8)) {
 		instruction->execute_function = &gbz80_cpu_load16_hl_sp_plus_n;
 		instruction->cycles = 12;
-		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+		instruction->d = (int8_t)gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 		sprintf(instruction->disassembled_name, "LDHL SP,$%04X", instruction->d);
 	}
 	else if (prefix == 0x00 && (opcode == 0x08)) {
 		instruction->execute_function = &gbz80_cpu_load16_nn_r;
 		instruction->cycles = 20;
-		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 		cpu->registers.PC += 2;
 		sprintf(instruction->disassembled_name, "LD ($%04X),SP", instruction->nn);
 	}
@@ -940,7 +911,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xC6:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_add_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "ADD A,$%02X", instruction->n);
@@ -1004,7 +975,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xCE:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_adc_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "ADC A,$%02X", instruction->n);
@@ -1067,7 +1038,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xD6:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_sub_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "SUB $%02X", instruction->n);
@@ -1130,7 +1101,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xDE:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_sbc_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "SBC A,$%02X", instruction->n);
@@ -1193,7 +1164,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xE6:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_and_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "AND $%02X", instruction->n);
@@ -1256,7 +1227,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xF6:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_or_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "OR $%02X", instruction->n);
@@ -1319,7 +1290,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xEE:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_xor_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "XOR $%02X", instruction->n);
@@ -1382,7 +1353,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 			case 0xFE:
 				instruction->left_r = GBZ80_REGISTER_A;
-				instruction->n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+				instruction->n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 				instruction->execute_function = &gbz80_cpu_alu8_cp_r_n;
 				instruction->cycles = 8;
 				sprintf(instruction->disassembled_name, "CP $%02X", instruction->n);
@@ -1511,7 +1482,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	else if (prefix == 0x00 && (opcode == 0xE8)) {
 		instruction->execute_function = &gbz80_cpu_alu16_add_sp_nn;
 		instruction->cycles = 16;
-		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
+		instruction->d = (int8_t)gbz80_memory_read8(cpu->instance,cpu->registers.PC++);
 		sprintf(instruction->disassembled_name, "SP SP,$%04X", instruction->d);
 	}
 	else if (prefix == 0x00 && (opcode == 0x03 || opcode == 0x13 || opcode == 0x23 || opcode == 0x33)) {
@@ -1639,7 +1610,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 		sprintf(instruction->disassembled_name, "NOP");
 	}
 	else if (prefix == 0x00 && (opcode == 0x10)) {
-		uint8_t n = gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+		uint8_t n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 		if (n == 0x00) {
 			instruction->execute_function = &gbz80_cpu_misc_stop;
 			instruction->cycles = 4;
@@ -2156,13 +2127,13 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	else if (prefix == 0x00 && (opcode == 0xC3)) {
 		instruction->execute_function = &gbz80_cpu_jumps_jp_nn;
 		instruction->cycles = 12;
-		instruction->nn = gbz80_cpu_memory_read16(cpu,cpu->registers.PC);
+		instruction->nn = gbz80_memory_read16(cpu->instance,cpu->registers.PC);
 		sprintf(instruction->disassembled_name, "JP $%04X", instruction->nn);
 		cpu->registers.PC += 2;
 	}
 	else if (prefix == 0x00 && (opcode == 0xC2 || opcode == 0xCA || opcode == 0xD2 || opcode == 0xDA)) {
 		instruction->cycles = 12;
-		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 		cpu->registers.PC += 2;
 
 		switch (opcode) {
@@ -2194,13 +2165,13 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	}
 	else if (prefix == 0x00 && (opcode == 0x18)) {
 		instruction->cycles = 8;
-		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu,cpu->registers.PC++);
+		instruction->d = (int8_t)gbz80_memory_read8(cpu->instance,cpu->registers.PC++);
 		instruction->execute_function = &gbz80_cpu_jumps_jr_d;
 		sprintf(instruction->disassembled_name, "JR $%04X", instruction->address + instruction->d + 2);
 	}
 	else if (prefix == 0x00 && (opcode == 0x20 || opcode == 0x28 || opcode == 0x30 || opcode == 0x38)) {
 		instruction->cycles = 8;
-		instruction->d = (int8_t)gbz80_cpu_memory_read8(cpu, cpu->registers.PC++);
+		instruction->d = (int8_t)gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 
 		switch (opcode) {
 			case 0x20:
@@ -2226,14 +2197,14 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	}
 	else if (prefix == 0x00 && (opcode == 0xCD)) {
 		instruction->cycles = 12;
-		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 		instruction->execute_function = &gbz80_cpu_calls_call_nn;
 		sprintf(instruction->disassembled_name, "CALL $%04X", instruction->nn);
 		cpu->registers.PC += 2;
 	}
 	else if (prefix == 0x00 && (opcode == 0xC4 || opcode == 0xCC || opcode == 0xD4 || opcode == 0xDC)) {
 		instruction->cycles = 12;
-		instruction->nn = gbz80_cpu_memory_read16(cpu, cpu->registers.PC);
+		instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 
 		switch (opcode) {
 			case 0xC4:
@@ -2364,12 +2335,12 @@ void gbz80_cpu_load8_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 void gbz80_cpu_load8_n_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
-	gbz80_cpu_memory_write8(cpu, instruction->nn, val);
+	gbz80_memory_write8(cpu->instance, instruction->nn, val);
 }
 
 void gbz80_cpu_load8_a_hl_dec(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
-	uint8_t val = gbz80_cpu_memory_read8(cpu, hl);
+	uint8_t val = gbz80_memory_read8(cpu->instance, hl);
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, val);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl - 1);
 }
@@ -2377,13 +2348,13 @@ void gbz80_cpu_load8_a_hl_dec(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 void gbz80_cpu_load8_hl_dec_a(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 	uint8_t a = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
-	gbz80_cpu_memory_write8(cpu, hl, a);
+	gbz80_memory_write8(cpu->instance, hl, a);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl - 1);
 }
 
 void gbz80_cpu_load8_a_hl_inc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
-	uint8_t val = gbz80_cpu_memory_read8(cpu, hl);
+	uint8_t val = gbz80_memory_read8(cpu->instance, hl);
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, val);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl + 1);
 }
@@ -2391,7 +2362,7 @@ void gbz80_cpu_load8_a_hl_inc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 void gbz80_cpu_load8_hl_inc_a(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 	uint8_t a = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
-	gbz80_cpu_memory_write8(cpu, hl, a);
+	gbz80_memory_write8(cpu->instance, hl, a);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl + 1);
 }
 
@@ -2412,20 +2383,20 @@ void gbz80_cpu_load16_hl_sp_plus_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instru
 
 void gbz80_cpu_load16_nn_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction){
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
-	gbz80_cpu_memory_write8(cpu, instruction->nn, val);
+	gbz80_memory_write8(cpu->instance, instruction->nn, val);
 }
 
 void gbz80_cpu_load16_push(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
 	uint16_t nn = gbz80_cpu_get_register16(cpu, instruction->right_r);
 
-	gbz80_cpu_memory_write16(cpu, sp - 2, nn);
+	gbz80_memory_write16(cpu->instance, sp - 2, nn);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp - 2);
 }
 
 void gbz80_cpu_load16_pop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
-	uint16_t nn = gbz80_cpu_memory_read16(cpu, sp);
+	uint16_t nn = gbz80_memory_read16(cpu->instance, sp);
 
 	gbz80_cpu_set_register16(cpu, instruction->left_r, nn);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp + 2);
@@ -2736,12 +2707,12 @@ void gbz80_cpu_misc_stop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 
 void gbz80_cpu_misc_di(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
-	gbz80_cpu_memory_write8(cpu, 0xFFFF, 0);
+	gbz80_memory_write8(cpu->instance, 0xFFFF, 0);
 }
 
 void gbz80_cpu_misc_ei(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
-	gbz80_cpu_memory_write8(cpu, 0xFFFF, 1);
+	gbz80_memory_write8(cpu->instance, 0xFFFF, 1);
 }
 
 void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
@@ -2911,7 +2882,7 @@ void gbz80_cpu_jumps_jrc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 void gbz80_cpu_calls_call_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
-	gbz80_cpu_memory_write16(cpu, sp - 2, cpu->registers.PC);
+	gbz80_memory_write16(cpu->instance, sp - 2, cpu->registers.PC);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp - 2);
 	cpu->registers.PC = instruction->nn;
 }
@@ -2947,7 +2918,7 @@ void gbz80_cpu_calls_callc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 void gbz80_cpu_rsts_rst_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
-	gbz80_cpu_memory_write16(cpu, sp - 2, instruction->address);
+	gbz80_memory_write16(cpu->instance, sp - 2, instruction->address);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp - 2);
 	cpu->registers.PC = 0x0000 + instruction->n;
 }
@@ -2955,7 +2926,7 @@ void gbz80_cpu_rsts_rst_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 void gbz80_cpu_rtrns_ret(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint16_t sp = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_SP);
-	uint16_t nn = gbz80_cpu_memory_read16(cpu, sp);
+	uint16_t nn = gbz80_memory_read16(cpu->instance, sp);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_SP, sp + 2);
 	cpu->registers.PC = nn;
 }

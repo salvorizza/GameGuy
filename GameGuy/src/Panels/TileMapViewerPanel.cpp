@@ -5,7 +5,7 @@
 
 namespace GameGuy {
 	TileMapViewerPanel::TileMapViewerPanel()
-		:	Panel("Tile Map Viewer", false, true),
+		:	Panel("Tile Map Viewer", false, true, false),
 			mInstance(NULL),
 			mResizeWidth(0),
 			mResizeHeight(0),
@@ -19,7 +19,7 @@ namespace GameGuy {
 
 	void TileMapViewerPanel::onRender(const std::shared_ptr<BatchRenderer>& batchRenderer)
 	{
-		if (mInstance && mFBO) {
+		if (mOpen && mInstance && mFBO) {
 			if (mNeedResize) {
 				mFBO->resize(mResizeWidth, mResizeHeight);
 				mFBO->bind();

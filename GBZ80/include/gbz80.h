@@ -8,6 +8,7 @@ extern "C" {
 #include "gbz80_cartridge.h"
 #include "gbz80_cpu.h"
 #include "gbz80_ppu.h"
+#include "gbz80_apu.h"
 
 #define GBZ80_CLOCK_HERTZ 4194304
 #define GBZ80_MEMORY_SIZE KIBI(64)
@@ -47,6 +48,7 @@ extern "C" {
 		uint8_t bootstrap_rom[GBZ80_ROM_SIZE];
 		gbz80_cpu_t cpu;
 		gbz80_ppu_t ppu;
+		gbz80_apu_t apu;
 		size_t cartridge_code_size;
 	} gbz80_t;
 
@@ -56,6 +58,14 @@ extern "C" {
 	size_t gbz80_step(gbz80_t* instance);
 	size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds);
 	void gbz80_destroy(gbz80_t* rom);
+
+	uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address);
+	void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val);
+	uint16_t gbz80_memory_read16(gbz80_t* instance, uint16_t address);
+	void gbz80_memory_write16(gbz80_t* instance, uint16_t address, uint16_t val);
+
+	void gbz80_set_sample_rate(gbz80_t* instance, size_t sample_rate);
+	void gbz80_set_sample_function(gbz80_t* instance, gbz80_apu_sample_function_t sample_func);
 
 #ifdef __cplusplus
 }

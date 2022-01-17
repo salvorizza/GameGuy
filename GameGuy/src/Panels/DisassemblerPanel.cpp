@@ -42,9 +42,15 @@ namespace GameGuy {
 		for (auto& [address, debugInstruction] : mInstructionsCartridge)
 			mInstructionsCartridgeKeys.push_back(address);
 	}
+
 	bool DisassemblerPanel::breakFunction(uint16_t address)
 	{
-		bool isBreaked = getCurrentInstructionMap()[mInstance->cpu.registers.PC].Breakpoint;
+		uint16_t currentPC = mInstance->cpu.registers.PC;
+		auto& instructionMap = getCurrentInstructionMap();
+		bool isBreaked = instructionMap.at(currentPC).Breakpoint;
+		if (isBreaked) {
+			setDebugState(DebugState::Breakpoint);
+		}
 		return isBreaked;
 	}
 
@@ -54,11 +60,11 @@ namespace GameGuy {
 		switch (mDebugState) {
 			case DebugState::Start:
 				setDebugState(DebugState::Running);
-				mInstance->cpu.registers.PC = getCurrentInstructionMap().begin()->first;
+				//mInstance->cpu.registers.PC = getCurrentInstructionMap().begin()->first;
 				break;
 
 			case DebugState::Running:
-				if (mPrevDebugState == DebugState::Breakpoint) {
+				/*if (mPrevDebugState == DebugState::Breakpoint) {
 					gbz80_step(mInstance);
 					mPrevDebugState = DebugState::Step;
 				}
@@ -84,7 +90,7 @@ namespace GameGuy {
 				}
 				else {
 					setDebugState(DebugState::Stop);
-				}
+				}*/
 				break;
 
 			case DebugState::Step:

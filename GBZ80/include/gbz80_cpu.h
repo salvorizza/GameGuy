@@ -90,11 +90,6 @@ extern "C" {
 	uint16_t gbz80_cpu_get_register16(gbz80_cpu_t* cpu, gbz80_register_t r);
 	void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val);
 
-	uint8_t gbz80_cpu_memory_read8(gbz80_cpu_t* cpu, uint16_t address);
-	void gbz80_cpu_memory_write8(gbz80_cpu_t* cpu, uint16_t address, uint8_t val);
-	uint16_t gbz80_cpu_memory_read16(gbz80_cpu_t* cpu, uint16_t address);
-	void gbz80_cpu_memory_write16(gbz80_cpu_t* cpu, uint16_t address, uint16_t val);
-
 	size_t gbz80_cpu_step(gbz80_cpu_t* cpu);
 
 	void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction);
