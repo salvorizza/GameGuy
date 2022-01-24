@@ -16,7 +16,6 @@
 
 #include <iostream>
 
-#include "Application/AudioManager.h"
 
 using namespace GameGuy;
 
@@ -27,41 +26,13 @@ public:
 		:	Application("Game Guy"),
 			mProjectionMatrix(glm::identity<glm::mat4>())
 	{
-		sInstance = this;
 	}
 
 	~GameGuyApp() {
-		mAudioManager->Stop();
-	}
-
-	static void vmSampleFunction(double left, double right) {
-		sInstance->mAudioPanel.addSample(0, left, right);
-
-		if (!sInstance->mCanFlush) {
-			sInstance->mSamples.push_back(left);
-			if (sInstance->mSamples.size() == 48000) {
-				sInstance->mCanFlush = true;
-			}
-		}
-	}
-
-	static double sample(double dTime) {
-		if (sInstance->mCanFlush) {
-			double sample = sInstance->mSamples.front();
-			sInstance->mSamples.pop_front();
-
-			if (sInstance->mSamples.empty()) {
-				sInstance->mCanFlush = false;
-			}
-
-			return sample;
-		}
-		else {
-			return 0;
-		}
 	}
 
 	virtual void onSetup() override {
+		mGameBoyVM.init();
 		mBatchRenderer = std::make_shared<BatchRenderer>();
 
 		mTileMapViewerPanel.setInstance(mGameBoyVM);
@@ -72,13 +43,6 @@ public:
 
 		mGameBoyVM.setBreakFunction(std::bind(&DisassemblerPanel::breakFunction, &mDisassemblerPanel, std::placeholders::_1));
 		mDisassemblerPanel.disassembleBootRom();
-
-		gbz80_set_sample_rate(mGameBoyVM, 48000);
-		gbz80_set_sample_function(mGameBoyVM, &vmSampleFunction);
-		mCanFlush = false;
-		std::vector<std::wstring> devices = AudioManager<int16_t>::Enumerate();
-		mAudioManager = std::make_shared<AudioManager<int16_t>>(devices[0], 44100, 1, 8, 512);
-		mAudioManager->SetUserFunction(sample);
 	}
 
 	virtual void onUpdate() override {
@@ -185,14 +149,7 @@ public:
 	}
 
 
-	public:
-		std::atomic<bool> mCanFlush;
-		std::deque<double> mSamples;
-
-
 private:
-	static GameGuyApp* sInstance;
-
 	AudioPanel mAudioPanel;
 	GameBoyVM mGameBoyVM;
 	MemoryEditorPanel mMemoryEditorPanel;
@@ -205,12 +162,9 @@ private:
 	glm::mat4 mProjectionMatrix;
 
 	std::shared_ptr<BatchRenderer> mBatchRenderer;
-	std::shared_ptr<AudioManager<int16_t>> mAudioManager;
 
 	
 };
-
-GameGuyApp* GameGuyApp::sInstance = nullptr;
 
 int main(int argc, char** argv) {
 	ApplicationManager appManager;

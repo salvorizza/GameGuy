@@ -20,7 +20,7 @@ namespace GameGuy {
 
 	private:
 		std::deque<std::tuple<size_t, double, double>> mSamples;
-		const size_t MAX_SAMPLES = 128;
+		const size_t MAX_SAMPLES = 48000;
 	};
 
 }

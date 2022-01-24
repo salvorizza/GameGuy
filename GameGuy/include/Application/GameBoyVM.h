@@ -4,10 +4,13 @@
 #include "Timer.h"
 
 #include <functional>
+#include "Application/AudioManager.h"
+
+#include <deque>
 
 namespace GameGuy {
 
-	enum class VMState {
+	enum VMState : uint32_t {
 		None,
 		Start,
 		Run,
@@ -22,22 +25,34 @@ namespace GameGuy {
 		GameBoyVM();
 		~GameBoyVM();
 
+		void init();
 		void update();
 		void loadRom(const char* romPath);
 
-		inline void setState(VMState state) { mPrevState = mState; mState = state; }
-		inline VMState getState() const { return mState; }
+		inline void setState(VMState state) { mPrevState = (uint32_t)mState; mState = state; }
+		inline VMState getState() const { return (VMState)mState.load(); }
 
 		inline void setBreakFunction(const BreakFunction& breakFunction) { mBreakFunction = breakFunction; }
 
 		operator gbz80_t*() { return mInstance; }
+
+	private:
+		static int32_t vmSampleFunction(double left, double right);
+		static double sample(double dTime);
 	private:
 		gbz80_t* mInstance;
 		gbz80_cartridge_t* mCurrentlyLoadedCartridge;
-		VMState mState,mPrevState;
+
+		std::atomic<uint32_t> mState,mPrevState;
+
 		Timer mTimer;
 		BreakFunction mBreakFunction;
+
+		std::shared_ptr<AudioManager<int16_t>> mAudioManager;
+		std::deque<double> mSamples;
 		const char* mBiosPath;
+
+		static GameBoyVM* sInstance;
 	};
 
 }

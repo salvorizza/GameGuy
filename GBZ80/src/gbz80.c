@@ -23,30 +23,9 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 			instance->bootstrap_mode = 0;
 		}
 
+		uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, val);
+
 		instance->memory_map[address] = val;
-
-		//Trigger events
-		switch (address) {
-		case 0xFF14:
-			if(common_get8_bit(val,7))
-				gbz80_apu_trigger_channel1(&instance->apu);
-			break;
-
-		case 0xFF19:
-			if (common_get8_bit(val, 7))
-				gbz80_apu_trigger_channel2(&instance->apu);
-			break;
-
-		case 0xFF1E:
-			if (common_get8_bit(val, 7))
-				gbz80_apu_trigger_channel3(&instance->apu);
-			break;
-
-		case 0xFF23:
-			if (common_get8_bit(val, 7))
-				gbz80_apu_trigger_channel4(&instance->apu);
-			break;
-		}
 	}
 
 }
@@ -102,8 +81,8 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 
 size_t gbz80_step(gbz80_t* instance){
 	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
-	gbz80_ppu_step(&instance->ppu, num_cycles * 4);
-	gbz80_apu_step(&instance->apu, num_cycles * 4);
+	gbz80_ppu_step(&instance->ppu, num_cycles);
+	gbz80_apu_step(&instance->apu, num_cycles);
 	return num_cycles;
 }
 

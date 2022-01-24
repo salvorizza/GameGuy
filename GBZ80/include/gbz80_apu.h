@@ -10,9 +10,9 @@ extern "C" {
 
 	typedef struct gbz80_t gbz80_t;
 
-	typedef void(*gbz80_apu_sample_function_t)(double, double);
-
+	typedef int32_t(*gbz80_apu_sample_function_t)(double, double);
 	
+		
 	typedef struct gbz80_apu_timer_t {
 		size_t counter;
 		size_t period;
@@ -81,6 +81,8 @@ extern "C" {
 		gbz80_apu_channel_2_t channel_2;
 		gbz80_apu_channel_3_t channel_3;
 
+		int32_t status;
+
 		gbz80_apu_timer_t sample_timer;
 		gbz80_apu_sample_function_t sample_function;
 
@@ -92,11 +94,8 @@ extern "C" {
 	void gbz80_apu_init(gbz80_apu_t* apu, gbz80_t* instance);
 	void gbz80_apu_step(gbz80_apu_t* apu, size_t num_cycles);
 
-	void gbz80_apu_channel_1_clock(gbz80_apu_t* apu);
-	void gbz80_apu_channel_2_clock(gbz80_apu_t* apu);
-	void gbz80_apu_channel_3_clock(gbz80_apu_t* apu);
-	//void gbz80_apu_channel_4_clock(gbz80_apu_t* apu);
-
+	uint8_t gbz80_apu_memory_read(gbz80_apu_t* apu, uint16_t address);
+	uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t val);
 
 	void gbz80_apu_trigger_channel1(gbz80_apu_t* apu);
 	void gbz80_apu_trigger_channel2(gbz80_apu_t* apu);
@@ -132,10 +131,9 @@ extern "C" {
 	void gbz80_apu_volume_envelope_init(gbz80_apu_volume_envelope_t* volume_envelope, uint8_t volume, uint8_t period);
 	void gbz80_apu_volume_envelope_update(gbz80_apu_volume_envelope_t* volume_envelope, uint8_t increment);
 
-	uint16_t gbz80_apu_frequency_sweep_calc(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency, uint8_t decrease, uint8_t sweep_shift);
-	uint8_t gbz80_apu_frequency_sweep_overflow_check(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency);
+	uint16_t gbz80_apu_frequency_sweep_calc(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency, uint8_t decrease, uint8_t sweep_shift, uint8_t* channel_enabled);
 
-	void gbz80_apu_frequency_sweep_init(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency, uint8_t sweep_time, uint8_t decrease, uint8_t sweep_shift);
+	uint8_t gbz80_apu_frequency_sweep_init(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency, uint8_t sweep_time, uint8_t decrease, uint8_t sweep_shift);
 	uint8_t gbz80_apu_frequency_sweep_update(gbz80_apu_frequency_sweep_t* frequency_sweep, uint8_t decrease, uint8_t sweep_shift);
 
 	void gbz80_apu_duty_init(gbz80_apu_duty_cycle_t* duty_cycler);
