@@ -16,7 +16,7 @@ void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 
 }
 
-void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
+void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 	uint8_t lcdc = gbz80_memory_read8(ppu->instance, 0xFF40);
 
 	if (common_get8_bit(lcdc, 7) == 1) {
@@ -27,59 +27,57 @@ void gbz80_ppu_step(gbz80_ppu_t* ppu, size_t num_cycles_passed) {
 			ppu->num_dots = 0;
 		}
 
-		for (size_t num_cycle = 0; num_cycle < num_cycles_passed; num_cycle++) {
-			uint32_t time_span = (ppu->num_dots % NUM_DOTS_ZERO) + 1;
+		uint32_t time_span = (ppu->num_dots % NUM_DOTS_ZERO) + 1;
 
-			if (ly >= 0 && ly < 143) {
-				if (time_span <= NUM_DOTS_TWO) {
-					if(time_span == 1)
-						gbz80_ppu_update_stat_register(ppu, 2, ly);
-				}
-				else if (time_span <= NUM_DOTS_THREE) {
-					if (time_span == NUM_DOTS_TWO + 1)
-						gbz80_ppu_update_stat_register(ppu, 3, ly);
-
-					if (time_span == NUM_DOTS_THREE) {
-						if (common_get8_bit(lcdc, 0) == 1) {
-							gbz80_ppu_draw_background(ppu, ly);
-						}
-
-						if (common_get8_bit(lcdc, 1) == 1) {
-							gbz80_ppu_draw_sprites(ppu, ly);
-						}
-					}
-
-
-					
-				}
-				else if (time_span <= NUM_DOTS_ZERO) {
-					if (time_span == NUM_DOTS_THREE + 1)
-						gbz80_ppu_update_stat_register(ppu, 0, ly);
-
-					if (time_span == NUM_DOTS_ZERO) {
-						ly++;
-						gbz80_ppu_update_stat_register(ppu, 0, ly);
-					}
-
-					
-				}
+		if (ly >= 0 && ly < 143) {
+			if (time_span <= NUM_DOTS_TWO) {
+				if(time_span == 1)
+					gbz80_ppu_update_stat_register(ppu, 2, ly);
 			}
-			else {
-				if (time_span <= NUM_DOTS_ZERO) {
-					if(time_span == 0)
-						gbz80_ppu_update_stat_register(ppu, 1, ly);
+			else if (time_span <= NUM_DOTS_THREE) {
+				if (time_span == NUM_DOTS_TWO + 1)
+					gbz80_ppu_update_stat_register(ppu, 3, ly);
 
-					if (time_span == NUM_DOTS_ZERO) {
-						ly++;
-						gbz80_ppu_update_stat_register(ppu, 1, ly);
+				if (time_span == NUM_DOTS_THREE) {
+					if (common_get8_bit(lcdc, 0) == 1) {
+						gbz80_ppu_draw_background(ppu, ly);
 					}
-					
-					
-				}
-			}
 
-			ppu->num_dots++;
+					if (common_get8_bit(lcdc, 1) == 1) {
+						gbz80_ppu_draw_sprites(ppu, ly);
+					}
+				}
+
+
+					
+			}
+			else if (time_span <= NUM_DOTS_ZERO) {
+				if (time_span == NUM_DOTS_THREE + 1)
+					gbz80_ppu_update_stat_register(ppu, 0, ly);
+
+				if (time_span == NUM_DOTS_ZERO) {
+					ly++;
+					gbz80_ppu_update_stat_register(ppu, 0, ly);
+				}
+
+					
+			}
 		}
+		else {
+			if (time_span <= NUM_DOTS_ZERO) {
+				if(time_span == 0)
+					gbz80_ppu_update_stat_register(ppu, 1, ly);
+
+				if (time_span == NUM_DOTS_ZERO) {
+					ly++;
+					gbz80_ppu_update_stat_register(ppu, 1, ly);
+				}
+					
+					
+			}
+		}
+
+		ppu->num_dots++;
 	}
 	else {
 		ppu->num_dots = 0;

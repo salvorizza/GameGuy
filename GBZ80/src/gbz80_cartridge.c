@@ -8,7 +8,7 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 	if (file_stream) {
 
 		fseek(file_stream, 0x0000, SEEK_END);
-		size_t code_size = ftell(file_stream) - 0x014F;
+		size_t code_size = ftell(file_stream) - (size_t)0x014F;
 		fseek(file_stream, 0x0000, SEEK_SET);
 
 		uint8_t* allocated_memory = (uint8_t*)malloc(sizeof(gbz80_cartridge_t) + sizeof(uint8_t) * code_size);

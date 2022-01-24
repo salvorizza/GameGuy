@@ -39,16 +39,8 @@ void gbz80_memory_write16(gbz80_t* instance, uint16_t address, uint16_t val) {
 	gbz80_memory_write8(instance, address + 1, (uint8_t)((val >> 8) & 0xFF));
 }
 
-void gbz80_set_sample_rate(gbz80_t* instance, size_t sample_rate)
-{
+void gbz80_set_sample_rate(gbz80_t* instance, size_t sample_rate) {
 	gbz80_apu_init_timer(&instance->apu.sample_timer, GBZ80_APU_FREQ / sample_rate);
-}
-
-void gbz80_set_sample_function(gbz80_t* instance, gbz80_apu_sample_function_t sample_func)
-{
-	instance->apu.sample_function = sample_func;
-	gbz80_apu_reset_timer(&instance->apu.sample_timer);
-
 }
 
 void gbz80_init(gbz80_t* instance, const char* bios_path) {
@@ -79,11 +71,10 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 	}
 }
 
-size_t gbz80_step(gbz80_t* instance){
-	size_t num_cycles = gbz80_cpu_step(&instance->cpu);
-	gbz80_ppu_step(&instance->ppu, num_cycles);
-	gbz80_apu_step(&instance->apu, num_cycles);
-	return num_cycles;
+void gbz80_clock(gbz80_t* instance){
+	gbz80_cpu_clock(&instance->cpu);
+	gbz80_ppu_clock(&instance->ppu);
+	gbz80_apu_clock(&instance->apu);
 }
 
 size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds)

@@ -22,14 +22,14 @@ namespace GameGuy {
 		mAudioManager->Stop();
 	}
 
-	void GameBoyVM::init()
+	void GameBoyVM::init(AudioPanel* audioPanel)
 	{
+		mAudioPanel = audioPanel;
 		sInstance = this;
 		mInstance = gbz80_create();
 		gbz80_init(mInstance, mBiosPath);
 
 		gbz80_set_sample_rate(mInstance, 48000);
-		gbz80_set_sample_function(mInstance, &vmSampleFunction);
 		std::vector<std::wstring> devices = AudioManager<int16_t>::Enumerate();
 		mAudioManager = std::make_shared<AudioManager<int16_t>>(devices[0], 48000, 1, 8, 512);
 		mAudioManager->SetUserFunction(sample);
@@ -71,21 +71,15 @@ namespace GameGuy {
 		gbz80_load_cartridge(mInstance, mCurrentlyLoadedCartridge);
 	}
 
-	int32_t GameBoyVM::vmSampleFunction(double left, double right)
-	{
-		//sInstance->mSample = left;
-		//sInstance->mPlay = true;
-		return 1;
-	}
-
 	double GameBoyVM::sample(double dTime)
 	{
 		if (sInstance->mState == VMState::Run) {
 			do {
-				gbz80_step(sInstance->mInstance);
-			} while (sInstance->mInstance->apu.status == 0);
+				gbz80_clock(sInstance->mInstance);
+			} while (sInstance->mInstance->apu.sample_ready == 0);
 			
 			double sample = sInstance->mInstance->apu.so_1;
+			sInstance->mAudioPanel->addSample(dTime, sample, sample);
 
 			return sample;
 		}

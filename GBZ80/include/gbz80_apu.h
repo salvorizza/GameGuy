@@ -8,10 +8,7 @@ extern "C" {
 
 	#define GBZ80_APU_FREQ 4194304llu
 
-	typedef struct gbz80_t gbz80_t;
-
-	typedef int32_t(*gbz80_apu_sample_function_t)(double, double);
-	
+	typedef struct gbz80_t gbz80_t;	
 		
 	typedef struct gbz80_apu_timer_t {
 		size_t counter;
@@ -80,19 +77,15 @@ extern "C" {
 		gbz80_apu_channel_1_t channel_1;
 		gbz80_apu_channel_2_t channel_2;
 		gbz80_apu_channel_3_t channel_3;
-
-		int32_t status;
-
+		int32_t sample_ready;
 		gbz80_apu_timer_t sample_timer;
-		gbz80_apu_sample_function_t sample_function;
-
 		gbz80_t* instance;
 	} gbz80_apu_t;
 
 
 
 	void gbz80_apu_init(gbz80_apu_t* apu, gbz80_t* instance);
-	void gbz80_apu_step(gbz80_apu_t* apu, size_t num_cycles);
+	void gbz80_apu_clock(gbz80_apu_t* apu);
 
 	uint8_t gbz80_apu_memory_read(gbz80_apu_t* apu, uint16_t address);
 	uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t val);
@@ -107,14 +100,10 @@ extern "C" {
 		timer->counter = period;
 	}
 
-	static __forceinline void gbz80_apu_reset_timer(gbz80_apu_timer_t* timer) {
-		timer->counter = timer->period;
-	}
-
 	static __forceinline uint8_t gbz80_apu_update_timer(gbz80_apu_timer_t* timer) {
 		timer->counter--;
 		if (timer->counter == 0) {
-			gbz80_apu_reset_timer(timer);
+			timer->counter = timer->period;
 			return 1;
 		}
 		return 0;

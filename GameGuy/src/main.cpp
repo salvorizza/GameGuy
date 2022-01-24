@@ -10,7 +10,6 @@
 
 #include "Graphics/BatchRenderer.h"
 
-
 #include <imgui.h>
 #include "gbz80.h"
 
@@ -32,7 +31,7 @@ public:
 	}
 
 	virtual void onSetup() override {
-		mGameBoyVM.init();
+		mGameBoyVM.init(&mAudioPanel);
 		mBatchRenderer = std::make_shared<BatchRenderer>();
 
 		mTileMapViewerPanel.setInstance(mGameBoyVM);
@@ -107,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/tetris.gb");
+					mGameBoyVM.loadRom("commons/roms/cpu_instrs.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

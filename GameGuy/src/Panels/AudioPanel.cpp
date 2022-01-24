@@ -15,6 +15,8 @@ namespace GameGuy {
 
 	void AudioPanel::addSample(size_t time, double left, double right)
 	{
+		std::lock_guard<std::mutex> lc(mMutex);
+
 		if (mSamples.size() > MAX_SAMPLES)
 			mSamples.pop_front();
 
@@ -23,6 +25,8 @@ namespace GameGuy {
 
 
 	void AudioPanel::onImGuiRender() {
+		std::lock_guard<std::mutex> lc(mMutex);
+
 		ImVec2 pos = ImGui::GetWindowPos();
 		ImVec2 region = ImGui::GetContentRegionAvail();
 		ImDrawList* drawList = ImGui::GetWindowDrawList();

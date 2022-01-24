@@ -95,7 +95,7 @@ namespace GameGuy {
 
 			case DebugState::Step:
 				if (getCurrentInstructionMap().find(mInstance->cpu.registers.PC) != getCurrentInstructionMap().end()) {
-					gbz80_step(mInstance);
+					gbz80_clock(mInstance);
 					mScrollToCurrent = true;
 					setDebugState(DebugState::Breakpoint);
 				}

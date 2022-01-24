@@ -55,7 +55,7 @@ extern "C" {
 	gbz80_t* gbz80_create();
 	void gbz80_init(gbz80_t* instance, const char* bios_path);
 	void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom);
-	size_t gbz80_step(gbz80_t* instance);
+	void gbz80_clock(gbz80_t* instance);
 	size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds);
 	void gbz80_destroy(gbz80_t* rom);
 
@@ -65,8 +65,6 @@ extern "C" {
 	void gbz80_memory_write16(gbz80_t* instance, uint16_t address, uint16_t val);
 
 	void gbz80_set_sample_rate(gbz80_t* instance, size_t sample_rate);
-	void gbz80_set_sample_function(gbz80_t* instance, gbz80_apu_sample_function_t sample_func);
-
 #ifdef __cplusplus
 }
 #endif

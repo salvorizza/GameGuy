@@ -157,17 +157,18 @@ void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val
 	}
 }
 
-size_t gbz80_cpu_step(gbz80_cpu_t* cpu)
+void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 {
-	size_t clock_cycles;
-	gbz80_instruction_t instruction;
 
-	memset(&instruction, 0, sizeof(gbz80_instruction_t));
-	gbz80_cpu_fetch(cpu, &instruction);
-	gbz80_cpu_decode(cpu, &instruction, 0);
-	clock_cycles = gbz80_cpu_execute(cpu, &instruction);
-
-	return clock_cycles;
+	if (cpu->cycles == 0) {
+		gbz80_instruction_t instruction;
+		memset(&instruction, 0, sizeof(gbz80_instruction_t));
+		gbz80_cpu_fetch(cpu, &instruction);
+		gbz80_cpu_decode(cpu, &instruction, 0);
+		
+		cpu->cycles = gbz80_cpu_execute(cpu, &instruction);
+	}
+	cpu->cycles--;
 }
 
 void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)

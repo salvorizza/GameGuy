@@ -6,6 +6,8 @@
 #include <functional>
 #include "Application/AudioManager.h"
 
+#include "Panels/AudioPanel.h"
+
 #include <deque>
 
 namespace GameGuy {
@@ -25,7 +27,7 @@ namespace GameGuy {
 		GameBoyVM();
 		~GameBoyVM();
 
-		void init();
+		void init(AudioPanel* audioPanel);
 		void update();
 		void loadRom(const char* romPath);
 
@@ -37,7 +39,6 @@ namespace GameGuy {
 		operator gbz80_t*() { return mInstance; }
 
 	private:
-		static int32_t vmSampleFunction(double left, double right);
 		static double sample(double dTime);
 	private:
 		gbz80_t* mInstance;
@@ -49,10 +50,10 @@ namespace GameGuy {
 		BreakFunction mBreakFunction;
 
 		std::shared_ptr<AudioManager<int16_t>> mAudioManager;
-		std::deque<double> mSamples;
 		const char* mBiosPath;
 
 		static GameBoyVM* sInstance;
+		AudioPanel* mAudioPanel;
 	};
 
 }

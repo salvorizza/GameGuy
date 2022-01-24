@@ -4,6 +4,7 @@
 
 #include "Panel.h"
 #include <deque>
+#include <mutex>
 
 namespace GameGuy {
 
@@ -20,7 +21,8 @@ namespace GameGuy {
 
 	private:
 		std::deque<std::tuple<size_t, double, double>> mSamples;
-		const size_t MAX_SAMPLES = 48000;
+		std::mutex mMutex;
+		const size_t MAX_SAMPLES = 512;
 	};
 
 }

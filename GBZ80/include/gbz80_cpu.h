@@ -58,6 +58,7 @@ extern "C" {
 		uint16_t PC;
 	} gbz80_registers_t;
 	typedef struct gbz80_cpu_t {
+		size_t cycles;
 		gbz80_t* instance;
 		gbz80_registers_t registers;
 	} gbz80_cpu_t;
@@ -90,7 +91,7 @@ extern "C" {
 	uint16_t gbz80_cpu_get_register16(gbz80_cpu_t* cpu, gbz80_register_t r);
 	void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val);
 
-	size_t gbz80_cpu_step(gbz80_cpu_t* cpu);
+	void gbz80_cpu_clock(gbz80_cpu_t* cpu);
 
 	void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction);
 	void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_t get_instruction_name);

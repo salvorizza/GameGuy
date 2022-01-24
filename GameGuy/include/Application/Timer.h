@@ -6,7 +6,12 @@ namespace GameGuy {
 
 	class Timer {
 	public:
-		Timer() = default;
+		Timer()
+			:	mDeltaTime()
+		{
+
+		}
+
 		~Timer() = default;
 
 		void init() {
