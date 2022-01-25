@@ -50,6 +50,7 @@ extern "C" {
 		gbz80_ppu_t ppu;
 		gbz80_apu_t apu;
 		size_t cartridge_code_size;
+		gbz80_cartridge_t* inserted_cartridge;
 	} gbz80_t;
 
 	gbz80_t* gbz80_create();

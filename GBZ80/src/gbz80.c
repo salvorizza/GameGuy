@@ -54,6 +54,7 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 	memset(instance->memory_map, 0, GBZ80_MEMORY_SIZE);
 	instance->bootstrap_mode = 1;
 	instance->cartridge_code_size = 0;
+	instance->inserted_cartridge = NULL;
 	gbz80_cpu_init(&instance->cpu, instance);
 	gbz80_ppu_init(&instance->ppu, instance);
 	gbz80_apu_init(&instance->apu, instance);
@@ -61,6 +62,7 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 
 void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 {
+	instance->inserted_cartridge = rom;
 	if (rom->header.cartridge_type == GBZ80_CARTRIDGE_TYPE_ROM_ONLY) {
 		memcpy(&instance->memory_map[0x0000], rom, sizeof(gbz80_cartridge_t) - sizeof(gbz80_cartridge_code_t));
 		memcpy(&instance->memory_map[0x0150], rom->code.data, rom->code.size);

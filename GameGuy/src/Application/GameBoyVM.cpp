@@ -14,12 +14,13 @@ namespace GameGuy {
 	}
 
 	GameBoyVM::~GameBoyVM() {
+		mAudioManager->Stop();
+
 		if (mCurrentlyLoadedCartridge) {
 			gbz80_cartridge_destroy(mCurrentlyLoadedCartridge);
 			mCurrentlyLoadedCartridge = NULL;
 		}
 		gbz80_destroy(mInstance);
-		mAudioManager->Stop();
 	}
 
 	void GameBoyVM::init(AudioPanel* audioPanel)

@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 #include "common.h"
+#include "gbz80_mbc.h"
 
 	typedef enum gbz80_color_flag_t {
 		GBZ80_COLOR_FLAG_GB_AND_CGB = 0x80,
@@ -104,9 +105,12 @@ extern "C" {
 		uint8_t entry_point[BYTE(0x4)];
 		gbz80_cartridge_header_t header;
 		gbz80_cartridge_code_t code;
+		gbz80_mbc_t* mbc;
 	} gbz80_cartridge_t;
 
 	gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path);
+	uint8_t gbz80_cartridge_read(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t* out_val);
+	uint8_t gbz80_cartridge_write(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t val);
 	void gbz80_cartridge_destroy(gbz80_cartridge_t* rom);
 
 #ifdef __cplusplus
