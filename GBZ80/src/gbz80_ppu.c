@@ -2,18 +2,16 @@
 
 #include "gbz80.h"
 
-#define NUM_DOTS_TWO (80)
-#define NUM_DOTS_THREE (NUM_DOTS_TWO + 172)
-#define NUM_DOTS_ZERO (NUM_DOTS_THREE + 204)
-#define NUM_DOTS_ONE (NUM_DOTS_ZERO * 144) + 4560
-
+#define NUM_DOTS_PER_LINE 456
+#define NUM_DOTS_START_TWO 0
+#define NUM_DOTS_START_THREE 80
+#define NUM_DOTS_START_ZERO 252
 
 void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	memset(ppu, 0, sizeof(gbz80_ppu_t));
 	ppu->instance = instance;
 	gbz80_memory_write8(ppu->instance, 0xFF44, 0x0000);
 	gbz80_memory_write8(ppu->instance, 0xFF40, 0x00);
-
 }
 
 void gbz80_ppu_clock(gbz80_ppu_t* ppu){
@@ -22,62 +20,40 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 	if (common_get8_bit(lcdc, 7) == 1) {
 		uint8_t ly = gbz80_memory_read8(ppu->instance, 0xFF44);
 
-		if (ly == 153) {
-			ly = 0;
-			ppu->num_dots = 0;
-		}
-
-		uint32_t time_span = (ppu->num_dots % NUM_DOTS_ZERO) + 1;
-
 		if (ly >= 0 && ly < 143) {
-			if (time_span <= NUM_DOTS_TWO) {
-				if(time_span == 1)
-					gbz80_ppu_update_stat_register(ppu, 2, ly);
+			if (ppu->num_dots == NUM_DOTS_START_TWO) {
+				gbz80_ppu_update_stat_register(ppu, 2, ly);
 			}
-			else if (time_span <= NUM_DOTS_THREE) {
-				if (time_span == NUM_DOTS_TWO + 1)
-					gbz80_ppu_update_stat_register(ppu, 3, ly);
-
-				if (time_span == NUM_DOTS_THREE) {
-					if (common_get8_bit(lcdc, 0) == 1) {
-						gbz80_ppu_draw_background(ppu, ly);
-					}
-
-					if (common_get8_bit(lcdc, 1) == 1) {
-						gbz80_ppu_draw_sprites(ppu, ly);
-					}
+			else if (ppu->num_dots == NUM_DOTS_START_THREE) {
+				if (common_get8_bit(lcdc, 0) == 1) {
+					gbz80_ppu_draw_background(ppu, ly);
 				}
 
-
-					
-			}
-			else if (time_span <= NUM_DOTS_ZERO) {
-				if (time_span == NUM_DOTS_THREE + 1)
-					gbz80_ppu_update_stat_register(ppu, 0, ly);
-
-				if (time_span == NUM_DOTS_ZERO) {
-					ly++;
-					gbz80_ppu_update_stat_register(ppu, 0, ly);
+				if (common_get8_bit(lcdc, 1) == 1) {
+					gbz80_ppu_draw_sprites(ppu, ly);
 				}
 
-					
+				gbz80_ppu_update_stat_register(ppu, 3, ly);
 			}
-		}
-		else {
-			if (time_span <= NUM_DOTS_ZERO) {
-				if(time_span == 0)
-					gbz80_ppu_update_stat_register(ppu, 1, ly);
-
-				if (time_span == NUM_DOTS_ZERO) {
-					ly++;
-					gbz80_ppu_update_stat_register(ppu, 1, ly);
-				}
-					
-					
+			else if (ppu->num_dots == NUM_DOTS_START_ZERO) {
+				gbz80_ppu_update_stat_register(ppu, 0, ly);
 			}
 		}
 
 		ppu->num_dots++;
+
+		if (ppu->num_dots == NUM_DOTS_PER_LINE) {
+			ppu->num_dots = 0;
+			if (ly < 143) {
+				gbz80_ppu_update_stat_register(ppu, 2, ly + 1);
+			} else {
+				if (ly == 153) {
+					gbz80_ppu_update_stat_register(ppu, 2, 0);
+				} else {
+					gbz80_ppu_update_stat_register(ppu, 1, ly + 1);
+				}
+			}
+		}
 	}
 	else {
 		ppu->num_dots = 0;

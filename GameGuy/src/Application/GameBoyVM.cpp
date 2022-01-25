@@ -79,7 +79,7 @@ namespace GameGuy {
 			} while (sInstance->mInstance->apu.sample_ready == 0);
 			
 			double sample = sInstance->mInstance->apu.so_1;
-			sInstance->mAudioPanel->addSample(dTime, sample, sample);
+			//sInstance->mAudioPanel->addSample(dTime, sample, sample);
 
 			return sample;
 		}

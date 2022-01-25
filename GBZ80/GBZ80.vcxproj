@@ -134,6 +134,7 @@
     <ClInclude Include="include\gbz80_apu.h" />
     <ClInclude Include="include\gbz80_cartridge.h" />
     <ClInclude Include="include\gbz80_cpu.h" />
+    <ClInclude Include="include\gbz80_mbc.h" />
     <ClInclude Include="include\gbz80_ppu.h" />
   </ItemGroup>
   <ItemGroup>

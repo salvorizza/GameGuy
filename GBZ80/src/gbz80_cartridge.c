@@ -1,6 +1,5 @@
 #include "gbz80_cartridge.h"
 
-
 gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 	gbz80_cartridge_t* out_rom = NULL;
 
@@ -34,9 +33,6 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 
 	return out_rom;
 }
-
-
-
 
 void gbz80_cartridge_destroy(gbz80_cartridge_t* rom) {
 	free(rom);
