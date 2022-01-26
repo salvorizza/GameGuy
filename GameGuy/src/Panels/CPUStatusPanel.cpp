@@ -88,6 +88,7 @@ namespace GameGuy {
 
 		ImGui::Text("PC: 0x%04X", mInstance->cpu.registers.PC);
 		ImGui::Text("SP: 0x%04X", mInstance->cpu.registers.SP);
+		ImGui::Text("Current Instruction: %s", mInstance->cpu.current_instruction.disassembled_name);
 
 	}
 

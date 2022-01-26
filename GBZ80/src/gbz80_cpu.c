@@ -161,12 +161,14 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 {
 
 	if (cpu->cycles == 0) {
-		gbz80_instruction_t instruction;
-		memset(&instruction, 0, sizeof(gbz80_instruction_t));
-		gbz80_cpu_fetch(cpu, &instruction);
-		gbz80_cpu_decode(cpu, &instruction, 0);
+		memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
+		gbz80_cpu_fetch(cpu, &cpu->current_instruction);
+		gbz80_cpu_decode(cpu, &cpu->current_instruction, 1);
+		if (cpu->registers.PC == 0xC3C3) {
+			int i = 0;
+		}
 		
-		cpu->cycles = gbz80_cpu_execute(cpu, &instruction);
+		cpu->cycles = gbz80_cpu_execute(cpu, &cpu->current_instruction);
 	}
 	cpu->cycles--;
 }
@@ -2441,7 +2443,7 @@ void gbz80_cpu_alu8_adc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	uint16_t val = lhs + rhs + c;
 
-	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10) == 0x10, val > 0xFF);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2472,7 +2474,7 @@ void gbz80_cpu_alu8_sbc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	int16_t val = lhs - (rhs + c);
 
-	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10) == 0x10, val < 0x0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2483,7 +2485,7 @@ void gbz80_cpu_alu8_sbc_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	int16_t val = lhs - (rhs + c);
 
-	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10, val < 0x0);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) - (rhs & 0xf) - (c & 0xf)) & 0x10) == 0x10, val < 0x0);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }

@@ -11,9 +11,9 @@ extern "C" {
 	#include <assert.h>
 	#include <string.h>
 
-	#define BYTE(x) x
-	#define KIBI(x) 1024 * BYTE(x)
-	#define MIBI(x) 1024 * KIBI(x)
+	#define BYTE(x) (x)
+	#define KIBI(x) (1024llu * BYTE(x))
+	#define MIBI(x) (1024llu * KIBI(x))
 
 	static __forceinline void common_change8_bit(uint8_t* bitset, uint8_t bit_pos, uint8_t bit_val) {
 		*bitset = (*bitset & ~(1 << (uint8_t)bit_pos)) | (bit_val << (uint8_t)bit_pos);

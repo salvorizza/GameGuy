@@ -57,14 +57,14 @@ extern "C" {
 		uint16_t SP;
 		uint16_t PC;
 	} gbz80_registers_t;
-	typedef struct gbz80_cpu_t {
-		size_t cycles;
-		gbz80_t* instance;
-		gbz80_registers_t registers;
-	} gbz80_cpu_t;
 
 	typedef struct gbz80_instruction_t gbz80_instruction_t;
+
+	typedef struct gbz80_cpu_t gbz80_cpu_t;
+	
+	typedef struct gbz80_instruction_t gbz80_instruction_t;
 	typedef void(*gbz80_execute_function_t)(gbz80_cpu_t*, gbz80_instruction_t*);
+
 	typedef struct gbz80_instruction_t {
 		uint16_t address;
 		uint8_t prefix;
@@ -79,6 +79,15 @@ extern "C" {
 
 		char disassembled_name[32];
 	} gbz80_instruction_t;
+
+	typedef struct gbz80_cpu_t {
+		size_t cycles;
+		gbz80_t* instance;
+		gbz80_registers_t registers;
+		gbz80_instruction_t current_instruction;
+	} gbz80_cpu_t;
+
+	
 
 
 	void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance);

@@ -138,11 +138,11 @@
     <ClInclude Include="include\gbz80_ppu.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="gbz80_mbc.c" />
     <ClCompile Include="src\gbz80.c" />
     <ClCompile Include="src\gbz80_apu.c" />
     <ClCompile Include="src\gbz80_cartridge.c" />
     <ClCompile Include="src\gbz80_cpu.c" />
+    <ClCompile Include="src\gbz80_mbc.c" />
     <ClCompile Include="src\gbz80_ppu.c" />
     <ClCompile Include="src\main.c" />
   </ItemGroup>

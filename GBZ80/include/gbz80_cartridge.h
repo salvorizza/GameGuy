@@ -57,10 +57,10 @@ extern "C" {
 	} gbz80_rom_size_t;
 	typedef enum gbz80_ram_size_t {
 		GBZ80_RAM_SIZE_NONE = 0x00,
-		GBZ80_RAM_SIZE_16K = 0x01,
-		GBZ80_RAM_SIZE_64K = 0x02,
-		GBZ80_RAM_SIZE_256K = 0x03,
-		GBZ80_RAM_SIZE_1M = 0x04
+		GBZ80_RAM_SIZE_8K = 0x02,
+		GBZ80_RAM_SIZE_32K = 0x03,
+		GBZ80_RAM_SIZE_128K = 0x04,
+		GBZ80_RAM_SIZE_64K = 0x05
 	} gbz80_ram_size_t;
 	typedef struct gbz80_cartridge_rst_t {
 		uint8_t rst_adresses_0[BYTE(0x8)];
@@ -106,6 +106,12 @@ extern "C" {
 		gbz80_cartridge_header_t header;
 		gbz80_cartridge_code_t code;
 		gbz80_mbc_t* mbc;
+
+		uint8_t* rom_banks;
+		size_t rom_banks_size;
+
+		uint8_t* ram_banks;
+		size_t ram_banks_size;
 	} gbz80_cartridge_t;
 
 	gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path);

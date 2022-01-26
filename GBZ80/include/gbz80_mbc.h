@@ -7,7 +7,7 @@ extern "C" {
 
 #include "common.h"
 
-	typedef uint8_t(*gbz80_mbc_write_t)(void*, uint16_t, uint8_t);
+	typedef uint8_t(*gbz80_mbc_write_t)(void*, uint16_t, uint8_t, uint32_t*);
 	typedef uint8_t(*gbz80_mbc_read_t)(void*, uint16_t, uint32_t*);
 
 	typedef enum gbz80_mbc_type_t {
@@ -37,14 +37,14 @@ extern "C" {
 	
 	gbz80_mbc_t* gbz80_mbc_create(gbz80_mbc_type_t type);
 	uint8_t gbz80_mbc_read(gbz80_mbc_t* mbc, uint16_t address, uint32_t* mapped_address);
-	uint8_t gbz80_mbc_write(gbz80_mbc_t* mbc, uint16_t address, uint8_t val);
+	uint8_t gbz80_mbc_write(gbz80_mbc_t* mbc, uint16_t address, uint8_t val, uint32_t* ram_address);
 	void gbz80_mbc_release(gbz80_mbc_t* mbc);
 
 	uint8_t gbz80_mbc_null_read(void* mbc_null, uint16_t address, uint32_t* mapped_address);
-	uint8_t gbz80_mbc_null_write(void* mbc_null, uint16_t address, uint8_t val);
+	uint8_t gbz80_mbc_null_write(void* mbc_null, uint16_t address, uint8_t val, uint32_t* ram_address);
 
 	uint8_t gbz80_mbc_001_read(void* mbc_001, uint16_t address, uint32_t* mapped_address);
-	uint8_t gbz80_mbc_001_write(void* mbc_001, uint16_t address, uint8_t val);
+	uint8_t gbz80_mbc_001_write(void* mbc_001, uint16_t address, uint8_t val, uint32_t* ram_address);
 
 	
 

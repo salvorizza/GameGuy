@@ -37,7 +37,7 @@ namespace GameGuy {
 	{
 		mInstructionsCartridgeKeys.clear();
 		mInstance->bootstrap_mode = 0;
-		disassemble(mInstructionsCartridge, mInstance->memory_map, mInstance->rom_bank_0 + mInstance->cartridge_code_size);
+		disassemble(mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xD000);
 		mInstance->bootstrap_mode = 1;
 		for (auto& [address, debugInstruction] : mInstructionsCartridge)
 			mInstructionsCartridgeKeys.push_back(address);

@@ -6,10 +6,12 @@ gbz80_t* gbz80_create() {
 }
 
 uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
+	uint8_t val;
 	if (instance->bootstrap_mode == 1 && address <= 0xFF) {
 		return instance->bootstrap_rom[address];
-	}
-	else {
+	} else if (gbz80_cartridge_read(instance->inserted_cartridge, address, &val)) {
+		return val;
+	} else {
 		return instance->memory_map[address];
 	}
 }
@@ -25,7 +27,11 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 
 		uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, val);
 
-		instance->memory_map[address] = val;
+		if (instance->bootstrap_mode == 0 && gbz80_cartridge_write(instance->inserted_cartridge, address, val)) {
+			
+		} else {
+			instance->memory_map[address] = val;
+		}
 	}
 
 }
@@ -67,9 +73,6 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 		memcpy(&instance->memory_map[0x0000], rom, sizeof(gbz80_cartridge_t) - sizeof(gbz80_cartridge_code_t));
 		memcpy(&instance->memory_map[0x0150], rom->code.data, rom->code.size);
 		instance->cartridge_code_size = rom->code.size;
-	}
-	else {
-		assert(0 && "Rom not supported yet");
 	}
 }
 
