@@ -36,7 +36,7 @@ public:
 
 		mTileMapViewerPanel.setInstance(mGameBoyVM);
 		mMemoryEditorPanel.setInstance(mGameBoyVM);
-		mDisassemblerPanel.setInstance(mGameBoyVM);
+		mDisassemblerPanel.setInstance(&mGameBoyVM);
 		mCPUStatusPanel.setInstance(mGameBoyVM);
 		mViewportPanel.setInstance(mGameBoyVM);
 

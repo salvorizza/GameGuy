@@ -164,7 +164,8 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 		memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
 		gbz80_cpu_fetch(cpu, &cpu->current_instruction);
 		gbz80_cpu_decode(cpu, &cpu->current_instruction, 1);
-		if (cpu->registers.PC == 0xC3C3) {
+
+		if (cpu->current_instruction.address == 0x7F2) {
 			int i = 0;
 		}
 		

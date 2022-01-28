@@ -89,7 +89,7 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 
 uint8_t gbz80_cartridge_read(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t* out_val) {
 	uint32_t mapped_address;
-	if (cartridge && gbz80_mbc_read(cartridge->mbc, address, &mapped_address) == 1) {
+	if (cartridge && cartridge->mbc->read_func(cartridge->mbc, address, &mapped_address) == 1) {
 		if (address >= 0x0000 && address <= 0x7FFF) {
 			*out_val = cartridge->rom_banks[mapped_address];
 		} else if (address >= 0xA000 && address <= 0xBFFF) {
@@ -102,7 +102,7 @@ uint8_t gbz80_cartridge_read(gbz80_cartridge_t* cartridge, uint16_t address, uin
 
 uint8_t gbz80_cartridge_write(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t val) {
 	uint32_t ram_address;
-	if (cartridge && gbz80_mbc_write(cartridge->mbc, address, val, &ram_address)) {
+	if (cartridge && cartridge->mbc->write_func(cartridge->mbc, address, val, &ram_address)) {
 		if (address >= 0xA000 && address <= 0xBFFF) {
 			cartridge->ram_banks[ram_address] = val;
 		}

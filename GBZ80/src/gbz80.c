@@ -7,6 +7,7 @@ gbz80_t* gbz80_create() {
 
 uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
 	uint8_t val;
+	
 	if (instance->bootstrap_mode == 1 && address <= 0xFF) {
 		return instance->bootstrap_rom[address];
 	} else if (gbz80_cartridge_read(instance->inserted_cartridge, address, &val)) {

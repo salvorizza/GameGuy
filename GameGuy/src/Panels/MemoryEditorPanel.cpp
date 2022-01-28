@@ -20,8 +20,10 @@ namespace GameGuy {
 
 	void MemoryEditorPanel::onImGuiRender() {
 		static MemoryEditor mem_edit;
-		if(mInstance->inserted_cartridge)
-			mem_edit.DrawContents(mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks_size);
+		mem_edit.DrawContents(mInstance->memory_map, 0xFFFF);
+
+		/*if (mInstance->inserted_cartridge)
+			mem_edit.DrawContents(mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks_size);*/
 	}
 
 }

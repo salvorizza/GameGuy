@@ -76,7 +76,13 @@ namespace GameGuy {
 	{
 		if (sInstance->mState == VMState::Run) {
 			do {
-				gbz80_clock(sInstance->mInstance);
+				if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
+					sInstance->setState(VMState::Pause);
+					break;
+				}
+				else {
+					gbz80_clock(sInstance->mInstance);
+				}
 			} while (sInstance->mInstance->apu.sample_ready == 0);
 			
 			double sample = sInstance->mInstance->apu.so_1;

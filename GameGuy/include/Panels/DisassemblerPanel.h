@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Panels/Panel.h>
+#include <Application/GameBoyVM.h>
 
 #include <gbz80.h>
 
@@ -14,7 +15,7 @@ namespace GameGuy {
 		DisassemblerPanel();
 		~DisassemblerPanel();
 
-		void setInstance(gbz80_t* pInstance) { mInstance = pInstance; }
+		void setInstance(GameBoyVM* pInstance) { mVMInstance = pInstance; mInstance = pInstance->mInstance; }
 
 		void disassembleBootRom();
 		void disassembleCartridge();
@@ -69,7 +70,9 @@ namespace GameGuy {
 
 		void setDebugState(DebugState debugState) { mPrevDebugState = mDebugState; mDebugState = debugState; }
 
+		GameBoyVM* mVMInstance;
 		gbz80_t* mInstance;
+
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsCartridge;
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsBootRom;
 		std::vector<uint16_t> mInstructionsCartridgeKeys;

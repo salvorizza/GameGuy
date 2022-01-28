@@ -37,11 +37,11 @@ namespace GameGuy {
 		inline void setBreakFunction(const BreakFunction& breakFunction) { mBreakFunction = breakFunction; }
 
 		operator gbz80_t*() { return mInstance; }
+		gbz80_t* mInstance;
 
 	private:
 		static double sample(double dTime);
 	private:
-		gbz80_t* mInstance;
 		gbz80_cartridge_t* mCurrentlyLoadedCartridge;
 
 		std::atomic<uint32_t> mState,mPrevState;

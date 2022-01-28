@@ -13,6 +13,7 @@ namespace GameGuy {
 	DisassemblerPanel::DisassemblerPanel()
 		:	Panel("Disassembler", false),
 			mInstance(NULL),
+			mVMInstance(nullptr),
 			mDebugState(DebugState::Idle),
 			mPrevDebugState(DebugState::None),
 			mScrollToCurrent(false),
@@ -45,13 +46,16 @@ namespace GameGuy {
 
 	bool DisassemblerPanel::breakFunction(uint16_t address)
 	{
-		uint16_t currentPC = mInstance->cpu.registers.PC;
 		auto& instructionMap = getCurrentInstructionMap();
-		bool isBreaked = instructionMap.at(currentPC).Breakpoint;
-		if (isBreaked) {
-			setDebugState(DebugState::Breakpoint);
+		auto it = instructionMap.find(address);
+		if (it != instructionMap.end()) {
+			bool isBreaked = it->second.Breakpoint;
+			if (isBreaked) {
+				setDebugState(DebugState::Breakpoint);
+			}
+			return isBreaked;
 		}
-		return isBreaked;
+		return false;
 	}
 
 
@@ -60,10 +64,12 @@ namespace GameGuy {
 		switch (mDebugState) {
 			case DebugState::Start:
 				setDebugState(DebugState::Running);
+				mVMInstance->setState(VMState::Run);
 				//mInstance->cpu.registers.PC = getCurrentInstructionMap().begin()->first;
 				break;
 
 			case DebugState::Running:
+				mVMInstance->setState(VMState::Run);
 				/*if (mPrevDebugState == DebugState::Breakpoint) {
 					gbz80_step(mInstance);
 					mPrevDebugState = DebugState::Step;
@@ -95,7 +101,9 @@ namespace GameGuy {
 
 			case DebugState::Step:
 				if (getCurrentInstructionMap().find(mInstance->cpu.registers.PC) != getCurrentInstructionMap().end()) {
-					gbz80_clock(mInstance);
+					do {
+						gbz80_clock(mInstance);
+					} while (mInstance->cpu.cycles != 0);
 					mScrollToCurrent = true;
 					setDebugState(DebugState::Breakpoint);
 				}

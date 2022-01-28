@@ -66,11 +66,11 @@ uint8_t gbz80_mbc_001_read(void* mbc_001, uint16_t address, uint32_t* mapped_add
 		*mapped_address = address;
 		return 1;
 	} else if (address >= 0x4000 && address <= 0x7FFF) {
-		*mapped_address = KIBI(16) * mbc->rom_bank;
+		*mapped_address = KIBI(16) * mbc->rom_bank + (address - 0x4000);
 		return 1;
 	} else if (address >= 0xA000 && address <= 0xBFFF) {
 		if (mbc->ram_enable) {
-			*mapped_address = KIBI(8) * mbc->ram_bank;
+			*mapped_address = KIBI(8) * mbc->ram_bank + (address - 0xA000);
 			return 1;
 		}
 	}
@@ -88,14 +88,14 @@ uint8_t gbz80_mbc_001_write(void* mbc_001, uint16_t address, uint8_t val, uint32
 	} else if (address >= 0x2000 && address <= 0x3FFF) {
 		mbc->rom_bank = val & 0x1F;
 
-		switch (mbc->rom_bank) {
+		/*switch (mbc->rom_bank) {
 			case 0x00:
 			case 0x20:
 			case 0x40:
 			case 0x60:
 				mbc->rom_bank++;
 				break;
-		}
+		}*/
 		return 1;
 	} else if (address >= 0x4000 && address <= 0x5FFF) {
 		if (mbc->mode == 1) {
@@ -109,7 +109,7 @@ uint8_t gbz80_mbc_001_write(void* mbc_001, uint16_t address, uint8_t val, uint32
 		return 1;
 	} else if (address >= 0xA000 && address <= 0xBFFF) {
 		if (mbc->ram_enable) {
-			*ram_address = KIBI(8) * mbc->ram_bank;
+			*ram_address = KIBI(8) * mbc->ram_bank + (address - 0xA000);
 			return 1;
 		}
 	}
