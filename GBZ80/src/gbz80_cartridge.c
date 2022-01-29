@@ -37,14 +37,14 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 					break;
 			}
 
-			if (out_rom->header.rom_size != GBZ80_ROM_SIZE_32K) {
+			//if (out_rom->header.rom_size != GBZ80_ROM_SIZE_32K) {
 				out_rom->rom_banks_size = KIBI(32) << (size_t)out_rom->header.rom_size;
 				out_rom->rom_banks = (uint8_t*)malloc(out_rom->rom_banks_size);
 				memset(out_rom->rom_banks, 0, out_rom->rom_banks_size);
-			} else {
+			/* } else {
 				out_rom->rom_banks = NULL;
 				out_rom->rom_banks_size = 0;
-			}
+			}*/
 
 			switch (out_rom->header.rom_size) {
 				case GBZ80_RAM_SIZE_NONE:

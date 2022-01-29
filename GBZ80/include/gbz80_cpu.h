@@ -33,7 +33,7 @@ extern "C" {
 		union {
 			uint16_t AF;
 			struct {
-				uint8_t A, flags;
+				uint8_t flags, A;
 			};
 		};
 		union {

@@ -21,7 +21,7 @@ gbz80_mbc_t* gbz80_mbc_create(gbz80_mbc_type_t type) {
 			mbc_001->base.write_func = &gbz80_mbc_001_write;
 			mbc_001->mode = 0;
 			mbc_001->ram_bank = 0;
-			mbc_001->rom_bank = 0;
+			mbc_001->rom_bank = 1;
 			mbc_001->ram_enable = 0;
 			mbc = (gbz80_mbc_t*)mbc_001;
 		}
@@ -88,14 +88,14 @@ uint8_t gbz80_mbc_001_write(void* mbc_001, uint16_t address, uint8_t val, uint32
 	} else if (address >= 0x2000 && address <= 0x3FFF) {
 		mbc->rom_bank = val & 0x1F;
 
-		/*switch (mbc->rom_bank) {
+		switch (mbc->rom_bank) {
 			case 0x00:
 			case 0x20:
 			case 0x40:
 			case 0x60:
 				mbc->rom_bank++;
 				break;
-		}*/
+		}
 		return 1;
 	} else if (address >= 0x4000 && address <= 0x5FFF) {
 		if (mbc->mode == 1) {
