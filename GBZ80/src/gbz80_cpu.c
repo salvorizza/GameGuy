@@ -166,7 +166,6 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 		gbz80_cpu_fetch(cpu, &cpu->current_instruction);
 		gbz80_cpu_decode(cpu, &cpu->current_instruction, 1);
 
-
 		cpu->cycles = gbz80_cpu_execute(cpu, &cpu->current_instruction);
 	}
 	cpu->cycles--;
@@ -2435,7 +2434,7 @@ void gbz80_cpu_alu8_adc_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) 
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	uint16_t val = lhs + rhs + c;
 
-	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, ((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10, val > 0xFF);
+	utility_set_flags(cpu, ((uint8_t)val) == 0, 0, (((lhs & 0xf) + (rhs & 0xf) + (c & 0xf)) & 0x10) == 0x10, val > 0xFF);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, (uint8_t)val);
 }
@@ -2583,8 +2582,7 @@ void gbz80_cpu_alu8_inc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	uint8_t val = lhs + 1;
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 
-	/*(((lhs & 0xf) + (1 & 0xf)) & 0x10) == 0x10*/
-	utility_set_flags(cpu, val == 0, 0, val > 0xF , c);
+	utility_set_flags(cpu, val == 0, 0, (((lhs & 0xf) + (1 & 0xf)) & 0x10) == 0x10, c);
 
 	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
 }
@@ -2650,14 +2648,12 @@ void gbz80_cpu_misc_swap(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 
 void gbz80_cpu_misc_daa(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
-	uint16_t val = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
+	uint8_t val = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
 	uint8_t h = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_H);
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	uint8_t n = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_N);
 	uint8_t z = val == 0;
-
-	uint16_t initialVal = val;
-
+	
 	if (n == 0) {
 		if (h || (val & 0x0F) > 0x9) {
 			val += 0x06;
@@ -2669,16 +2665,14 @@ void gbz80_cpu_misc_daa(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	else {
 		if (h) {
 			val -= 0x6;
-			/*if (!c) {
-				val &= 0xFF;
-			}*/
 		}
-		if (c)
+		if (c) {
 			val -= 0x60;
+		}
 	}
 
 	
-	utility_set_flags(cpu, (val & 0xFF) == 0, n, 0, val & 0x100 != 0);
+	utility_set_flags(cpu, (val & 0xFF) == 0, n, 0, (val & 0x100) != 0);
 
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, (uint8_t)(val & 0xFF));
 }
@@ -2805,7 +2799,7 @@ void gbz80_cpu_bitw_bit_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
-	uint8_t bit = (val >> instruction->n) & 0x1;
+	uint8_t bit = common_get8_bit(val, instruction->n);
 
 	utility_set_flags(cpu, bit == 0, 0, 1, c);
 
@@ -2814,13 +2808,15 @@ void gbz80_cpu_bitw_bit_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 void gbz80_cpu_bitw_set_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
-	val |= 1 << instruction->n;
+	common_set8_bit(&val, instruction->n);
+	gbz80_cpu_set_register8(cpu, instruction->right_r, val);
 }
 
 void gbz80_cpu_bitw_res_b_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->right_r);
-	val &= ~(1 << instruction->n);
+	common_reset8_bit(&val, instruction->n);
+	gbz80_cpu_set_register8(cpu, instruction->right_r, val);
 }
 
 void gbz80_cpu_jumps_jp_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)

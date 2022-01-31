@@ -73,6 +73,9 @@ namespace GameGuy {
 		GameBoyVM* mVMInstance;
 		gbz80_t* mInstance;
 
+		std::map<std::pair<DebugTab,uint16_t>, DisassemblerPanel::DebugInstruction> mInstructionsBreaks;
+
+
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsCartridge;
 		std::map<uint16_t, DisassemblerPanel::DebugInstruction> mInstructionsBootRom;
 		std::vector<uint16_t> mInstructionsCartridgeKeys;

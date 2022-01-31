@@ -14,6 +14,7 @@ namespace GameGuy {
 	}
 
 	GameBoyVM::~GameBoyVM() {
+		setState(VMState::Stop);
 		mAudioManager->Stop();
 
 		if (mCurrentlyLoadedCartridge) {
@@ -76,14 +77,18 @@ namespace GameGuy {
 	{
 		if (sInstance->mState == VMState::Run) {
 			do {
-				if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
-					sInstance->setState(VMState::Pause);
-					break;
+				gbz80_clock(sInstance->mInstance);
+
+				if (sInstance->mInstance->cpu.cycles == 0) {
+					if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
+						sInstance->setState(VMState::Pause);
+						break;
+					}
 				}
-				else {
-					gbz80_clock(sInstance->mInstance);
-				}
+
 			} while (sInstance->mInstance->apu.sample_ready == 0);
+
+			
 			
 			double sample = sInstance->mInstance->apu.so_1;
 			//sInstance->mAudioPanel->addSample(dTime, sample, sample);

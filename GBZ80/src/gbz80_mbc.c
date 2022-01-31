@@ -50,6 +50,14 @@ void gbz80_mbc_release(gbz80_mbc_t* mbc) {
 uint8_t gbz80_mbc_null_read(void* mbc_null, uint16_t address, uint32_t* mapped_address) {
 	gbz80_mbc_null_t* mbc = (gbz80_mbc_null_t*)mbc_null;
 
+	if (address >= 0x0000 && address <= 0x3FFF) {
+		*mapped_address = address;
+		return 1;
+	} else if (address >= 0x4000 && address <= 0x7FFF) {
+		*mapped_address = address;
+		return 1;
+	}
+
 	return 0;
 }
 

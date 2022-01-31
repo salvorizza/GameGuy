@@ -29,7 +29,11 @@ namespace GameGuy {
 	void DisassemblerPanel::disassembleBootRom()
 	{
 		mInstructionsBootRomKeys.clear();
+
+		uint8_t bootstrapMode = mInstance->bootstrap_mode;
+		mInstance->bootstrap_mode = 1;
 		disassemble(mInstructionsBootRom, mInstance->bootstrap_rom, mInstance->bootstrap_rom + BYTE(256));
+		mInstance->bootstrap_mode = bootstrapMode;
 		for (auto& [address, debugInstruction] : mInstructionsBootRom)
 			mInstructionsBootRomKeys.push_back(address);
 	}
@@ -37,23 +41,22 @@ namespace GameGuy {
 	void DisassemblerPanel::disassembleCartridge()
 	{
 		mInstructionsCartridgeKeys.clear();
+		uint8_t bootstrapMode = mInstance->bootstrap_mode;
 		mInstance->bootstrap_mode = 0;
-		disassemble(mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xD000);
-		mInstance->bootstrap_mode = 1;
+		disassemble(mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xE000);
+		mInstance->bootstrap_mode = bootstrapMode;
+
 		for (auto& [address, debugInstruction] : mInstructionsCartridge)
 			mInstructionsCartridgeKeys.push_back(address);
 	}
 
 	bool DisassemblerPanel::breakFunction(uint16_t address)
 	{
-		auto& instructionMap = getCurrentInstructionMap();
-		auto it = instructionMap.find(address);
-		if (it != instructionMap.end()) {
-			bool isBreaked = it->second.Breakpoint;
-			if (isBreaked) {
-				setDebugState(DebugState::Breakpoint);
-			}
-			return isBreaked;
+		auto it = mInstructionsBreaks.find(std::pair<DebugTab, uint16_t>(mDebugTab, address));
+		if (it != mInstructionsBreaks.end()) {
+			setDebugState(DebugState::Breakpoint);
+			mScrollToCurrent = true;
+			return true;
 		}
 		return false;
 	}
@@ -138,6 +141,8 @@ namespace GameGuy {
 		ImGui::SameLine();
 		if (ImGui::Button(ICON_FA_STEP_FORWARD)) onStepForward();
 		ImGui::SameLine();
+		if (ImGui::Button(ICON_FA_SYNC)) disassembleCartridge();
+		ImGui::SameLine();
 		switch (mDebugState)
 		{
 		case GameGuy::DisassemblerPanel::DebugState::Idle:
@@ -210,6 +215,13 @@ namespace GameGuy {
 			ImGuiListClipper clipper;
 
 			clipper.Begin(instructionMap.size());
+
+			if (mScrollToCurrent) {
+				auto it = std::find(keys.begin(), keys.end(), mInstance->cpu.registers.PC);
+				size_t val = std::distance(keys.begin(), it);
+				clipper.ForceDisplayRangeByIndices(val - 1, val + 1);
+			}
+
 			while (clipper.Step())
 			{
 				for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++) {
@@ -223,7 +235,7 @@ namespace GameGuy {
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, IM_COL32(230, 100, 120, 125));
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(180, 50, 70, 125));
 
-						if (mScrollToCurrent) {
+						if (mScrollToCurrent && address == mInstance->cpu.registers.PC) {
 							ImGui::SetScrollHereY(0.75);
 							mScrollToCurrent = false;
 						}
@@ -238,6 +250,12 @@ namespace GameGuy {
 					ImGui::PushID(row);
 					if (ImGui::Button(ICON_FA_CIRCLE)) {
 						debugInstruction.Breakpoint = !debugInstruction.Breakpoint;
+						
+						if (debugInstruction.Breakpoint) {
+							mInstructionsBreaks.emplace(std::pair<DebugTab, uint16_t>(mDebugTab, address), debugInstruction);
+						} else {
+							mInstructionsBreaks.erase(std::pair<DebugTab, uint16_t>(mDebugTab, address));
+						}
 					}
 					ImGui::PopID();
 					ImGui::PopStyleColor(4);
@@ -262,6 +280,8 @@ namespace GameGuy {
 	void DisassemblerPanel::disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionsMap,uint8_t* base, uint8_t* end){
 		instructionsMap.clear();
 
+		uint16_t pc = mInstance->cpu.registers.PC;
+
 		mInstance->cpu.registers.PC = 0;
 		while (&base[mInstance->cpu.registers.PC] <= end) {
 			gbz80_instruction_t instruction;
@@ -270,6 +290,8 @@ namespace GameGuy {
 
 			instructionsMap.emplace(instruction.address, instruction.disassembled_name);
 		}
+
+		mInstance->cpu.registers.PC = pc;
 	}
 
 	void DisassemblerPanel::onPlay() {
