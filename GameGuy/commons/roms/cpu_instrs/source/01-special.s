@@ -1,4 +1,4 @@
-; Tests instructions that don't fit template
+; Tests instructions that don''t fit template
 
 .include "shell.inc"
 

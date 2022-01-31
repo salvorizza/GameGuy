@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/cpu_instrs/individual/11-op a,(hl).gb");
+					mGameBoyVM.loadRom("commons/roms/cpu_instrs/individual/09-op r,r.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

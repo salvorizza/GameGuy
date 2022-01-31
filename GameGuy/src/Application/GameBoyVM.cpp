@@ -77,6 +77,10 @@ namespace GameGuy {
 	{
 		if (sInstance->mState == VMState::Run) {
 			do {
+				if (sInstance->mState == VMState::Stop) {
+					break;
+				}
+
 				gbz80_clock(sInstance->mInstance);
 
 				if (sInstance->mInstance->cpu.cycles == 0) {
@@ -87,8 +91,6 @@ namespace GameGuy {
 				}
 
 			} while (sInstance->mInstance->apu.sample_ready == 0);
-
-			
 			
 			double sample = sInstance->mInstance->apu.so_1;
 			//sInstance->mAudioPanel->addSample(dTime, sample, sample);
