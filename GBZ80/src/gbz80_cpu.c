@@ -2645,7 +2645,7 @@ void gbz80_cpu_alu16_dec_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 
 void gbz80_cpu_misc_swap(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint8_t val = gbz80_cpu_get_register8(cpu, instruction->left_r);
-	val = ((val & 0xF) << 4) | (val & 0xF);
+	val = ((val & 0xF) << 4) | ((val & 0xF0) >> 4);
 	utility_set_flags(cpu, val == 0, 0, 0, 0);
 	gbz80_cpu_set_register8(cpu, instruction->left_r, val);
 }
@@ -2687,7 +2687,7 @@ void gbz80_cpu_misc_cpl(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	uint8_t z = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO);
 	uint8_t c = gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C);
 	utility_set_flags(cpu, z, 1, 1, c);
-	val = val ^ 0xFF;
+	val = ~val;
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, val);
 }
 
