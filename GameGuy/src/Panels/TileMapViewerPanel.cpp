@@ -41,8 +41,8 @@ namespace GameGuy {
 
 			for (uint8_t tileY = 0; tileY < 32; tileY++) {
 				for (uint8_t tileX = 0; tileX < 32; tileX++) {
-					uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY);
-					//uint8_t tileIndex = tileY * 32 + tileX;
+					//uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY);
+					uint8_t tileIndex = tileY * 32 + tileX;
 
 					for (size_t pixelY = 0; pixelY < 8; pixelY++) {
 						gbz80_ppu_read_tile_pixels_by_line(&mInstance->ppu, tileIndex, pixelY, pixels);

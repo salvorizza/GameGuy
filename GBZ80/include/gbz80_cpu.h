@@ -158,8 +158,12 @@ extern "C" {
 
 	void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtsh_rlc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+	void gbz80_cpu_rtsh_rla(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+	void gbz80_cpu_rtsh_rlca(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtsh_rr_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtsh_rrc_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+	void gbz80_cpu_rtsh_rra(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+	void gbz80_cpu_rtsh_rrca(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtsh_sla_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtsh_sra_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_rtsh_srl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);

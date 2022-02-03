@@ -13,7 +13,12 @@ uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
 	} else if (gbz80_cartridge_read(instance->inserted_cartridge, address, &val)) {
 		return val;
 	} else {
-		return instance->memory_map[address];
+		switch (address) {
+		case 0xFF00:
+			return 0xFF;
+		default:
+				return instance->memory_map[address];
+		}
 	}
 }
 
@@ -26,11 +31,11 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 			instance->bootstrap_mode = 0;
 		}
 
-		uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, val);
-
 		if (instance->bootstrap_mode == 0 && gbz80_cartridge_write(instance->inserted_cartridge, address, val)) {
 			
 		} else {
+			uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, val);
+
 			instance->memory_map[address] = val;
 		}
 	}
