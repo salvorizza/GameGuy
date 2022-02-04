@@ -10,9 +10,8 @@ extern "C" {
 #include "gbz80_ppu.h"
 #include "gbz80_apu.h"
 
-#define GBZ80_CLOCK_HERTZ 4194304
-#define GBZ80_MEMORY_SIZE KIBI(64)
-#define GBZ80_ROM_SIZE BYTE(256)
+	#define GBZ80_MEMORY_SIZE KIBI(64)
+	#define GBZ80_ROM_SIZE BYTE(256)
 
 	typedef struct gbz80_video_ram_t {
 		union {

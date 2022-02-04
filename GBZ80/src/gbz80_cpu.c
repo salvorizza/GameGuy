@@ -5,6 +5,10 @@
 void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance) {
 	memset(cpu, 0, sizeof(gbz80_cpu_t));
 	cpu->instance = instance;
+	gbz80_init_timer(&cpu->div_timer, GBZ80_CLOCK_HERTZ / 16384);
+	gbz80_init_timer(&cpu->tima_timer, 0);
+	cpu->ime = 0;
+	cpu->ime_ready = 0;
 }
 
 void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
@@ -13,6 +17,49 @@ void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
 		return;
 	}
 	common_change8_bit(&(cpu->registers.flags), (uint8_t)flag, val);
+}
+
+uint8_t gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address) {
+
+	return 1;
+}
+
+
+uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val) {
+	switch (address) {
+		case 0xFF04:
+			*val = 0;
+			break;
+
+		case 0xFF07:
+			if (common_get8_bit(*val, 2) != 0) {
+				static size_t cpu_clocks[] = { 4096, 262144, 65536, 16384 };
+				gbz80_init_timer(&cpu->tima_timer, GBZ80_CLOCK_HERTZ / cpu_clocks[common_get8_bit_range(*val,0,1)]);
+			} else {
+				gbz80_init_timer(&cpu->tima_timer, 0);
+				cpu->tima_timer.period = 0;
+			}
+			break;
+
+		case 0xFF41: {
+			uint8_t prev_lcd_status = gbz80_memory_read8(cpu->instance, 0xFF41);
+			uint8_t previous_mode = common_get8_bit_range(prev_lcd_status, 0, 1);
+			uint8_t current_mode = common_get8_bit_range(*val, 0, 1);
+
+			if (current_mode == 1 && previous_mode != current_mode) {
+				gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_VBLANK);
+			}
+			break;
+		}
+			
+	}
+	return 1;
+}
+
+void gbz80_cpu_request_interrupt(gbz80_cpu_t* cpu, gbz80_interrupt_type_t interrupt_type) {
+	uint8_t register_if = gbz80_memory_read8(cpu->instance, 0xFF0F);
+	common_set8_bit(&register_if, (uint8_t)interrupt_type);
+	gbz80_memory_write8(cpu->instance, 0xFF0F, register_if);
 }
 
 uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag){
@@ -159,14 +206,36 @@ void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val
 
 void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 {
+	if (cpu->div_timer.period != 0 && gbz80_update_timer(&cpu->div_timer)) {
+		uint8_t div = gbz80_memory_read8(cpu->instance, 0xFF04);
+		gbz80_memory_write8(cpu->instance, 0xFF04, div + 1);
+	}
+
+	if (cpu->tima_timer.period != 0 && gbz80_update_timer(&cpu->tima_timer)) {
+		uint16_t tima = gbz80_memory_read8(cpu->instance, 0xFF05);
+		tima++;
+		if (tima <= 0xFF) {
+			gbz80_memory_write8(cpu->instance, 0xFF05, (uint8_t)tima);
+		}
+		else {
+			uint8_t tma = gbz80_memory_read8(cpu->instance, 0xFF05);
+			gbz80_memory_write8(cpu->instance, 0xFF05, tma);
+			gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_TIMER);
+		}
+	}
 
 	if (cpu->cycles == 0) {
-		
+		uint8_t ime_ready_prev = cpu->ime_ready;
+
 		memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
 		gbz80_cpu_fetch(cpu, &cpu->current_instruction);
 		gbz80_cpu_decode(cpu, &cpu->current_instruction, 1);
 
 		cpu->cycles = gbz80_cpu_execute(cpu, &cpu->current_instruction);
+
+		if (ime_ready_prev == 1 && cpu->ime_ready == 1) {
+			cpu->ime = 1;
+		}
 	}
 	cpu->cycles--;
 }
@@ -2715,14 +2784,13 @@ void gbz80_cpu_misc_stop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 	//TODO
 }
 
-void gbz80_cpu_misc_di(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
-{
-	gbz80_memory_write8(cpu->instance, 0xFFFF, 0);
+void gbz80_cpu_misc_di(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	cpu->ime = 0;
+	cpu->ime_ready = 0;
 }
 
-void gbz80_cpu_misc_ei(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
-{
-	gbz80_memory_write8(cpu->instance, 0xFFFF, 1);
+void gbz80_cpu_misc_ei(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	cpu->ime_ready = 1;
 }
 
 void gbz80_cpu_rtsh_rl_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)

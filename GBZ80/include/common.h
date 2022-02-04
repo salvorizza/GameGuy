@@ -3,17 +3,37 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define GBZ80_CLOCK_HERTZ 4194304llu
 
-	#include <stdint.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <memory.h>
-	#include <assert.h>
-	#include <string.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <assert.h>
+#include <string.h>
 
-	#define BYTE(x) (x)
-	#define KIBI(x) (1024llu * BYTE(x))
-	#define MIBI(x) (1024llu * KIBI(x))
+#define BYTE(x) (x)
+#define KIBI(x) (1024llu * BYTE(x))
+#define MIBI(x) (1024llu * KIBI(x))
+
+	typedef struct gbz80_timer_t {
+		size_t counter;
+		size_t period;
+	} gbz80_timer_t;
+
+	static __forceinline void gbz80_init_timer(gbz80_timer_t* timer, size_t period) {
+		timer->period = period;
+		timer->counter = period;
+	}
+
+	static __forceinline uint8_t gbz80_update_timer(gbz80_timer_t* timer) {
+		timer->counter--;
+		if (timer->counter == 0) {
+			timer->counter = timer->period;
+			return 1;
+		}
+		return 0;
+	}
 
 	static __forceinline void common_change8_bit(uint8_t* bitset, uint8_t bit_pos, uint8_t bit_val) {
 		*bitset = (*bitset & ~(1 << (uint8_t)bit_pos)) | (bit_val << (uint8_t)bit_pos);

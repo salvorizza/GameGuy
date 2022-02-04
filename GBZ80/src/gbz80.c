@@ -34,7 +34,8 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 		if (instance->bootstrap_mode == 0 && gbz80_cartridge_write(instance->inserted_cartridge, address, val)) {
 			
 		} else {
-			uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, val);
+			uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, &val);
+			uint8_t cpu_write_flag = gbz80_cpu_memory_write(&instance->cpu, address, &val);
 
 			instance->memory_map[address] = val;
 		}
@@ -52,7 +53,7 @@ void gbz80_memory_write16(gbz80_t* instance, uint16_t address, uint16_t val) {
 }
 
 void gbz80_set_sample_rate(gbz80_t* instance, size_t sample_rate) {
-	gbz80_apu_init_timer(&instance->apu.sample_timer, GBZ80_APU_FREQ / sample_rate);
+	gbz80_init_timer(&instance->apu.sample_timer, GBZ80_APU_FREQ / sample_rate);
 }
 
 void gbz80_init(gbz80_t* instance, const char* bios_path) {

@@ -9,11 +9,6 @@ extern "C" {
 	#define GBZ80_APU_FREQ 4194304llu
 
 	typedef struct gbz80_t gbz80_t;	
-		
-	typedef struct gbz80_apu_timer_t {
-		size_t counter;
-		size_t period;
-	} gbz80_apu_timer_t;
 
 	typedef struct gbz80_apu_frame_sequencer_t {
 		uint8_t num_step;
@@ -21,7 +16,7 @@ extern "C" {
 		uint8_t volume_envelope_clock;
 		uint8_t sweep_clock;
 
-		gbz80_apu_timer_t timer;
+		gbz80_timer_t timer;
 	} gbz80_apu_frame_sequencer_t;
 
 	typedef struct gbz80_apu_length_counter_t {
@@ -31,13 +26,13 @@ extern "C" {
 
 	typedef struct gbz80_apu_volume_envelope_t {
 		uint8_t counter;
-		gbz80_apu_timer_t timer;
+		gbz80_timer_t timer;
 	} gbz80_apu_volume_envelope_t;
 
 	typedef struct gbz80_apu_frequency_sweep_t {
 		uint8_t enabled;
 		uint16_t frequency_shadow;
-		gbz80_apu_timer_t timer;
+		gbz80_timer_t timer;
 	} gbz80_apu_frequency_sweep_t;
 
 	typedef struct gbz80_apu_duty_cycle_t {
@@ -52,7 +47,7 @@ extern "C" {
 		gbz80_apu_length_counter_t length_counter;
 		gbz80_apu_volume_envelope_t volume_envelope;
 		double dac_output;
-		gbz80_apu_timer_t frequency_timer;
+		gbz80_timer_t frequency_timer;
 	} gbz80_apu_base_channel_t;
 
 	typedef struct gbz80_apu_channel_1_t {
@@ -78,7 +73,7 @@ extern "C" {
 		gbz80_apu_channel_2_t channel_2;
 		gbz80_apu_channel_3_t channel_3;
 		int32_t sample_ready;
-		gbz80_apu_timer_t sample_timer;
+		gbz80_timer_t sample_timer;
 		gbz80_t* instance;
 	} gbz80_apu_t;
 
@@ -88,26 +83,12 @@ extern "C" {
 	void gbz80_apu_clock(gbz80_apu_t* apu);
 
 	uint8_t gbz80_apu_memory_read(gbz80_apu_t* apu, uint16_t address);
-	uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t val);
+	uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t* val);
 
 	void gbz80_apu_trigger_channel1(gbz80_apu_t* apu);
 	void gbz80_apu_trigger_channel2(gbz80_apu_t* apu);
 	void gbz80_apu_trigger_channel3(gbz80_apu_t* apu);
 	void gbz80_apu_trigger_channel4(gbz80_apu_t* apu);
-
-	static __forceinline void gbz80_apu_init_timer(gbz80_apu_timer_t* timer, size_t period) {
-		timer->period = period;
-		timer->counter = period;
-	}
-
-	static __forceinline uint8_t gbz80_apu_update_timer(gbz80_apu_timer_t* timer) {
-		timer->counter--;
-		if (timer->counter == 0) {
-			timer->counter = timer->period;
-			return 1;
-		}
-		return 0;
-	}
 
 	void gbz80_apu_channel_base_init(gbz80_apu_base_channel_t* channel);
 
