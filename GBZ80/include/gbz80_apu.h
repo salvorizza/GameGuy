@@ -82,8 +82,8 @@ extern "C" {
 	void gbz80_apu_init(gbz80_apu_t* apu, gbz80_t* instance);
 	void gbz80_apu_clock(gbz80_apu_t* apu);
 
-	uint8_t gbz80_apu_memory_read(gbz80_apu_t* apu, uint16_t address);
-	uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t* val);
+	void gbz80_apu_memory_read(gbz80_apu_t* apu, uint16_t address, uint8_t* readed_val);
+	uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t current_value, uint8_t* val);
 
 	void gbz80_apu_trigger_channel1(gbz80_apu_t* apu);
 	void gbz80_apu_trigger_channel2(gbz80_apu_t* apu);

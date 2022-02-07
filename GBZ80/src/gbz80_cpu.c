@@ -60,15 +60,15 @@ uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val)
 }
 
 void gbz80_cpu_request_interrupt(gbz80_cpu_t* cpu, gbz80_interrupt_type_t interrupt_type) {
-	uint8_t register_if = gbz80_memory_read8(cpu->instance, 0xFF0F);
+	uint8_t register_if = gbz80_memory_read_internal(cpu->instance, 0xFF0F);
 	common_set8_bit(&register_if, (uint8_t)interrupt_type);
-	gbz80_memory_write8(cpu->instance, 0xFF0F, register_if);
+	gbz80_memory_write_internal(cpu->instance, 0xFF0F, register_if);
 }
 
 uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu) {
 	if (cpu->ime) {
-		uint8_t ie = gbz80_memory_read8(cpu->instance, 0xFFFF);
-		uint8_t register_if = gbz80_memory_read8(cpu->instance, 0xFF0F);
+		uint8_t ie = gbz80_memory_read_internal(cpu->instance, 0xFFFF);
+		uint8_t register_if = gbz80_memory_read_internal(cpu->instance, 0xFF0F);
 
 		if (ie != 0 && register_if != 0) {
 			static uint16_t int_adresses[] = { 0x0040,0x0048,0x0050,0x0058,0x0060 };
@@ -77,7 +77,7 @@ uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu) {
 			for (uint8_t i = 0; i < (uint8_t)GBZ80_INTERRUPT_MAX; i++) {
 				if (common_get8_bit(ie, i) == 1 && common_get8_bit(register_if, i) == 1) {
 					common_reset8_bit(&register_if, i);
-					gbz80_memory_write8(cpu->instance, 0xFF0F, register_if);
+					gbz80_memory_write_internal(cpu->instance, 0xFF0F, register_if);
 					cpu->ime = 0;
 
 					uint16_t int_adress = int_adresses[i];
@@ -245,19 +245,19 @@ void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val
 void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 {
 	if (cpu->div_timer.period != 0 && gbz80_update_timer(&cpu->div_timer)) {
-		uint8_t div = gbz80_memory_read8(cpu->instance, 0xFF04);
+		uint8_t div = gbz80_memory_read_internal(cpu->instance, 0xFF04);
 		gbz80_memory_write8(cpu->instance, 0xFF04, div + 1);
 	}
 
 	if (cpu->tima_timer.period != 0 && gbz80_update_timer(&cpu->tima_timer)) {
-		uint16_t tima = gbz80_memory_read8(cpu->instance, 0xFF05);
+		uint16_t tima = gbz80_memory_read_internal(cpu->instance, 0xFF05);
 		tima++;
 		if (tima <= 0xFF) {
-			gbz80_memory_write8(cpu->instance, 0xFF05, (uint8_t)tima);
+			gbz80_memory_write_internal(cpu->instance, 0xFF05, (uint8_t)tima);
 		}
 		else {
-			uint8_t tma = gbz80_memory_read8(cpu->instance, 0xFF06);
-			gbz80_memory_write8(cpu->instance, 0xFF05, tma);
+			uint8_t tma = gbz80_memory_read_internal(cpu->instance, 0xFF06);
+			gbz80_memory_write_internal(cpu->instance, 0xFF05, tma);
 			gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_TIMER);
 		}
 	}
@@ -268,7 +268,7 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 
 			memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
 			gbz80_cpu_fetch(cpu, &cpu->current_instruction);
-			gbz80_cpu_decode(cpu, &cpu->current_instruction, 1);
+			gbz80_cpu_decode(cpu, &cpu->current_instruction, 0);
 
 			cpu->cycles = gbz80_cpu_execute(cpu, &cpu->current_instruction);
 

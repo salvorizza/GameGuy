@@ -41,7 +41,8 @@ extern "C" {
 
 	static __forceinline void common_change8_bit_range(uint8_t* bitset, uint8_t bit_pos_start, uint8_t bit_pos_end, uint8_t val) {
 		uint8_t mask = 0xFF >> (8 - bit_pos_end + bit_pos_start - 1);
-		*bitset = (*bitset & ~(mask << (uint8_t)bit_pos_start)) | (val << (uint8_t)bit_pos_start);
+		uint8_t write_mask = val ? mask : 0;
+		*bitset = (*bitset & ~(mask << (uint8_t)bit_pos_start)) | write_mask;
 	}
 
 	static __forceinline void common_toggle8_bit(uint8_t* bitset, uint8_t bit_pos)

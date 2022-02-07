@@ -59,6 +59,10 @@ extern "C" {
 	size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds);
 	void gbz80_destroy(gbz80_t* rom);
 
+	uint8_t gbz80_memory_read_internal(gbz80_t* instance, uint16_t address);
+	void gbz80_memory_write_internal(gbz80_t* instance, uint16_t address, uint8_t val);
+
+
 	uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address);
 	void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val);
 	uint16_t gbz80_memory_read16(gbz80_t* instance, uint16_t address);

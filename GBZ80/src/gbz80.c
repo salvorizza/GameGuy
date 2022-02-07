@@ -14,11 +14,15 @@ uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
 		return val;
 	} else {
 		switch (address) {
-		case 0xFF00:
-			return 0xFF;
-		default:
-				return instance->memory_map[address];
+			case 0xFF00:
+				return 0xFF;
+			default: {
+				uint8_t val = instance->memory_map[address];
+				gbz80_apu_memory_read(&instance->apu, address, &val);
+				return val;
+			}
 		}
+				
 	}
 }
 
@@ -34,7 +38,9 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 		if (instance->bootstrap_mode == 0 && gbz80_cartridge_write(instance->inserted_cartridge, address, val)) {
 			
 		} else {
-			uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, &val);
+			uint8_t current_value = instance->memory_map[address];
+
+			uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, current_value, &val);
 			uint8_t cpu_write_flag = gbz80_cpu_memory_write(&instance->cpu, address, &val);
 
 			instance->memory_map[address] = val;
@@ -68,9 +74,9 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 	instance->bootstrap_mode = 1;
 	instance->cartridge_code_size = 0;
 	instance->inserted_cartridge = NULL;
-	gbz80_cpu_init(&instance->cpu, instance);
-	gbz80_ppu_init(&instance->ppu, instance);
 	gbz80_apu_init(&instance->apu, instance);
+	gbz80_ppu_init(&instance->ppu, instance);
+	gbz80_cpu_init(&instance->cpu, instance);
 }
 
 void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
@@ -98,4 +104,14 @@ void gbz80_destroy(gbz80_t* instance)
 {
 	free(instance);
 	instance = NULL;
+}
+
+uint8_t gbz80_memory_read_internal(gbz80_t* instance, uint16_t address)
+{
+	return instance->memory_map[address];
+}
+
+void gbz80_memory_write_internal(gbz80_t* instance, uint16_t address, uint8_t val)
+{
+	instance->memory_map[address] = val;
 }
