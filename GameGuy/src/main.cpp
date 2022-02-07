@@ -67,8 +67,8 @@ public:
 				uint8_t col = ((gbz80_t*)mGameBoyVM)->ppu.lcd[y * 160 + x];
 				switch (col) {
 					case 0: color = { 1,1,1,1 }; break;
-					case 1: color = { .82f,.82f,.82f,1 }; break;
-					case 2: color = { .37f,.37f,.37f,1 }; break;
+					case 1: color = { .66f,.66f,.66f,1 }; break;
+					case 2: color = { .33f,.33f,.33f,1 }; break;
 					case 3: color = { 0,0,0,1 }; break;
 				}
 
@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/cpu_instrs/individual/02-interrupts.gb");
+					mGameBoyVM.loadRom("commons/roms/gb-test-roms-master/dmg_sound/rom_singles/01-registers.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

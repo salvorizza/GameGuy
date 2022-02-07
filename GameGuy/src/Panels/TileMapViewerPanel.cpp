@@ -41,8 +41,8 @@ namespace GameGuy {
 
 			for (uint8_t tileY = 0; tileY < 32; tileY++) {
 				for (uint8_t tileX = 0; tileX < 32; tileX++) {
-					//uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY);
-					uint8_t tileIndex = tileY * 32 + tileX;
+					uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY);
+					//uint8_t tileIndex = tileY * 32 + tileX;
 
 					for (size_t pixelY = 0; pixelY < 8; pixelY++) {
 						gbz80_ppu_read_tile_pixels_by_line(&mInstance->ppu, tileIndex, pixelY, pixels);
@@ -52,10 +52,11 @@ namespace GameGuy {
 
 							switch (paletteColor) {
 								case 0: color = { 1,1,1,1 }; break;
-								case 1: color = { .82f,.82f,.82f,1 }; break;
-								case 2: color = { .37f,.37f,.37f,1 }; break;
+								case 1: color = { .66f,.66f,.66f,1 }; break;
+								case 2: color = { .33f,.33f,.33f,1 }; break;
 								case 3: color = { 0,0,0,1 }; break;
 							}
+
 
 							batchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth, cellHeight }, color);
 						}

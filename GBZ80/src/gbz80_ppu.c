@@ -51,6 +51,9 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 					gbz80_ppu_update_stat_register(ppu, 2, 0);
 				} else {
 					gbz80_ppu_update_stat_register(ppu, 1, ly + 1);
+					if (ly == 143) {
+						gbz80_cpu_request_interrupt(&ppu->instance->cpu, GBZ80_INTERRUPT_VBLANK);
+					}
 				}
 			}
 		}

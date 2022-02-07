@@ -46,7 +46,7 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 				out_rom->rom_banks_size = 0;
 			}*/
 
-			switch (out_rom->header.rom_size) {
+			switch (out_rom->header.ram_size) {
 				case GBZ80_RAM_SIZE_NONE:
 					out_rom->ram_banks_size = 0;
 					break;

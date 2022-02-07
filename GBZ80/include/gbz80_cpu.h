@@ -14,6 +14,7 @@ extern "C" {
 		GBZ80_FLAG_H = 5,
 		GBZ80_FLAG_C = 4
 	} gbz80_flag_t;
+
 	typedef enum gbz80_register_t {
 		GBZ80_REGISTER_A,
 		GBZ80_REGISTER_F,
@@ -29,13 +30,16 @@ extern "C" {
 		GBZ80_REGISTER_HL,
 		GBZ80_REGISTER_SP
 	} gbz80_register_t;
+
 	typedef enum gbz80_interrupt_type_t {
 		GBZ80_INTERRUPT_VBLANK = 0,
 		GBZ80_INTERRUPT_LCDSTAT = 1,
 		GBZ80_INTERRUPT_TIMER = 2,
 		GBZ80_INTERRUPT_SERIAL = 3,
-		GBZ80_INTERRUPT_JOYPAD = 4
+		GBZ80_INTERRUPT_JOYPAD = 4,
+		GBZ80_INTERRUPT_MAX
 	}gbz80_interrupt_type_t;
+
 	typedef struct gbz80_registers_t {
 		union {
 			uint16_t AF;
@@ -108,6 +112,7 @@ extern "C" {
 	uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val);
 
 	void gbz80_cpu_request_interrupt(gbz80_cpu_t* cpu, gbz80_interrupt_type_t interrupt_type);
+	uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu);
 
 	uint8_t gbz80_cpu_get_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag);
 
