@@ -107,7 +107,7 @@ void gbz80_ppu_draw_sprites(gbz80_ppu_t* ppu, uint8_t ly) {
 
 		uint8_t start_pixel = 0;
 		uint8_t end_pixel = 8;
-		uint8_t tile_index = sprite->x / 8;
+		uint8_t tile_index = sprite->x / 8 - 1;
 
 		if (sprite->x < 8) {
 			start_pixel = 8 - sprite->x;

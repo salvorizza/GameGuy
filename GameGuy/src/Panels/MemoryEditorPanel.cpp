@@ -21,21 +21,21 @@ namespace GameGuy {
 	void MemoryEditorPanel::onImGuiRender() {
 		static MemoryEditor mem_edit;
 
-		const char* items[] = { "Cartridge Memory", "Internal Memory"};
-		static int item_current = 1;
+		const char* items[] = { "Internal ROM + RAM","Cartridge ROM","Cartridge RAM"};
+		static int item_current = 0;
 		ImGui::Combo(" ", &item_current, items, IM_ARRAYSIZE(items));
 
-		if (item_current == 1) {
-			mem_edit.DrawContents(mInstance->memory_map, 0xFFFF);
-		}
-		else {
-			if (mInstance->inserted_cartridge) {
+		switch (item_current) {
+			case 0:
+				mem_edit.DrawContents(mInstance->memory_map, 0x10000);
+				break;
+			case 1:
 				mem_edit.DrawContents(mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks_size);
-			}
+				break;
+			case 2:
+				mem_edit.DrawContents(mInstance->inserted_cartridge->ram_banks, mInstance->inserted_cartridge->ram_banks_size);
+				break;
 		}
-
-		/*if (mInstance->inserted_cartridge)
-			mem_edit.DrawContents(mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks_size);*/
 	}
 
 }

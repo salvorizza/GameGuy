@@ -5,10 +5,14 @@
 void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance) {
 	memset(cpu, 0, sizeof(gbz80_cpu_t));
 	cpu->instance = instance;
-	gbz80_init_timer(&cpu->div_timer, GBZ80_CLOCK_HERTZ / 16384);
-	gbz80_init_timer(&cpu->tima_timer, 0);
 	cpu->ime = 0;
 	cpu->ime_ready = 0;
+	cpu->div_low = 0;
+	cpu->prev_timer_and_result = 0;
+	cpu->cycles_to_tima_interrupt = 0;
+	cpu->cycles_to_tima_interrupt_enable = 0;
+	cpu->tma_loaded = 0;
+	cpu->oam_transfer_count = 0;
 }
 
 void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
@@ -19,30 +23,54 @@ void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
 	common_change8_bit(&(cpu->registers.flags), (uint8_t)flag, val);
 }
 
-uint8_t gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address) {
-
-	return 1;
+void gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val) {
 }
 
 
-uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val) {
+uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t current_value, uint8_t* val) {
 	switch (address) {
-		case 0xFF04:
-			*val = 0;
+		case 0xFF00:
+			common_set8_bit(val, 6);
+			common_set8_bit(val, 7);
+			common_change8_bit_range(val, 0, 3, current_value);
 			break;
 
-		case 0xFF07:
-			if (common_get8_bit(*val, 2) != 0) {
-				static size_t cpu_clocks[] = { 4096, 262144, 65536, 16384 };
-				uint8_t clock_index = common_get8_bit_range(*val, 0, 1);
-				size_t clock_value_hz = cpu_clocks[clock_index];
+		case 0xFF04:
+			cpu->div_low = 0;
+			*val = 0;
+			uint8_t tac = gbz80_memory_read_internal(cpu->instance, 0xFF07);
 
-				gbz80_init_timer(&cpu->tima_timer, GBZ80_CLOCK_HERTZ / clock_value_hz);
+			/*if (cpu->prev_timer_and_result && common_get8_bit(tac, 2)) {
+				uint16_t tima = gbz80_memory_read_internal(cpu->instance, 0xFF05);
+				tima++;
+				if (tima <= 0xFF) {
+					gbz80_memory_write_internal(cpu->instance, 0xFF05, (uint8_t)tima);
+				}
+				else {
+					gbz80_memory_write_internal(cpu->instance, 0xFF05, 0);
+					cpu->cycles_to_tima_interrupt = 4;
+					cpu->cycles_to_tima_interrupt_enable = 1;
+				}
+			}*/
+
+			/*TODO: Falling edge increase*/
+			break;
+
+		case 0xFF05:
+			if (cpu->tma_loaded) {
+				*val = current_value;
 			} else {
-				gbz80_init_timer(&cpu->tima_timer, 0);
-				cpu->tima_timer.period = 0;
+				cpu->cycles_to_tima_interrupt_enable = 0;
+				cpu->cycles_to_tima_interrupt = 0;
 			}
 			break;
+
+		case 0xFF06:
+			if (cpu->tma_loaded) {
+				gbz80_memory_write_internal(cpu->instance, 0xFF05, *val);
+			}
+			break;
+
 
 		case 0xFF41: {
 			uint8_t prev_lcd_status = gbz80_memory_read8(cpu->instance, 0xFF41);
@@ -54,8 +82,25 @@ uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val)
 			}
 			break;
 		}
+
+		case 0xFF46: {
+			uint16_t source_address = ((uint16_t)*val << 8);
+			uint16_t dst_address = 0xFE00;
+
+			for (uint16_t i = 0; i < 0x100; i++) {
+				uint8_t val = gbz80_memory_read8(cpu->instance, source_address);
+				gbz80_memory_write_internal(cpu->instance, dst_address, val);
+
+				source_address++;
+				dst_address++;
+			}
+
+			cpu->oam_transfer_count = (uint16_t)640;
+			break;
+		}
 			
 	}
+
 	return 1;
 }
 
@@ -244,22 +289,49 @@ void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val
 
 void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 {
-	if (cpu->div_timer.period != 0 && gbz80_update_timer(&cpu->div_timer)) {
-		uint8_t div = gbz80_memory_read_internal(cpu->instance, 0xFF04);
-		gbz80_memory_write8(cpu->instance, 0xFF04, div + 1);
+	if (cpu->div_low == 0xFF) {
+		uint8_t div_high = gbz80_memory_read_internal(cpu->instance, 0xFF04);
+		gbz80_memory_write_internal(cpu->instance, 0xFF04, div_high + 1);
+		cpu->div_low = 0;
+	}
+	else {
+		cpu->div_low++;
 	}
 
-	if (cpu->tima_timer.period != 0 && gbz80_update_timer(&cpu->tima_timer)) {
+	uint8_t tac = gbz80_memory_read_internal(cpu->instance, 0xFF07);
+	static uint8_t bit_checks[] = { 9,3,5,7 };
+	uint8_t bit_check = bit_checks[common_get8_bit_range(tac, 0, 1)];
+	uint16_t div = ((uint16_t)gbz80_memory_read_internal(cpu->instance, 0xFF04) << 8) | cpu->div_low;
+
+	uint8_t current_timer_and_result = common_get16_bit(div, bit_check) & common_get8_bit(tac, 2);
+
+	if (cpu->prev_timer_and_result == 1 && current_timer_and_result == 0) {
 		uint16_t tima = gbz80_memory_read_internal(cpu->instance, 0xFF05);
 		tima++;
 		if (tima <= 0xFF) {
 			gbz80_memory_write_internal(cpu->instance, 0xFF05, (uint8_t)tima);
 		}
 		else {
-			uint8_t tma = gbz80_memory_read_internal(cpu->instance, 0xFF06);
-			gbz80_memory_write_internal(cpu->instance, 0xFF05, tma);
-			gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_TIMER);
+			gbz80_memory_write_internal(cpu->instance, 0xFF05, 0);
+			cpu->cycles_to_tima_interrupt = 4;
+			cpu->cycles_to_tima_interrupt_enable = 1;
 		}
+	}
+
+	cpu->prev_timer_and_result = current_timer_and_result;
+
+	if (cpu->cycles_to_tima_interrupt == 0 && cpu->cycles_to_tima_interrupt_enable) {
+		uint8_t tma = gbz80_memory_read_internal(cpu->instance, 0xFF06);
+		gbz80_memory_write_internal(cpu->instance, 0xFF05, tma);
+		gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_TIMER);
+
+		cpu->tma_loaded = 1;
+
+		cpu->cycles_to_tima_interrupt_enable = 0;
+	}
+
+	if (cpu->cycles_to_tima_interrupt_enable) {
+		cpu->cycles_to_tima_interrupt--;
 	}
 
 	if (cpu->cycles == 0) {
@@ -278,6 +350,14 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 		}
 	}
 	cpu->cycles--;
+
+	if (cpu->tma_loaded == 1) {
+		cpu->tma_loaded = 0;
+	}
+
+	if (cpu->oam_transfer_count != 0) {
+		cpu->oam_transfer_count--;
+	}
 }
 
 void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
@@ -493,6 +573,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 
 				case 0x50:
 					if(get_instruction_name) sprintf(instruction->disassembled_name, "LD D,B");
+					instruction->left_r = GBZ80_REGISTER_D;
 					instruction->left_r = GBZ80_REGISTER_D;
 					instruction->right_r = GBZ80_REGISTER_B;
 					break;
@@ -2310,7 +2391,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		}
 	}
 	else if (prefix == 0x00 && (opcode == 0xCD)) {
-		instruction->cycles = 12;
+		instruction->cycles = 24;
 		instruction->nn = gbz80_memory_read16(cpu->instance, cpu->registers.PC);
 		instruction->execute_function = &gbz80_cpu_calls_call_nn;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "CALL $%04X", instruction->nn);
@@ -2385,7 +2466,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "RST $%02X", instruction->n);
 	}
 	else if (prefix == 0x00 && (opcode == 0xC9)) {
-		instruction->cycles = 8;
+		instruction->cycles = 16;
 		instruction->execute_function = &gbz80_cpu_rtrns_ret;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "RET");
 	}
@@ -2415,7 +2496,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		}
 	}
 	else if (prefix == 0x00 && (opcode == 0xD9)) {
-		instruction->cycles = 8;
+		instruction->cycles = 16;
 		instruction->execute_function = &gbz80_cpu_rtrns_reti;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "RETI");
 	}
@@ -2976,6 +3057,7 @@ void gbz80_cpu_jumps_jpnz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
 		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+		instruction->cycles = 16;
 	}
 }
 
@@ -2983,6 +3065,7 @@ void gbz80_cpu_jumps_jpz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
 		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+		instruction->cycles = 16;
 	}
 }
 
@@ -2990,6 +3073,7 @@ void gbz80_cpu_jumps_jpnc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
 		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+		instruction->cycles = 16;
 	}
 }
 
@@ -2997,6 +3081,7 @@ void gbz80_cpu_jumps_jpc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
 		gbz80_cpu_jumps_jp_nn(cpu, instruction);
+		instruction->cycles = 16;
 	}
 }
 
@@ -3014,6 +3099,7 @@ void gbz80_cpu_jumps_jrnz_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
 		gbz80_cpu_jumps_jr_d(cpu, instruction);
+		instruction->cycles = 12;
 	}
 }
 
@@ -3021,6 +3107,7 @@ void gbz80_cpu_jumps_jrz_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
 		gbz80_cpu_jumps_jr_d(cpu, instruction);
+		instruction->cycles = 12;
 	}
 }
 
@@ -3028,6 +3115,7 @@ void gbz80_cpu_jumps_jrnc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
 		gbz80_cpu_jumps_jr_d(cpu, instruction);
+		instruction->cycles = 12;
 	}
 }
 
@@ -3035,6 +3123,7 @@ void gbz80_cpu_jumps_jrc_d(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
 		gbz80_cpu_jumps_jr_d(cpu, instruction);
+		instruction->cycles = 12;
 	}
 }
 
@@ -3050,6 +3139,7 @@ void gbz80_cpu_calls_callnz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instructio
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
 		gbz80_cpu_calls_call_nn(cpu, instruction);
+		instruction->cycles = 24;
 	}
 }
 
@@ -3057,6 +3147,7 @@ void gbz80_cpu_calls_callz_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
 		gbz80_cpu_calls_call_nn(cpu, instruction);
+		instruction->cycles = 24;
 	}
 }
 
@@ -3064,6 +3155,7 @@ void gbz80_cpu_calls_callnc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instructio
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
 		gbz80_cpu_calls_call_nn(cpu, instruction);
+		instruction->cycles = 24;
 	}
 }
 
@@ -3071,6 +3163,7 @@ void gbz80_cpu_calls_callc_nn(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
 		gbz80_cpu_calls_call_nn(cpu, instruction);
+		instruction->cycles = 24;
 	}
 }
 
@@ -3094,24 +3187,28 @@ void gbz80_cpu_rtrns_retnz(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 0) {
 		gbz80_cpu_rtrns_ret(cpu, instruction);
+		instruction->cycles = 20;
 	}
 }
 
 void gbz80_cpu_rtrns_retz(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_ZERO) == 1) {
 		gbz80_cpu_rtrns_ret(cpu, instruction);
+		instruction->cycles = 20;
 	}
 }
 
 void gbz80_cpu_rtrns_retnc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 0) {
 		gbz80_cpu_rtrns_ret(cpu, instruction);
+		instruction->cycles = 20;
 	}
 }
 
 void gbz80_cpu_rtrns_retc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	if (gbz80_cpu_get_flag(cpu, GBZ80_FLAG_C) == 1) {
 		gbz80_cpu_rtrns_ret(cpu, instruction);
+		instruction->cycles = 20;
 	}
 }
 

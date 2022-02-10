@@ -14,10 +14,9 @@ uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
 		return val;
 	} else {
 		switch (address) {
-			case 0xFF00:
-				return 0xFF;
 			default: {
 				uint8_t val = instance->memory_map[address];
+				gbz80_cpu_memory_read(&instance->cpu, address, &val);
 				gbz80_apu_memory_read(&instance->apu, address, &val);
 				return val;
 			}
@@ -40,8 +39,8 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 		} else {
 			uint8_t current_value = instance->memory_map[address];
 
+			uint8_t cpu_write_flag = gbz80_cpu_memory_write(&instance->cpu, address, current_value, &val);
 			uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, current_value, &val);
-			uint8_t cpu_write_flag = gbz80_cpu_memory_write(&instance->cpu, address, &val);
 
 			instance->memory_map[address] = val;
 		}
@@ -77,6 +76,7 @@ void gbz80_init(gbz80_t* instance, const char* bios_path) {
 	gbz80_apu_init(&instance->apu, instance);
 	gbz80_ppu_init(&instance->ppu, instance);
 	gbz80_cpu_init(&instance->cpu, instance);
+	gbz80_joypad_init(&instance->joypad, instance);
 }
 
 void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)

@@ -9,6 +9,7 @@ extern "C" {
 #include "gbz80_cpu.h"
 #include "gbz80_ppu.h"
 #include "gbz80_apu.h"
+#include "gbz80_joypad.h"
 
 	#define GBZ80_MEMORY_SIZE KIBI(64)
 	#define GBZ80_ROM_SIZE BYTE(256)
@@ -48,6 +49,7 @@ extern "C" {
 		gbz80_cpu_t cpu;
 		gbz80_ppu_t ppu;
 		gbz80_apu_t apu;
+		gbz80_joypad_t joypad;
 		size_t cartridge_code_size;
 		gbz80_cartridge_t* inserted_cartridge;
 	} gbz80_t;

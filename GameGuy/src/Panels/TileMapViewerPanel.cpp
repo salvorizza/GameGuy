@@ -44,10 +44,10 @@ namespace GameGuy {
 					uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY);
 					//uint8_t tileIndex = tileY * 32 + tileX;
 
-					for (size_t pixelY = 0; pixelY < 8; pixelY++) {
+					for (uint8_t pixelY = 0; pixelY < 8; pixelY++) {
 						gbz80_ppu_read_tile_pixels_by_line(&mInstance->ppu, tileIndex, pixelY, pixels);
 
-						for (size_t pixelX = 0; pixelX < 8; pixelX++) {
+						for (uint8_t pixelX = 0; pixelX < 8; pixelX++) {
 							uint8_t paletteColor = gbz80_ppu_get_bgp_color(&mInstance->ppu, pixels[pixelX]);
 
 							switch (paletteColor) {

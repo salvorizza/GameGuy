@@ -31,20 +31,6 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 
 	uint8_t apu_power= common_get8_bit(nr52, 7);
 
-	uint8_t left_channels_power[4] = {
-		common_get8_bit(nr51, 0),
-		common_get8_bit(nr51, 1),
-		common_get8_bit(nr51, 2),
-		common_get8_bit(nr51, 3)
-	};
-
-	uint8_t right_channels_power[4] = {
-		common_get8_bit(nr51, 4),
-		common_get8_bit(nr51, 5),
-		common_get8_bit(nr51, 6),
-		common_get8_bit(nr51, 7)
-	};
-
 	if (apu_power) {
 		gbz80_apu_frame_sequencer_update(&apu->frame_sequencer);
 
@@ -169,11 +155,11 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 
 			apu->so_1 = apu->so_2 = 0.0;
 			for (uint8_t channel_number = 0; channel_number < 4; channel_number++) {
-				if (left_channels_power[channel_number]) {
+				if (common_get8_bit(nr51, channel_number)) {
 					apu->so_1 += dac_outs[channel_number];
 				}
 
-				if (right_channels_power[channel_number]) {
+				if (common_get8_bit(nr51, 4 + channel_number)) {
 					apu->so_2 += dac_outs[channel_number];
 				}
 			}
@@ -265,15 +251,17 @@ uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t curre
 			common_change8_bit_range(val, 0, 6, previous);
 
 			if (common_get8_bit(*val, 7) == 0) {
-				for (uint16_t base_address = 0xFF10; base_address < 0xFF25; base_address++) {
+				for (uint16_t base_address = 0xFF10; base_address <= 0xFF25; base_address++) {
 					gbz80_memory_write_internal(apu->instance, base_address, 0x00);
 				}
+
+				*val = 0x70;
 			}
 			break;
 		}
 	}
 
-	if (common_get8_bit(nr52, 7) == 0 && address != 0xFF26) {
+	if (common_get8_bit(nr52, 7) == 0 && address != 0xFF26 && address >= 0xFF10 && address <= 0xFF25) {
 		*val = current_value;
 	}
 

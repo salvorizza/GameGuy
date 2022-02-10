@@ -97,9 +97,14 @@ extern "C" {
 		gbz80_registers_t registers;
 		gbz80_instruction_t current_instruction;
 
+		uint16_t oam_transfer_count;
+
 		uint8_t ime,ime_ready;
-		gbz80_timer_t div_timer;
-		gbz80_timer_t tima_timer;
+		uint8_t div_low;
+		uint8_t prev_timer_and_result;
+		uint8_t cycles_to_tima_interrupt,cycles_to_tima_interrupt_enable;
+		uint8_t tma_loaded;
+
 	} gbz80_cpu_t;
 
 	
@@ -108,8 +113,8 @@ extern "C" {
 	void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance);
 	void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val);
 
-	uint8_t gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address);
-	uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val);
+	void gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val);
+	uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t current_value, uint8_t* val);
 
 	void gbz80_cpu_request_interrupt(gbz80_cpu_t* cpu, gbz80_interrupt_type_t interrupt_type);
 	uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu);
