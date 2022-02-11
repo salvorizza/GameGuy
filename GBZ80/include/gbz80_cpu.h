@@ -105,11 +105,10 @@ extern "C" {
 		uint8_t cycles_to_tima_interrupt,cycles_to_tima_interrupt_enable;
 		uint8_t tma_loaded;
 
+		uint8_t halted;
 	} gbz80_cpu_t;
 
 	
-
-
 	void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance);
 	void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val);
 

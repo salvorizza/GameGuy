@@ -13,6 +13,7 @@ void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance) {
 	cpu->cycles_to_tima_interrupt_enable = 0;
 	cpu->tma_loaded = 0;
 	cpu->oam_transfer_count = 0;
+	cpu->halted = 0;
 }
 
 void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
@@ -108,6 +109,7 @@ void gbz80_cpu_request_interrupt(gbz80_cpu_t* cpu, gbz80_interrupt_type_t interr
 	uint8_t register_if = gbz80_memory_read_internal(cpu->instance, 0xFF0F);
 	common_set8_bit(&register_if, (uint8_t)interrupt_type);
 	gbz80_memory_write_internal(cpu->instance, 0xFF0F, register_if);
+	cpu->halted = 0;
 }
 
 uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu) {
@@ -335,18 +337,23 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 	}
 
 	if (cpu->cycles == 0) {
-		if (gbz80_cpu_handle_interrupts(cpu) == 1) {
-			uint8_t ime_ready_prev = cpu->ime_ready;
+		if (!cpu->halted) {
+			if (gbz80_cpu_handle_interrupts(cpu) == 1) {
+				uint8_t ime_ready_prev = cpu->ime_ready;
 
-			memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
-			gbz80_cpu_fetch(cpu, &cpu->current_instruction);
-			gbz80_cpu_decode(cpu, &cpu->current_instruction, 0);
+				memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
+				gbz80_cpu_fetch(cpu, &cpu->current_instruction);
+				gbz80_cpu_decode(cpu, &cpu->current_instruction, 0);
 
-			cpu->cycles = gbz80_cpu_execute(cpu, &cpu->current_instruction);
+				cpu->cycles = gbz80_cpu_execute(cpu, &cpu->current_instruction);
 
-			if (ime_ready_prev == 1 && cpu->ime_ready == 1) {
-				cpu->ime = 1;
+				if (ime_ready_prev == 1 && cpu->ime_ready == 1) {
+					cpu->ime = 1;
+				}
 			}
+		}
+		else {
+			cpu->cycles = 1;
 		}
 	}
 	cpu->cycles--;
@@ -1801,6 +1808,11 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		instruction->cycles = 4;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "NOP");
 	}
+	else if (prefix == 0x00 && (opcode == 0x76)) {
+		instruction->execute_function = &gbz80_cpu_misc_halt;
+		instruction->cycles = 4;
+		if (get_instruction_name) sprintf(instruction->disassembled_name, "HALT");
+	}
 	else if (prefix == 0x00 && (opcode == 0x10)) {
 		uint8_t n = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 		if (n == 0x00) {
@@ -2895,9 +2907,8 @@ void gbz80_cpu_misc_nop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
 {
 }
 
-void gbz80_cpu_misc_halt(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
-{
-	//TODO
+void gbz80_cpu_misc_halt(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
+	cpu->halted = 1;
 }
 
 void gbz80_cpu_misc_stop(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction)
