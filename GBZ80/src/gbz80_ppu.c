@@ -12,6 +12,8 @@ void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	ppu->instance = instance;
 	gbz80_memory_write_internal(ppu->instance, 0xFF44, 0x0000);
 	gbz80_memory_write_internal(ppu->instance, 0xFF40, 0x00);
+	gbz80_ppu_fifo_init(&ppu->fifo_fetcher.fifo);
+	ppu->fifo_fetcher.num_clocks = 0;
 }
 
 void gbz80_ppu_clock(gbz80_ppu_t* ppu){
@@ -22,24 +24,17 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 
 		if (ly >= 0 && ly < 143) {
 			if (ppu->num_dots == NUM_DOTS_START_TWO) {
+				gbz80_ppu_gather_oam_sprites_by_line(ppu, ly, ppu->oam_sprites, &ppu->num_oam_sprites);
+				ppu->lcd_x = 0;
+				ppu->fifo_fetcher.tile_x = 0;
+				ppu->fifo_fetcher.num_clocks = 0;
 				gbz80_ppu_update_stat_register(ppu, 2, ly);
 			}
-			else if (ppu->num_dots == NUM_DOTS_START_THREE) {
-				if (common_get8_bit(lcdc, 0) == 1) {
-					gbz80_ppu_draw_background(ppu, ly, lcdc);
-				}
+			else if (ppu->num_dots >= NUM_DOTS_START_THREE && ppu->num_dots < NUM_DOTS_START_ZERO) {
+				gbz80_ppu_fifo_fetcher_clock(ppu, &ppu->fifo_fetcher, ly, lcdc);
 
-				if (common_get8_bit(lcdc, 5) == 1) {
-					gbz80_ppu_draw_window(ppu, ly, lcdc);
-				}
-
-				if (common_get8_bit(lcdc, 1) == 1) {
-					gbz80_ppu_draw_sprites(ppu, ly, lcdc);
-				}
-
-				
-
-				gbz80_ppu_update_stat_register(ppu, 3, ly);
+				if(ppu->num_dots == NUM_DOTS_START_THREE)
+					gbz80_ppu_update_stat_register(ppu, 3, ly);
 			}
 			else if (ppu->num_dots == NUM_DOTS_START_ZERO) {
 				gbz80_ppu_update_stat_register(ppu, 0, ly);
@@ -287,8 +282,6 @@ void gbz80_ppu_read_sprite(gbz80_ppu_t* ppu, uint8_t sprite_index, gbz80_ppu_spr
 	sprite_data->attributes_flags = gbz80_memory_read_internal(ppu->instance, 0xFE00 + sprite_index * 4 + 3);
 }
 
-
-
 //FIFO
 void gbz80_ppu_fifo_element_init(gbz80_ppu_fifo_element_t* element, uint8_t palette, uint8_t pixel_value, uint8_t sprite) {
 	element->palette = palette;
@@ -308,9 +301,18 @@ void gbz80_ppu_fifo_clear(gbz80_ppu_fifo_t* fifo) {
 #endif
 }
 
-gbz80_ppu_fifo_element_t* gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo) {
+gbz80_ppu_fifo_element_t gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo) {
 	assert(fifo->size != 0 && "Failed to pop from PPU Fifo is empty");
-	gbz80_ppu_fifo_element_t* element = &fifo->data[fifo->size - 1];
+	gbz80_ppu_fifo_element_t element = fifo->data[0];
+
+	for (uint8_t i = 1; i < fifo->size; i++) {
+		fifo->data[i - 1] = fifo->data[i];
+	}
+
+#ifdef _DEBUG
+	memset(&fifo->data[fifo->size - 1], 0, sizeof(gbz80_ppu_fifo_element_t) * (16 - fifo->size + 1));
+#endif
+
 	fifo->size--;
 	return element;
 }
@@ -333,57 +335,89 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 	uint8_t adressing_mode = common_get8_bit(lcdc, 4);
 	uint8_t win_enable = common_get8_bit(lcdc, 5);
 	uint8_t win_map_index = common_get8_bit(lcdc, 6);
-	/*
-	uint16_t read_address = 0x0000;
-	if (adressing_mode == 1) {
-		read_address = 0x8000 + tile_index * 16 + tile_line * 2;
-	}
-	else {
-		read_address = 0x9000 + ((int8_t)tile_index) * 16 + tile_line * 2;
-	}
-	*/
 
-	switch (fifo_fetcher->num_clocks) {
-	case 0: {
-		if (sprite_enable) {
+	if (ppu->lcd_x < 160) {
+		switch (fifo_fetcher->num_clocks) {
+			case 0: {
+				fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, fifo_fetcher->tile_x, (scy + ly) / 8, (gbz80_ppu_tilemap_type_t)bg_map_index);
+				fifo_fetcher->tile_x++;
+				/*if (sprite_enable) {
 
-		} else if (win_enable && ly >= wy && ppu->lcd_x >= wx && ppu->lcd_x <= (wx + 152)) {
-			if (ppu->lcd_x == wx) {
-				gbz80_ppu_fifo_clear(&fifo_fetcher->fifo);
+				} else if (win_enable && ly >= wy && ppu->lcd_x >= wx && ppu->lcd_x <= (wx + 152)) {
+					if (ppu->lcd_x == wx) {
+						gbz80_ppu_fifo_clear(&fifo_fetcher->fifo);
+					}
+					fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, ((wx - 7) - ppu->lcd_x) / 8 , (wy - ly) / 8, (gbz80_ppu_tilemap_type_t)win_map_index);
+				} else if (bg_enable) {
+
+					fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, ppu->lcd_x / 8, ly / 8, (gbz80_ppu_tilemap_type_t)bg_map_index);
+				}*/
+				break;
 			}
-			fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, ((wx - 7) - ppu->lcd_x) / 8 , (wy - ly) / 8, (gbz80_ppu_tilemap_type_t)win_map_index);
-		} else if (bg_enable) {
-			fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, ppu->lcd_x / 8, ly / 8, (gbz80_ppu_tilemap_type_t)bg_map_index);
+			case 2: {
+				uint16_t read_address = 0x0000;
+
+				if (adressing_mode == 1) {
+					read_address = 0x8000 + fifo_fetcher->tile_index * 16 + (ly % 8) * 2;
+				} else {
+					read_address = 0x9000 + ((int8_t)fifo_fetcher->tile_index) * 16 + (ly % 8) * 2;
+				}
+
+				fifo_fetcher->tile_low = gbz80_memory_read8(ppu->instance, read_address);
+				break;
+			}
+			
+
+			case 4: {
+				uint16_t read_address = 0x0000;
+
+				if (adressing_mode == 1) {
+					read_address = 0x8000 + fifo_fetcher->tile_index * 16 + (ly % 8) * 2;
+				}
+				else {
+					read_address = 0x9000 + ((int8_t)fifo_fetcher->tile_index) * 16 + (ly % 8) * 2;
+				}
+
+				fifo_fetcher->tile_high = gbz80_memory_read8(ppu->instance, read_address + 1);
+
+				break;
+			}
+
+			case 7: {
+				uint8_t pixels[8];
+				gbz80_ppu_fifo_element_t element;
+				gbz80_ppu_util_convert_2bpp(fifo_fetcher->tile_low, fifo_fetcher->tile_high, pixels);
+				for (uint8_t i = 0; i < 8; i++) {
+					gbz80_ppu_fifo_element_init(&element, 0, pixels[i], 0);
+					gbz80_ppu_fifo_push(&fifo_fetcher->fifo, &element);
+				}
+				break;
+			}
+
 		}
-		break;
-	}
-		case 2:
-			//uint8_t low_byte = gbz80_memory_read_internal(ppu->instance, read_address);
-			//uint8_t high_byte = gbz80_memory_read_internal(ppu->instance, read_address + 1);
-			break;
 
-		case 4:
-			break;
+		if (fifo_fetcher->fifo.size > 8) {
+			gbz80_ppu_fifo_element_t element = gbz80_ppu_fifo_pop(&fifo_fetcher->fifo);
 
-		case 6:
-			break;
-	}
+			if (!element.sprite) {
+				ppu->lcd[ly * 160 + ppu->lcd_x] = gbz80_ppu_get_bgp_color(ppu, element.pixel_value);
+			}
+			else {
+				ppu->lcd[ly * 160 + ppu->lcd_x] = gbz80_ppu_get_sprite_color(ppu, element.palette, element.pixel_value);
+			}
 
-	if (fifo_fetcher->fifo.size > 8) {
-		gbz80_ppu_fifo_element_t* element = gbz80_ppu_fifo_pop(&fifo_fetcher->fifo);
-
-		if (!element->sprite) {
-			ppu->lcd[ly * 160 + ppu->lcd_x] = gbz80_ppu_get_bgp_color(ppu, element->pixel_value);
-		}
-		else {
-			ppu->lcd[ly * 160 + ppu->lcd_x] = gbz80_ppu_get_sprite_color(ppu, element->palette, element->pixel_value);
+			ppu->lcd_x++;
 		}
 
-		ppu->lcd_x++;
+		fifo_fetcher->num_clocks++;
+		fifo_fetcher->num_clocks %= 8;
 	}
-	
+}
 
-	fifo_fetcher->num_clocks++;
-	fifo_fetcher->num_clocks %= 8;
+void gbz80_ppu_util_convert_2bpp(uint8_t low, uint8_t high, uint8_t out_pixels[8]) {
+	for (uint8_t bit_index = 0; bit_index < 8; bit_index++) {
+		uint8_t colorID = (common_get8_bit(high, bit_index) << 1) | common_get8_bit(low, bit_index);
+		out_pixels[7 - bit_index] = colorID;
+	}
 }
 

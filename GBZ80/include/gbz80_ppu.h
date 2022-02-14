@@ -33,15 +33,9 @@ extern "C" {
 		uint8_t num_clocks;
 
 		gbz80_ppu_fifo_t fifo;
-	} gbz80_ppu_fifo_fetcher_t;
 
-	typedef struct gbz80_ppu_t {
-		uint8_t lcd[GBZ80_LCD_SIZE];
-		uint32_t num_dots;
-		uint8_t lcd_x;
-		gbz80_ppu_fifo_fetcher_t* fifo_fetcher;
-		gbz80_t* instance;
-	} gbz80_ppu_t;
+		uint8_t tile_x;
+	} gbz80_ppu_fifo_fetcher_t;
 
 	typedef struct gbz80_ppu_sprite_data_t {
 		uint8_t y;
@@ -49,6 +43,20 @@ extern "C" {
 		uint8_t tile_index;
 		uint8_t attributes_flags;
 	} gbz80_ppu_sprite_data_t;
+
+	typedef struct gbz80_ppu_t {
+		uint8_t lcd[GBZ80_LCD_SIZE];
+		uint32_t num_dots;
+		uint8_t lcd_x;
+		gbz80_ppu_fifo_fetcher_t fifo_fetcher;
+
+		gbz80_ppu_sprite_data_t oam_sprites[10];
+		uint8_t num_oam_sprites;
+
+		gbz80_t* instance;
+	} gbz80_ppu_t;
+
+
 
 	typedef enum gbz80_ppu_tilemap_type_t {
 		GBZ80_PPU_TILEMAP_0,
@@ -77,10 +85,10 @@ extern "C" {
 	void gbz80_ppu_fifo_element_init(gbz80_ppu_fifo_element_t* element, uint8_t palette, uint8_t pixel_value, uint8_t sprite);
 	void gbz80_ppu_fifo_init(gbz80_ppu_fifo_t* fifo);
 	void gbz80_ppu_fifo_clear(gbz80_ppu_fifo_t* fifo);
-	gbz80_ppu_fifo_element_t* gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo);
+	gbz80_ppu_fifo_element_t gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo);
 	void gbz80_ppu_fifo_push(gbz80_ppu_fifo_t* fifo, gbz80_ppu_fifo_element_t* element);
-
 	void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t ly, uint8_t lcdc);
+	void gbz80_ppu_util_convert_2bpp(uint8_t low, uint8_t high, uint8_t out_pixels[8]);
 
 
 #ifdef __cplusplus
