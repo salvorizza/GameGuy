@@ -39,6 +39,15 @@ namespace GameGuy {
 
 	void GameBoyVM::update()
 	{
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_LEFT, GetAsyncKeyState(0x41) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_RIGHT, GetAsyncKeyState(0x44) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_UP, GetAsyncKeyState(0x57) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_DOWN, GetAsyncKeyState(0x53) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_A, GetAsyncKeyState(0x4B) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_B, GetAsyncKeyState(0x4C) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_SELECT, GetAsyncKeyState(0x4E) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_START, GetAsyncKeyState(0x4D) ? 1 : 0);
+
 		mTimer.update();
 		switch (mState)
 		{

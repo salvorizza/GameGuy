@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/gb-test-roms-master/dmg_sound/rom_singles/02-len ctr.gb");
+					mGameBoyVM.loadRom("commons/roms/pokemon_red.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

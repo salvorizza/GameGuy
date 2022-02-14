@@ -31,9 +31,29 @@ void gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val) {
 uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t current_value, uint8_t* val) {
 	switch (address) {
 		case 0xFF00:
+			if (common_get8_bit(*val, 4) == 0) {
+				common_change8_bit(val, 0, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_RIGHT] == 1 ? 0 : 1);
+				common_change8_bit(val, 1, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_LEFT] == 1 ? 0 : 1);
+				common_change8_bit(val, 2, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_UP] == 1 ? 0 : 1);
+				common_change8_bit(val, 3, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_DOWN] == 1 ? 0 : 1);
+			}else if (common_get8_bit(*val, 5) == 0) {
+				common_change8_bit(val, 0, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_A] == 1 ? 0 : 1);
+				common_change8_bit(val, 1, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_B] == 1 ? 0 : 1);
+				common_change8_bit(val, 2, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_SELECT] == 1 ? 0 : 1);
+				common_change8_bit(val, 3, cpu->instance->joypad.status[GBZ80_JOYPAD_BUTTON_START] == 1 ? 0 : 1);
+			} else {
+				common_change8_bit_range(val, 0, 3, current_value);
+			}
+
+			for (uint8_t i = 0; i < 4; i++) {
+				if (common_get8_bit(current_value, i) == 1 && common_get8_bit(*val, i) == 0) {
+					gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_JOYPAD);
+					break;
+				}
+			}
+
 			common_set8_bit(val, 6);
 			common_set8_bit(val, 7);
-			common_change8_bit_range(val, 0, 3, current_value);
 			break;
 
 		case 0xFF04:

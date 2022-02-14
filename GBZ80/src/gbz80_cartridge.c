@@ -35,6 +35,14 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1_AND_RAM_AND_BATT:
 					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_1);
 					break;
+
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_RAM:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_RAM_AND_BATT:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_BATT:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_RAM_AND_BATT:
+					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_3);
+					break;
 			}
 
 			//if (out_rom->header.rom_size != GBZ80_ROM_SIZE_32K) {

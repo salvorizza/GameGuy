@@ -12,7 +12,8 @@ extern "C" {
 
 	typedef enum gbz80_mbc_type_t {
 		GBZ80_MBC_TYPE_NULL,
-		GBZ80_MBC_TYPE_1
+		GBZ80_MBC_TYPE_1,
+		GBZ80_MBC_TYPE_3
 	} gbz80_mbc_type_t;
 
 	typedef struct gbz80_mbc_t {
@@ -33,6 +34,14 @@ extern "C" {
 		uint8_t mode;
 	} gbz80_mbc_001_t;
 
+	typedef struct gbz80_mbc_003_t {
+		gbz80_mbc_t base;
+		uint8_t ram_timer_enable;
+		uint8_t ram_bank;
+		uint8_t rom_bank;
+		uint8_t rtc_register;
+	} gbz80_mbc_003_t;
+
 	
 	
 	gbz80_mbc_t* gbz80_mbc_create(gbz80_mbc_type_t type);
@@ -46,7 +55,9 @@ extern "C" {
 	uint8_t gbz80_mbc_001_read(void* mbc_001, uint16_t address, uint32_t* mapped_address);
 	uint8_t gbz80_mbc_001_write(void* mbc_001, uint16_t address, uint8_t val, uint32_t* ram_address);
 
-	
+	uint8_t gbz80_mbc_003_read(void* mbc_003, uint16_t address, uint32_t* mapped_address);
+	uint8_t gbz80_mbc_003_write(void* mbc_003, uint16_t address, uint8_t val, uint32_t* ram_address);
+
 
 
 
