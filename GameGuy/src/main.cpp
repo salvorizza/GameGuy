@@ -52,7 +52,7 @@ public:
 	virtual void onRender() override {
 
 		mViewportPanel.startFrame();
-		glClearColor(1, 0, 1, 1);
+		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		mProjectionMatrix = glm::ortho(0.0f, (float)mViewportPanel.width(), (float)mViewportPanel.height(), 0.0f);
@@ -72,7 +72,7 @@ public:
 					case 3: color = { 0,0,0,1 }; break;
 				}
 
-				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth,cellHeight }, color);
+				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth - 1,cellHeight - 1 }, color);
 			}
 		}
 
@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/pokemon_red.gb");
+					mGameBoyVM.loadRom("commons/roms/tetris.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

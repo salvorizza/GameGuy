@@ -19,6 +19,8 @@ extern "C" {
 	typedef struct gbz80_ppu_fifo_t {
 		uint8_t size;
 		gbz80_ppu_fifo_element_t data[16];
+		uint8_t write_index;
+		uint8_t read_index;
 	} gbz80_ppu_fifo_t;
 
 	typedef struct gbz80_ppu_fifo_fetcher_t {
@@ -87,7 +89,7 @@ extern "C" {
 	void gbz80_ppu_fifo_clear(gbz80_ppu_fifo_t* fifo);
 	gbz80_ppu_fifo_element_t gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo);
 	void gbz80_ppu_fifo_push(gbz80_ppu_fifo_t* fifo, gbz80_ppu_fifo_element_t* element);
-	void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t ly, uint8_t lcdc);
+	void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t clock, uint8_t ly, uint8_t lcdc);
 	void gbz80_ppu_util_convert_2bpp(uint8_t low, uint8_t high, uint8_t out_pixels[8]);
 
 
