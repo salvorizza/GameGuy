@@ -338,38 +338,49 @@ void gbz80_ppu_fifo_push(gbz80_ppu_fifo_t* fifo, gbz80_ppu_fifo_element_t* eleme
 void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t clock, uint8_t ly, uint8_t lcdc) {
 	uint8_t scy = gbz80_memory_read_internal(ppu->instance, 0xFF42);
 	uint8_t scx = gbz80_memory_read_internal(ppu->instance, 0xFF43);
-
-	/*uint8_t wy = gbz80_memory_read_internal(ppu->instance, 0xFF4A);
+	uint8_t wy = gbz80_memory_read_internal(ppu->instance, 0xFF4A);
 	uint8_t wx = gbz80_memory_read_internal(ppu->instance, 0xFF4B);
 	uint8_t bg_enable = common_get8_bit(lcdc, 0);
 	uint8_t sprite_enable = common_get8_bit(lcdc, 1);
 	uint8_t sprite_mode = common_get8_bit(lcdc, 2);
 	uint8_t win_enable = common_get8_bit(lcdc, 5);
-	uint8_t win_map_index = common_get8_bit(lcdc, 6);*/
+	uint8_t win_map_index = common_get8_bit(lcdc, 6);
 
 	if (ppu->lcd_x < 160) {
 		if (clock % 2) {
 			uint8_t reset = 0;
 			switch (fifo_fetcher->num_clocks) {
 				case 0: {
-					uint8_t bg_map_index = common_get8_bit(lcdc, 3);
 
-					uint8_t tile_x = ((scx / 8) + fifo_fetcher->tile_x) & 0x1F;
-					uint8_t tile_y = ((scy + ly) & 0xFF) / 8;
+					uint8_t is_window_tile = 0;
+					if (win_enable && ly >= wy && (fifo_fetcher->tile_x * 8) >= wx && (fifo_fetcher->tile_x * 8) <= (wx + 157)) {
+						is_window_tile = 1;
+					}
+					
+					/*if (is_window_tile) {
+						uint8_t tile_x = (wx / 8) + fifo_fetcher->tile_x;
+						uint8_t tile_y = (ly - wy) / 8;
 
-					fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, tile_x, tile_y, (gbz80_ppu_tilemap_type_t)bg_map_index);
-					fifo_fetcher->tile_x++;
-					/*if (sprite_enable) {
-
-					} else if (win_enable && ly >= wy && ppu->lcd_x >= wx && ppu->lcd_x <= (wx + 152)) {
-						if (ppu->lcd_x == wx) {
+						if (((fifo_fetcher->tile_x * 8) - 1) == wx) {
 							gbz80_ppu_fifo_clear(&fifo_fetcher->fifo);
 						}
-						fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, ((wx - 7) - ppu->lcd_x) / 8 , (wy - ly) / 8, (gbz80_ppu_tilemap_type_t)win_map_index);
-					} else if (bg_enable) {
 
-						fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, ppu->lcd_x / 8, ly / 8, (gbz80_ppu_tilemap_type_t)bg_map_index);
-					}*/
+						fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, tile_x, tile_y, (gbz80_ppu_tilemap_type_t)win_map_index);
+					}
+					else {*/
+						if (bg_enable) {
+
+							uint8_t bg_map_index = common_get8_bit(lcdc, 3);
+
+							uint8_t tile_x = ((scx / 8) + fifo_fetcher->tile_x) & 0x1F;
+							uint8_t tile_y = ((scy + ly) & 0xFF) / 8;
+
+							fifo_fetcher->tile_index = gbz80_ppu_tilemap_read_tile_index_by_coords(ppu, tile_x, tile_y, (gbz80_ppu_tilemap_type_t)bg_map_index);
+						}
+					//}
+
+					fifo_fetcher->tile_x++;
+
 					break;
 				}
 				case 1: {
