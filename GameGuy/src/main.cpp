@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/pokemon_red.gb");
+					mGameBoyVM.loadRom("commons/roms/mario_land.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

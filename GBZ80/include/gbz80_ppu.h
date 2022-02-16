@@ -23,6 +23,14 @@ extern "C" {
 		uint8_t read_index;
 	} gbz80_ppu_fifo_t;
 
+	typedef enum gbz80_ppu_fifo_fetcher_state_t {
+		GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID,
+		GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_LOW,
+		GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_HIGH,
+		GBZ80_PPU_FIFO_FETCHER_STATE_PUSH,
+		GBZ80_PPU_FIFO_FETCHER_STATE_IDLE
+	} gbz80_ppu_fifo_fetcher_state_t;
+
 	typedef struct gbz80_ppu_fifo_fetcher_t {
 		uint16_t tile_address;
 		uint8_t tile_index;
@@ -34,9 +42,13 @@ extern "C" {
 
 		uint8_t num_clocks;
 
+		gbz80_ppu_fifo_fetcher_state_t state;
+
 		gbz80_ppu_fifo_t fifo;
 
 		uint8_t tile_x;
+		uint8_t win_x, win_y;
+		uint8_t fetch_x, fetch_y;
 	} gbz80_ppu_fifo_fetcher_t;
 
 	typedef struct gbz80_ppu_sprite_data_t {
@@ -45,6 +57,13 @@ extern "C" {
 		uint8_t tile_index;
 		uint8_t attributes_flags;
 	} gbz80_ppu_sprite_data_t;
+
+	typedef enum gbz80_ppu_state_t {
+		GBZ80_PPU_STATE_OAM_SCAN,
+		GBZ80_PPU_STATE_DRAWING_PIXELS,
+		GBZ80_PPU_STATE_HMODE,
+		GBZ80_PPU_STATE_VBLANK
+	} gbz80_ppu_state_t;
 
 	typedef struct gbz80_ppu_t {
 		uint8_t lcd[GBZ80_LCD_SIZE];
@@ -55,10 +74,13 @@ extern "C" {
 		gbz80_ppu_sprite_data_t oam_sprites[10];
 		uint8_t num_oam_sprites;
 
+		gbz80_ppu_state_t state;
+		uint8_t ly;
+
+		uint8_t mode_2_clocks, mode_3_clocks, mode_0_clocks;
+
 		gbz80_t* instance;
 	} gbz80_ppu_t;
-
-
 
 	typedef enum gbz80_ppu_tilemap_type_t {
 		GBZ80_PPU_TILEMAP_0,
@@ -87,7 +109,7 @@ extern "C" {
 	void gbz80_ppu_fifo_element_init(gbz80_ppu_fifo_element_t* element, uint8_t palette, uint8_t pixel_value, uint8_t sprite);
 	void gbz80_ppu_fifo_init(gbz80_ppu_fifo_t* fifo);
 	void gbz80_ppu_fifo_clear(gbz80_ppu_fifo_t* fifo);
-	gbz80_ppu_fifo_element_t gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo);
+	gbz80_ppu_fifo_element_t* gbz80_ppu_fifo_pop(gbz80_ppu_fifo_t* fifo);
 	void gbz80_ppu_fifo_push(gbz80_ppu_fifo_t* fifo, gbz80_ppu_fifo_element_t* element);
 	void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t clock, uint8_t ly, uint8_t lcdc);
 	void gbz80_ppu_util_convert_2bpp(uint8_t low, uint8_t high, uint8_t out_pixels[8]);
