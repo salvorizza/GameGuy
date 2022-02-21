@@ -17,6 +17,7 @@ uint8_t gbz80_memory_read8(gbz80_t* instance, uint16_t address) {
 	} else {
 		val = instance->memory_map[address];
 		gbz80_cpu_memory_read(&instance->cpu, address, &val);
+		gbz80_ppu_memory_read(&instance->ppu, address, &val);
 		gbz80_apu_memory_read(&instance->apu, address, &val);
 		return val;
 	}
@@ -36,6 +37,7 @@ void gbz80_memory_write8(gbz80_t* instance, uint16_t address, uint8_t val) {
 		uint8_t current_value = instance->memory_map[address];
 
 		uint8_t cpu_write_flag = gbz80_cpu_memory_write(&instance->cpu, address, current_value, &val);
+		uint8_t ppu_write_flag = gbz80_ppu_memory_write(&instance->ppu, address, current_value, &val);
 		uint8_t apu_write_flag = gbz80_apu_memory_write(&instance->apu, address, current_value, &val);
 
 		instance->memory_map[address] = val;

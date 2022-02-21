@@ -39,12 +39,12 @@ namespace GameGuy {
 
 	void GameBoyVM::update()
 	{
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_LEFT, GetAsyncKeyState(0x41) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_RIGHT, GetAsyncKeyState(0x44) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_UP, GetAsyncKeyState(0x57) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_DOWN, GetAsyncKeyState(0x53) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_A, GetAsyncKeyState(0x4B) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_B, GetAsyncKeyState(0x4C) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_LEFT, GetAsyncKeyState(VK_LEFT) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_RIGHT, GetAsyncKeyState(VK_RIGHT) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_UP, GetAsyncKeyState(VK_UP) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_DOWN, GetAsyncKeyState(VK_DOWN) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_A, GetAsyncKeyState(0x5A) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_B, GetAsyncKeyState(0x58) ? 1 : 0);
 		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_SELECT, GetAsyncKeyState(0x4E) ? 1 : 0);
 		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_START, GetAsyncKeyState(0x4D) ? 1 : 0);
 
@@ -93,10 +93,10 @@ namespace GameGuy {
 				gbz80_clock(sInstance->mInstance);
 
 				if (sInstance->mInstance->cpu.cycles == 0) {
-					/*if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
+					if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
 						sInstance->setState(VMState::Pause);
 						break;
-					}*/
+					}
 				}
 
 			} while (sInstance->mInstance->apu.sample_ready == 0);

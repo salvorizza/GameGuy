@@ -112,7 +112,8 @@ uint8_t gbz80_cartridge_write(gbz80_cartridge_t* cartridge, uint16_t address, ui
 	uint32_t ram_address;
 	if (cartridge && cartridge->mbc->write_func(cartridge->mbc, address, val, &ram_address)) {
 		if (address >= 0xA000 && address <= 0xBFFF) {
-			cartridge->ram_banks[ram_address] = val;
+			if(cartridge->ram_banks)
+				cartridge->ram_banks[ram_address] = val;
 		}
 	}
 	return 0;

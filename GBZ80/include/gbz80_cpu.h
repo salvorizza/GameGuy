@@ -100,10 +100,10 @@ extern "C" {
 		uint16_t oam_transfer_count;
 
 		uint8_t ime,ime_ready;
-		uint8_t div_low;
+		uint16_t div;
+		uint8_t tima, tac, tma;
 		uint8_t prev_timer_and_result;
 		uint8_t cycles_to_tima_interrupt,cycles_to_tima_interrupt_enable;
-		uint8_t tma_loaded;
 
 		uint8_t halted;
 	} gbz80_cpu_t;

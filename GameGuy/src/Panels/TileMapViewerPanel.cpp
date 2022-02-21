@@ -28,7 +28,7 @@ namespace GameGuy {
 			mFBO->bind();
 
 			glViewport(0, 0, mFBO->width(), mFBO->height());
-			glClearColor(1, 0, 1, 1);
+			glClearColor(0, 0, 0, 1);
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			glm::mat4 projMatrix = glm::ortho(0.0f, (float)mFBO->width(), (float)mFBO->height(), 0.0f);
@@ -39,9 +39,10 @@ namespace GameGuy {
 			glm::vec4 color;
 			uint8_t pixels[8];
 
+
 			for (uint8_t tileY = 0; tileY < 32; tileY++) {
 				for (uint8_t tileX = 0; tileX < 32; tileX++) {
-					uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY, GBZ80_PPU_TILEMAP_0);
+					uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY, GBZ80_PPU_TILEMAP_1);
 					//uint8_t tileIndex = tileY * 32 + tileX;
 
 					for (uint8_t pixelY = 0; pixelY < 8; pixelY++) {
@@ -58,7 +59,8 @@ namespace GameGuy {
 							}
 
 
-							batchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth, cellHeight }, color);
+							
+							batchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth - 1, cellHeight - 1 }, color);
 						}
 					}
 

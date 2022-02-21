@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/mario_land.gb");
+					mGameBoyVM.loadRom("commons/roms/gb-test-roms-master/instr_timing/instr_timing.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

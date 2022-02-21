@@ -7,11 +7,10 @@ void gbz80_cpu_init(gbz80_cpu_t* cpu, gbz80_t* instance) {
 	cpu->instance = instance;
 	cpu->ime = 0;
 	cpu->ime_ready = 0;
-	cpu->div_low = 0;
+	cpu->div = 0;
 	cpu->prev_timer_and_result = 0;
 	cpu->cycles_to_tima_interrupt = 0;
 	cpu->cycles_to_tima_interrupt_enable = 0;
-	cpu->tma_loaded = 0;
 	cpu->oam_transfer_count = 0;
 	cpu->halted = 0;
 }
@@ -25,8 +24,24 @@ void gbz80_cpu_set_flag(gbz80_cpu_t* cpu, gbz80_flag_t flag, uint8_t val) {
 }
 
 void gbz80_cpu_memory_read(gbz80_cpu_t* cpu, uint16_t address, uint8_t* val) {
-}
+	switch (address) {
+		case 0xFF04:
+			*val = (cpu->div >> 8);
+			break;
 
+		case 0xFF05:
+			*val = cpu->tima;
+			break;
+
+		case 0xFF06:
+			*val = cpu->tma;
+			break;
+
+		case 0xFF07:
+			*val = cpu->tac;
+			break;
+	}
+}
 
 uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t current_value, uint8_t* val) {
 	switch (address) {
@@ -57,11 +72,11 @@ uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t curre
 			break;
 
 		case 0xFF04:
-			cpu->div_low = 0;
+			cpu->div = 0;
 			*val = 0;
-			uint8_t tac = gbz80_memory_read_internal(cpu->instance, 0xFF07);
+			/*uint8_t tac = gbz80_memory_read_internal(cpu->instance, 0xFF07);
 
-			/*if (cpu->prev_timer_and_result && common_get8_bit(tac, 2)) {
+			if (cpu->prev_timer_and_result && common_get8_bit(tac, 2)) {
 				uint16_t tima = gbz80_memory_read_internal(cpu->instance, 0xFF05);
 				tima++;
 				if (tima <= 0xFF) {
@@ -74,22 +89,41 @@ uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t curre
 				}
 			}*/
 
-			/*TODO: Falling edge increase*/
+			/*TODO: Falling edge increase?*/
 			break;
 
 		case 0xFF05:
-			if (cpu->tma_loaded) {
-				*val = current_value;
+			if (cpu->cycles_to_tima_interrupt_enable == 1 && cpu->cycles_to_tima_interrupt == 1) {
+				*val = cpu->tima;
 			} else {
+				cpu->tima = *val;
 				cpu->cycles_to_tima_interrupt_enable = 0;
 				cpu->cycles_to_tima_interrupt = 0;
 			}
 			break;
 
 		case 0xFF06:
-			if (cpu->tma_loaded) {
-				gbz80_memory_write_internal(cpu->instance, 0xFF05, *val);
+			cpu->tma = *val;
+			if (cpu->cycles_to_tima_interrupt_enable == 1 && cpu->cycles_to_tima_interrupt == 1) {
+				cpu->tima = cpu->tma;
 			}
+			break;
+
+		case 0xFF07:
+			*val |= 0xF8;
+			cpu->tac = *val;
+
+			/*if (cpu->prev_timer_and_result == 1 && common_get8_bit(cpu->tac, 2) == 0) {
+				cpu->tima++;
+				if (cpu->tima < 0xFF) {
+					cpu->tima++;
+				}
+				else {
+					cpu->tima = 0;
+					cpu->cycles_to_tima_interrupt = 4;
+					cpu->cycles_to_tima_interrupt_enable = 1;
+				}
+			}*/
 			break;
 
 
@@ -311,51 +345,6 @@ void gbz80_cpu_set_register16(gbz80_cpu_t* cpu, gbz80_register_t r, uint16_t val
 
 void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 {
-	if (cpu->div_low == 0xFF) {
-		uint8_t div_high = gbz80_memory_read_internal(cpu->instance, 0xFF04);
-		gbz80_memory_write_internal(cpu->instance, 0xFF04, div_high + 1);
-		cpu->div_low = 0;
-	}
-	else {
-		cpu->div_low++;
-	}
-
-	uint8_t tac = gbz80_memory_read_internal(cpu->instance, 0xFF07);
-	static uint8_t bit_checks[] = { 9,3,5,7 };
-	uint8_t bit_check = bit_checks[common_get8_bit_range(tac, 0, 1)];
-	uint16_t div = ((uint16_t)gbz80_memory_read_internal(cpu->instance, 0xFF04) << 8) | cpu->div_low;
-
-	uint8_t current_timer_and_result = common_get16_bit(div, bit_check) & common_get8_bit(tac, 2);
-
-	if (cpu->prev_timer_and_result == 1 && current_timer_and_result == 0) {
-		uint16_t tima = gbz80_memory_read_internal(cpu->instance, 0xFF05);
-		tima++;
-		if (tima <= 0xFF) {
-			gbz80_memory_write_internal(cpu->instance, 0xFF05, (uint8_t)tima);
-		}
-		else {
-			gbz80_memory_write_internal(cpu->instance, 0xFF05, 0);
-			cpu->cycles_to_tima_interrupt = 4;
-			cpu->cycles_to_tima_interrupt_enable = 1;
-		}
-	}
-
-	cpu->prev_timer_and_result = current_timer_and_result;
-
-	if (cpu->cycles_to_tima_interrupt == 0 && cpu->cycles_to_tima_interrupt_enable) {
-		uint8_t tma = gbz80_memory_read_internal(cpu->instance, 0xFF06);
-		gbz80_memory_write_internal(cpu->instance, 0xFF05, tma);
-		gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_TIMER);
-
-		cpu->tma_loaded = 1;
-
-		cpu->cycles_to_tima_interrupt_enable = 0;
-	}
-
-	if (cpu->cycles_to_tima_interrupt_enable) {
-		cpu->cycles_to_tima_interrupt--;
-	}
-
 	if (cpu->cycles == 0) {
 		if (!cpu->halted) {
 			if (gbz80_cpu_handle_interrupts(cpu) == 1) {
@@ -378,13 +367,38 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 	}
 	cpu->cycles--;
 
-	if (cpu->tma_loaded == 1) {
-		cpu->tma_loaded = 0;
+	static uint8_t bit_checks[] = { 9,3,5,7 };
+	uint8_t bit_check = bit_checks[common_get8_bit_range(cpu->tac, 0, 1)];
+	uint8_t current_timer_and_result = common_get16_bit(cpu->div, bit_check) & common_get8_bit(cpu->tac, 2);
+
+	if (cpu->prev_timer_and_result == 1 && current_timer_and_result == 0) {
+		if (cpu->tima < 0xFF) {
+			cpu->tima++;
+		}
+		else {
+			cpu->tima = 0;
+			cpu->cycles_to_tima_interrupt = 4;
+			cpu->cycles_to_tima_interrupt_enable = 1;
+		}
+	}
+
+	cpu->prev_timer_and_result = current_timer_and_result;
+
+	if (cpu->cycles_to_tima_interrupt == 0 && cpu->cycles_to_tima_interrupt_enable) {
+		cpu->tima = cpu->tma;
+		gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_TIMER);
+		cpu->cycles_to_tima_interrupt_enable = 0;
+	}
+	else {
+		if(cpu->cycles_to_tima_interrupt_enable)
+			cpu->cycles_to_tima_interrupt--;
 	}
 
 	if (cpu->oam_transfer_count != 0) {
 		cpu->oam_transfer_count--;
 	}
+
+	cpu->div++;
 }
 
 void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
