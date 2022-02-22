@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/gb-test-roms-master/instr_timing/instr_timing.gb");
+					mGameBoyVM.loadRom("commons/roms/tetris.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

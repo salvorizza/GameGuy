@@ -445,7 +445,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				break;
 
 			case 0x26:
-				if(get_instruction_name) sprintf(instruction->disassembled_name, "LD H$%02X", instruction->n);
+				if(get_instruction_name) sprintf(instruction->disassembled_name, "LD H,$%02X", instruction->n);
 				instruction->left_r = GBZ80_REGISTER_H;
 				break;
 
@@ -2261,10 +2261,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 
 			case 0x46:
 				instruction->right_r = GBZ80_REGISTER_HL;
-				instruction->cycles = 16;
-				if (opcode == 0x66) {
-					int i = 0;
-				}
+				instruction->cycles = 12;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "BIT %d,(HL)", instruction->n);
 				break;
 		}
@@ -2367,7 +2364,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 	}
 	else if (prefix == 0x00 && (opcode == 0xC3)) {
 		instruction->execute_function = &gbz80_cpu_jumps_jp_nn;
-		instruction->cycles = 12;
+		instruction->cycles = 16;
 		instruction->nn = gbz80_memory_read16(cpu->instance,cpu->registers.PC);
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "JP $%04X", instruction->nn);
 		cpu->registers.PC += 2;
@@ -2405,7 +2402,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "JP (HL)");
 	}
 	else if (prefix == 0x00 && (opcode == 0x18)) {
-		instruction->cycles = 8;
+		instruction->cycles = 12;
 		instruction->d = (int8_t)gbz80_memory_read8(cpu->instance,cpu->registers.PC++);
 		instruction->execute_function = &gbz80_cpu_jumps_jr_d;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "JR $%04X", instruction->address + instruction->d + 2);
@@ -2472,7 +2469,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		cpu->registers.PC += 2;
 	}
 	else if (prefix == 0x00 && (opcode == 0xC7 || opcode == 0xCF || opcode == 0xD7 || opcode == 0xDF || opcode == 0xE7 || opcode == 0xEF || opcode == 0xF7 || opcode == 0xFF)) {
-		instruction->cycles = 32;
+		instruction->cycles = 16;
 		instruction->execute_function = &gbz80_cpu_rsts_rst_n;
 
 		switch (opcode) {

@@ -6,7 +6,7 @@ namespace GameGuy {
 
 	GameBoyVM::GameBoyVM()
 		:	mInstance(NULL),
-			mBiosPath("commons/roms/gb_bios.bin"),
+			mBiosPath("commons/roms/dmg_boot.bin"),
 			mPrevState(VMState::None),
 			mState(VMState::None),
 			mCurrentlyLoadedCartridge(NULL) {
