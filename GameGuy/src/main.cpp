@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/tetris.gb");
+					mGameBoyVM.loadRom("commons/roms/dr_mario.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 

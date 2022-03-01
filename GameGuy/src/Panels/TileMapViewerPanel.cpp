@@ -9,7 +9,9 @@ namespace GameGuy {
 			mInstance(NULL),
 			mResizeWidth(0),
 			mResizeHeight(0),
-			mNeedResize(false)
+			mNeedResize(false),
+			mTilemapSelection(0),
+			mRelativeAdressing(false)
 	{
 	}
 
@@ -39,14 +41,21 @@ namespace GameGuy {
 			glm::vec4 color;
 			uint8_t pixels[8];
 
+			uint8_t tileYMax = 32;
+			if (mTilemapSelection > 1) {
+				tileYMax = 8;
+			}
 
-			for (uint8_t tileY = 0; tileY < 32; tileY++) {
+
+			for (uint8_t tileY = 0; tileY < tileYMax; tileY++) {
 				for (uint8_t tileX = 0; tileX < 32; tileX++) {
-					uint8_t tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY, GBZ80_PPU_TILEMAP_1);
-					//uint8_t tileIndex = tileY * 32 + tileX;
+					uint8_t tileIndex = tileY * 32 + tileX;
+					if (mTilemapSelection <= 1) {
+						tileIndex = gbz80_ppu_tilemap_read_tile_index_by_coords(&mInstance->ppu, tileX, tileY, (gbz80_ppu_tilemap_type_t)mTilemapSelection);
+					}
 
 					for (uint8_t pixelY = 0; pixelY < 8; pixelY++) {
-						gbz80_ppu_read_tile_pixels_by_line(&mInstance->ppu, tileIndex, pixelY, pixels, 1);
+						gbz80_ppu_read_tile_pixels_by_line(&mInstance->ppu, tileIndex, pixelY, pixels, mRelativeAdressing ? 0 : 1);
 
 						for (uint8_t pixelX = 0; pixelX < 8; pixelX++) {
 							uint8_t paletteColor = gbz80_ppu_get_bgp_color(&mInstance->ppu, pixels[pixelX]);
@@ -60,7 +69,7 @@ namespace GameGuy {
 
 
 							
-							batchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth - 1, cellHeight - 1 }, color);
+							batchRenderer->drawQuad({ (tileX * 8 + pixelX) * cellWidth, (tileY * 8 + pixelY) * cellHeight }, { cellWidth, cellHeight }, color);
 						}
 					}
 
@@ -73,8 +82,11 @@ namespace GameGuy {
 		}
 	}
 
-	void TileMapViewerPanel::onImGuiRender()
-	{
+	void TileMapViewerPanel::onImGuiRender() {
+		const char* items[] = { "Tilemap 0","Tilemap 1","Tile View" };
+		ImGui::Combo(" ", &mTilemapSelection, items, IM_ARRAYSIZE(items));
+		ImGui::Checkbox("Relative adressing", &mRelativeAdressing);
+
 		ImVec2 size = ImGui::GetContentRegionAvail();
 		float offsetX, offsetY;
 
@@ -107,5 +119,19 @@ namespace GameGuy {
 		cursorPos.y += offsetY;
 		ImGui::SetCursorPos(cursorPos);
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ newSize.x, newSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
+
+		ImVec2 pos = ImGui::GetWindowPos();
+		ImVec2 vMin;
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		float cellWidth = (float)newSize.x / 32.0f;
+		float cellHeight = (float)newSize.y / 32.0f;
+
+		vMin.x = pos.x + offsetX;
+		vMin.y = pos.y + cursorPos.y;
+
+		for (int i = 0; i <= 32; i++) {
+			drawList->AddLine(ImVec2(vMin.x + cellWidth * i, vMin.y), ImVec2(vMin.x + cellWidth * i, vMin.y + newSize.y), IM_COL32(0, 255, 0, 255));
+			drawList->AddLine(ImVec2(vMin.x, vMin.y + cellHeight * i), ImVec2(vMin.x + newSize.x, vMin.y + cellHeight * i), IM_COL32(0, 255, 0, 255));
+		}
 	}
 }

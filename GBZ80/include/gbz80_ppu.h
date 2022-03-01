@@ -40,24 +40,28 @@ extern "C" {
 	} gbz80_ppu_sprite_data_t;
 
 	typedef struct gbz80_ppu_fifo_fetcher_t {
+		gbz80_ppu_fifo_fetcher_state_t state;
 		uint16_t tile_address;
 		uint8_t tile_index;
 		uint8_t tile_high;
 		uint8_t tile_low;
+		uint8_t fetch_x, fetch_y;
+		uint8_t tile_x;
+
+		gbz80_ppu_fifo_fetcher_state_t sprite_fetch_stored_state;
+		uint8_t sprite_tile_index;
+		uint8_t sprite_tile_high;
+		uint8_t sprite_tile_low;
+		uint8_t sprite_fetch_x;
+		uint8_t sprite_fetch_y;
 
 		gbz80_ppu_sprite_data_t* oam_sprite;
 		uint8_t sprite_fetch;
 		uint8_t window_fetch;
-
 		uint8_t num_clocks;
 
-		gbz80_ppu_fifo_fetcher_state_t state;
 
 		gbz80_ppu_fifo_t fifo;
-
-		uint8_t tile_x;
-		uint8_t win_x, win_y;
-		uint8_t fetch_x, fetch_y;
 	} gbz80_ppu_fifo_fetcher_t;
 
 

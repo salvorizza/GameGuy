@@ -69,6 +69,7 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 									ppu->fifo_fetcher.oam_sprite = sprite;
 									ppu->fifo_fetcher.sprite_fetch = 1;
 									ppu->fifo_fetcher.fifo.stopped = 1;
+									ppu->fifo_fetcher.sprite_fetch_stored_state = ppu->fifo_fetcher.state;
 									ppu->fifo_fetcher.state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID;
 
 									break;
@@ -501,7 +502,6 @@ void gbz80_ppu_fifo_push(gbz80_ppu_fifo_t* fifo, gbz80_ppu_fifo_element_t* eleme
 }
 
 void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t clock) {
-	//uint8_t sprite_mode = common_get8_bit(lcdc, 2);
 
 	if (ppu->lcd_x < 160) {
 		if (clock % 2) {
@@ -513,24 +513,26 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 					uint8_t win_map_index = common_get8_bit(ppu->lcdc, 6);
 					uint8_t bg_enable = common_get8_bit(ppu->lcdc, 0);
 					uint8_t sprite_enable = common_get8_bit(ppu->lcdc, 1);
-					uint8_t bg_map_index = common_get8_bit(ppu->lcdc, 3);
-
-					uint8_t is_window_tile = 0;
-					
+					uint8_t sprite_mode = common_get8_bit(ppu->lcdc, 2);
+					uint8_t bg_map_index = common_get8_bit(ppu->lcdc, 3);					
 
 					if (fifo_fetcher->sprite_fetch) {
 						uint8_t offset_y = ppu->ly - fifo_fetcher->oam_sprite->y + 16;
 
-						fifo_fetcher->tile_index = fifo_fetcher->oam_sprite->tile_index & 0xFE;
-						if (offset_y > 7) {
-							offset_y -= 8;
-							fifo_fetcher->tile_index = fifo_fetcher->oam_sprite->tile_index | 0x01;
+						if (sprite_mode) {
+							fifo_fetcher->sprite_tile_index = fifo_fetcher->oam_sprite->tile_index & 0xFE;
+							if (offset_y > 7) {
+								offset_y -= 8;
+								fifo_fetcher->sprite_tile_index = fifo_fetcher->oam_sprite->tile_index | 0x01;
+							}
+						} else {
+							fifo_fetcher->sprite_tile_index = fifo_fetcher->oam_sprite->tile_index;
 						}
 
 						if (common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags, 6)) {
-							fifo_fetcher->fetch_y = 7 - offset_y;
+							fifo_fetcher->sprite_fetch_y = 7 - offset_y;
 						} else {
-							fifo_fetcher->fetch_y = offset_y;
+							fifo_fetcher->sprite_fetch_y = offset_y;
 						}
 
 						ppu->mode3_delay += 11 - min(5, (fifo_fetcher->oam_sprite->x + ppu->scx) % 8);
@@ -572,14 +574,25 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 				case GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_LOW: {
 					uint16_t read_address = 0x0000;
 					uint8_t adressing_mode = common_get8_bit(ppu->lcdc, 4);
-
-					if (adressing_mode == 1) {
-						read_address = 0x8000 + fifo_fetcher->tile_index * 16 + (fifo_fetcher->fetch_y % 8) * 2;
-					} else {
-						read_address = 0x9000 + ((int8_t)fifo_fetcher->tile_index) * 16 + (fifo_fetcher->fetch_y % 8) * 2;
+					if (fifo_fetcher->sprite_fetch == 1) {
+						adressing_mode = 1;
 					}
 
-					fifo_fetcher->tile_low = gbz80_memory_read8(ppu->instance, read_address);
+					uint8_t tile_index = fifo_fetcher->sprite_fetch ? fifo_fetcher->sprite_tile_index : fifo_fetcher->tile_index;
+					uint8_t fetch_y = fifo_fetcher->sprite_fetch ? fifo_fetcher->sprite_fetch_y : fifo_fetcher->fetch_y;
+
+					if (adressing_mode == 1) {
+						read_address = 0x8000 + tile_index * 16 + (fetch_y % 8) * 2;
+					} else {
+						read_address = 0x9000 + ((int8_t)tile_index) * 16 + (fetch_y % 8) * 2;
+					}
+
+					uint8_t tile_low = gbz80_memory_read8(ppu->instance, read_address);
+					if (fifo_fetcher->sprite_fetch == 1) {
+						fifo_fetcher->sprite_tile_low = tile_low;
+					} else {
+						fifo_fetcher->tile_low = tile_low;
+					}
 
 					fifo_fetcher->state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_HIGH;
 					break;
@@ -592,13 +605,21 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 						adressing_mode = 1;
 					}
 
+					uint8_t tile_index = fifo_fetcher->sprite_fetch ? fifo_fetcher->sprite_tile_index : fifo_fetcher->tile_index;
+					uint8_t fetch_y = fifo_fetcher->sprite_fetch ? fifo_fetcher->sprite_fetch_y : fifo_fetcher->fetch_y;
+
 					if (adressing_mode == 1) {
-						read_address = 0x8000 + fifo_fetcher->tile_index * 16 + (fifo_fetcher->fetch_y % 8) * 2;
+						read_address = 0x8000 + tile_index * 16 + (fetch_y % 8) * 2;
 					} else {
-						read_address = 0x9000 + ((int8_t)fifo_fetcher->tile_index) * 16 + (fifo_fetcher->fetch_y % 8) * 2;
+						read_address = 0x9000 + ((int8_t)tile_index) * 16 + (fetch_y % 8) * 2;
 					}
 
-					fifo_fetcher->tile_high = gbz80_memory_read8(ppu->instance, read_address + 1);
+					uint8_t tile_high = gbz80_memory_read8(ppu->instance, read_address + 1);
+					if (fifo_fetcher->sprite_fetch == 1) {
+						fifo_fetcher->sprite_tile_high = tile_high;
+					} else {
+						fifo_fetcher->tile_high = tile_high;
+					}
 
 					if (fifo_fetcher->fifo.size > 8 || fifo_fetcher->sprite_fetch) {
 						fifo_fetcher->state = GBZ80_PPU_FIFO_FETCHER_STATE_PUSH;
@@ -609,12 +630,10 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 				case GBZ80_PPU_FIFO_FETCHER_STATE_PUSH: {
 					uint8_t pixels[8];
 					gbz80_ppu_fifo_element_t element;
-					gbz80_ppu_util_convert_2bpp(fifo_fetcher->tile_low, fifo_fetcher->tile_high, pixels);
 
 					if (fifo_fetcher->sprite_fetch) {
 						//Mix
-
-
+						gbz80_ppu_util_convert_2bpp(fifo_fetcher->sprite_tile_low, fifo_fetcher->sprite_tile_high, pixels);
 
 						for (uint8_t i = 0; i < 8; i++) {
 							uint8_t pixel_index = i;
@@ -626,26 +645,29 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 							gbz80_ppu_fifo_element_t* element = &fifo_fetcher->fifo.data[index];
 							uint8_t pixel_val = pixels[pixel_index];
 
-							if (!element->sprite && pixel_val != 0) {
+							if (!element->sprite && pixel_val != 0 && !common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags, 7)) {
 								element->sprite = 1;
 								element->pixel_value = pixel_val;
 								element->palette = common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags,4);
 							}
 						}
 
+						ppu->fifo_fetcher.state = ppu->fifo_fetcher.sprite_fetch_stored_state;
 						fifo_fetcher->sprite_fetch = 0;
 						fifo_fetcher->oam_sprite->x = 0;
 						fifo_fetcher->oam_sprite = NULL;
 						fifo_fetcher->fifo.stopped = 0;
 					} else {
+						gbz80_ppu_util_convert_2bpp(fifo_fetcher->tile_low, fifo_fetcher->tile_high, pixels);
+
 						for (uint8_t i = 0; i < 8; i++) {
 							gbz80_ppu_fifo_element_init(&element, 0, pixels[i], 0);
 							gbz80_ppu_fifo_push(&fifo_fetcher->fifo, &element);
 						}
+						fifo_fetcher->state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID;
 					}
 
 					reset = 1;
-					fifo_fetcher->state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID;
 					break;
 				}
 			}

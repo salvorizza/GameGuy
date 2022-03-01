@@ -25,6 +25,8 @@ namespace GameGuy {
 		std::shared_ptr<FrameBuffer> mFBO;
 		uint32_t mResizeWidth, mResizeHeight;
 		bool mNeedResize;
+		int mTilemapSelection;
+		bool mRelativeAdressing;
 	};
 
 }
