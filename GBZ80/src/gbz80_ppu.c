@@ -23,7 +23,8 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 
 		switch (ppu->state) {
 			case GBZ80_PPU_STATE_OAM_SCAN: {
-				gbz80_ppu_update_stat_register(ppu, 2);
+				if (ppu->num_dots == 0)
+					gbz80_ppu_update_stat_register(ppu, 2);
 
 				if (ppu->num_dots == (NUM_DOTS_START_THREE - 1)) {
 					gbz80_ppu_gather_oam_sprites_by_line(ppu, ppu->ly, ppu->oam_sprites, &ppu->num_oam_sprites);
@@ -38,6 +39,9 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			}
 
 			case GBZ80_PPU_STATE_DRAWING_PIXELS: {
+				if (ppu->num_dots == NUM_DOTS_START_THREE)
+					gbz80_ppu_update_stat_register(ppu, 3);
+
 				if (ppu->fifo_fetcher.fifo.size > 8 && ppu->scx_dec > 0 && ppu->lcd_x == 0) {
 					gbz80_ppu_fifo_pop(&ppu->fifo_fetcher.fifo);
 					ppu->scx_dec--;
@@ -60,6 +64,9 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 								ppu->fifo_fetcher.tile_x = ppu->lcd_x / 8;
 								ppu->mode3_delay += 6;
 							}
+						}
+						else {
+							ppu->fifo_fetcher.window_fetch = 0;
 						}
 
 						if (common_get8_bit(ppu->lcdc, 1)) {
@@ -94,8 +101,6 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 					gbz80_ppu_fifo_fetcher_clock(ppu, &ppu->fifo_fetcher, ppu->num_dots);
 				}
 
-				gbz80_ppu_update_stat_register(ppu, 3);
-
 				if (ppu->num_dots == (NUM_DOTS_START_ZERO - 1 + ppu->mode3_delay)) {
 					ppu->state = GBZ80_PPU_STATE_HMODE;
 				}
@@ -103,9 +108,9 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			}
 
 			case GBZ80_PPU_STATE_HMODE: {
-				gbz80_ppu_update_stat_register(ppu, 0);
-
 				if (ppu->num_dots == (NUM_DOTS_START_ZERO + ppu->mode3_delay)) {
+					gbz80_ppu_update_stat_register(ppu, 0);
+
 					ppu->lcd_x = 0;
 					ppu->fifo_fetcher.tile_x = 0;
 					ppu->fifo_fetcher.num_clocks = 0;
@@ -128,9 +133,9 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			}
 
 			case GBZ80_PPU_STATE_VBLANK: {
-				gbz80_ppu_update_stat_register(ppu, 1);
-
 				if (ppu->num_dots == 0) {
+					gbz80_ppu_update_stat_register(ppu, 1);
+
 					if (ppu->ly == 144) {
 						gbz80_cpu_request_interrupt(&ppu->instance->cpu, GBZ80_INTERRUPT_VBLANK);
 					}
@@ -645,10 +650,13 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 							gbz80_ppu_fifo_element_t* element = &fifo_fetcher->fifo.data[index];
 							uint8_t pixel_val = pixels[pixel_index];
 
-							if (!element->sprite && pixel_val != 0 && !common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags, 7)) {
+							//If we have a pixel that is already in the fifo and it is a sprite we can't get priority over it because smaller X = higher priority in Non-CGB
+							//Pixel with value 0 are treated as transparent so they are skipped
+							//If the sprite has OBJ-to-BG Priority (Bit 7 of OAM Attributes) set, BG Values (1-3) goes over the sprite
+							if (!element->sprite && pixel_val != 0 && (!common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags, 7) || element->pixel_value == 0)) {
 								element->sprite = 1;
 								element->pixel_value = pixel_val;
-								element->palette = common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags,4);
+								element->palette = common_get8_bit(fifo_fetcher->oam_sprite->attributes_flags, 4);
 							}
 						}
 

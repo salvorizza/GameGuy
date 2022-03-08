@@ -72,7 +72,7 @@ public:
 					case 3: color = { 0,0,0,1 }; break;
 				}
 
-				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth - 1,cellHeight - 1 }, color);
+				mBatchRenderer->drawQuad({ x * cellWidth, y * cellHeight }, { cellWidth,cellHeight }, color);
 			}
 		}
 
@@ -106,7 +106,7 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/dr_mario.gb");
+					mGameBoyVM.loadRom("commons/roms/gb240p.gb");
 					mDisassemblerPanel.disassembleCartridge();
 				}
 
