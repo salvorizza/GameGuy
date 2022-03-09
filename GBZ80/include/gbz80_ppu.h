@@ -81,6 +81,9 @@ extern "C" {
 		uint8_t num_oam_sprites;
 		gbz80_ppu_state_t state;
 
+		uint8_t stat_line;
+		uint8_t prev_stat_line_or;
+
 		uint8_t ly, lyc;
 		uint8_t lcdc;
 		uint8_t lcd_status;

@@ -15,6 +15,8 @@ void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	gbz80_ppu_fifo_init(&ppu->fifo_fetcher.fifo);
 	ppu->fifo_fetcher.num_clocks = 0;
 	ppu->fifo_fetcher.fifo.stopped = 0;
+	ppu->prev_stat_line_or = 0;
+	ppu->stat_line = 0;
 }
 
 void gbz80_ppu_clock(gbz80_ppu_t* ppu){
@@ -166,10 +168,33 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 }
 
 void gbz80_ppu_update_stat_register(gbz80_ppu_t* ppu, uint8_t mode) {
-	uint8_t stat = ppu->lcd_status;
-
 	common_change8_bit_range(&ppu->lcd_status, 0, 1, mode);
 	common_change8_bit(&ppu->lcd_status, 2, ppu->ly == ppu->lyc);
+
+	for (uint8_t i = 0; i < 3; i++) {
+		if (i == mode && common_get8_bit(ppu->lcd_status, 3 + i)) {
+			common_set8_bit(&ppu->stat_line, i);
+		} else {
+			common_reset8_bit(&ppu->stat_line, i);
+		}
+	}
+
+	if (ppu->ly == ppu->lyc && common_get8_bit(ppu->lcd_status, 6)) {
+		common_set8_bit(&ppu->stat_line, 3);
+	} else {
+		common_reset8_bit(&ppu->stat_line, 3);
+	}
+
+	uint8_t current_stat_line_or = 0;
+	for (uint8_t i = 0; i < 4; i++) {
+		current_stat_line_or |= common_get8_bit(ppu->stat_line, i);
+	}
+
+	if (current_stat_line_or == 1 && ppu->prev_stat_line_or == 0) {
+		gbz80_cpu_request_interrupt(&ppu->instance->cpu, GBZ80_INTERRUPT_LCDSTAT);
+	}
+
+	ppu->prev_stat_line_or = current_stat_line_or;
 }
 
 void gbz80_ppu_memory_read(gbz80_ppu_t* ppu, uint16_t address, uint8_t* val) {
@@ -514,12 +539,10 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 
 			switch (fifo_fetcher->state) {
 				case GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID: {
-					uint8_t win_enable = common_get8_bit(ppu->lcdc, 5);
-					uint8_t win_map_index = common_get8_bit(ppu->lcdc, 6);
 					uint8_t bg_enable = common_get8_bit(ppu->lcdc, 0);
-					uint8_t sprite_enable = common_get8_bit(ppu->lcdc, 1);
 					uint8_t sprite_mode = common_get8_bit(ppu->lcdc, 2);
 					uint8_t bg_map_index = common_get8_bit(ppu->lcdc, 3);					
+					uint8_t win_map_index = common_get8_bit(ppu->lcdc, 6);
 
 					if (fifo_fetcher->sprite_fetch) {
 						uint8_t offset_y = ppu->ly - fifo_fetcher->oam_sprite->y + 16;

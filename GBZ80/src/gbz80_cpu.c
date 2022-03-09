@@ -126,18 +126,6 @@ uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t curre
 			}*/
 			break;
 
-
-		case 0xFF41: {
-			uint8_t prev_lcd_status = gbz80_memory_read8(cpu->instance, 0xFF41);
-			uint8_t previous_mode = common_get8_bit_range(prev_lcd_status, 0, 1);
-			uint8_t current_mode = common_get8_bit_range(*val, 0, 1);
-
-			if ((previous_mode != current_mode && common_get8_bit(*val, 3 + current_mode) == 1) || (common_get8_bit(*val,6) == 1 && common_get8_bit(*val, 2) == 1)) {
-				gbz80_cpu_request_interrupt(cpu, GBZ80_INTERRUPT_LCDSTAT);
-			}
-			break;
-		}
-
 		case 0xFF46: {
 			uint16_t source_address = ((uint16_t)*val << 8);
 			uint16_t dst_address = 0xFE00;
