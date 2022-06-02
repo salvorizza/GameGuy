@@ -1,5 +1,4 @@
 #include "gbz80_ppu.h"
-
 #include "gbz80.h"
 
 #define NUM_DOTS_PER_LINE 456

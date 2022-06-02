@@ -158,31 +158,30 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 			else
 				apu->channel_3.base.dac_output = 0;
 		}
+	}
 
-		if (apu->sample_timer.period != 0 && gbz80_update_timer(&apu->sample_timer)) {
-			double dac_outs[4] = {
-				apu->channel_1.base.dac_output,
-				apu->channel_2.base.dac_output,
-				apu->channel_3.base.dac_output,
-				0
-			};
+	if (apu->sample_timer.period != 0 && gbz80_update_timer(&apu->sample_timer)) {
+		double dac_outs[4] = {
+			apu->channel_1.base.dac_output,
+			apu->channel_2.base.dac_output,
+			apu->channel_3.base.dac_output,
+			0
+		};
 
-			apu->so_1 = apu->so_2 = 0.0;
-			for (uint8_t channel_number = 0; channel_number < 4; channel_number++) {
-				if (common_get8_bit(nr51, channel_number)) {
-					apu->so_1 += dac_outs[channel_number];
-				}
-
-				if (common_get8_bit(nr51, 4 + channel_number)) {
-					apu->so_2 += dac_outs[channel_number];
-				}
+		apu->so_1 = apu->so_2 = 0.0;
+		for (uint8_t channel_number = 0; channel_number < 4; channel_number++) {
+			if (common_get8_bit(nr51, channel_number)) {
+				apu->so_1 += dac_outs[channel_number];
 			}
-			apu->so_1 /= 4.0;
-			apu->so_2 /= 4.0;
 
-			apu->sample_ready = 1;
+			if (common_get8_bit(nr51, 4 + channel_number)) {
+				apu->so_2 += dac_outs[channel_number];
+			}
 		}
-			
+		apu->so_1 /= 4.0;
+		apu->so_2 /= 4.0;
+
+		apu->sample_ready = 1;
 	}
 }
 
