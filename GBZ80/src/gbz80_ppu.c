@@ -49,27 +49,30 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 					ppu->scx_dec--;
 				}
 				else {
-					if (ppu->fifo_fetcher.fifo.size > 8 && ppu->fifo_fetcher.fifo.stopped == 0) {
-						if (common_get8_bit(ppu->lcdc, 5) && ppu->ly >= ppu->wy) {
-							uint8_t last_window_fetch = ppu->fifo_fetcher.window_fetch;
+					if (common_get8_bit(ppu->lcdc, 5) && ppu->ly >= ppu->wy) {
+						uint8_t last_window_fetch = ppu->fifo_fetcher.window_fetch;
 
-							if (ppu->wx >= 7) {
-								ppu->fifo_fetcher.window_fetch = ppu->lcd_x >= (ppu->wx - 7) && ppu->lcd_x <= (ppu->wx - 7 + 160);
-							}else {
-								ppu->fifo_fetcher.window_fetch = ppu->lcd_x <= (ppu->wx - 7 + 160);
-							}
-
-
-							if (last_window_fetch == 0 && ppu->fifo_fetcher.window_fetch == 1){
-								gbz80_ppu_fifo_clear(&ppu->fifo_fetcher.fifo); 
-								ppu->fifo_fetcher.state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID;
-								ppu->fifo_fetcher.tile_x = ppu->lcd_x / 8;
-								ppu->mode3_delay += 6;
-							}
+						if (ppu->wx >= 7) {
+							ppu->fifo_fetcher.window_fetch = ppu->lcd_x >= (ppu->wx - 7) && ppu->lcd_x <= (ppu->wx - 7 + 160);
 						}
 						else {
-							ppu->fifo_fetcher.window_fetch = 0;
+							ppu->fifo_fetcher.window_fetch = ppu->lcd_x <= (ppu->wx - 7 + 160);
 						}
+
+						if (last_window_fetch == 0 && ppu->fifo_fetcher.window_fetch == 1) {
+							gbz80_ppu_fifo_clear(&ppu->fifo_fetcher.fifo);
+							ppu->fifo_fetcher.state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID;
+							ppu->fifo_fetcher.tile_x = ppu->lcd_x / 8;
+							ppu->mode3_delay += 6;
+						}
+					}
+					else {
+						ppu->fifo_fetcher.window_fetch = 0;
+					}
+
+					if (ppu->fifo_fetcher.fifo.size > 8 && ppu->fifo_fetcher.fifo.stopped == 0) {
+						
+
 
 						if (common_get8_bit(ppu->lcdc, 1)) {
 							for (gbz80_ppu_sprite_data_t* sprite = ppu->oam_sprites; sprite < ppu->oam_sprites + ppu->num_oam_sprites; sprite++) {
@@ -563,7 +566,11 @@ void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fi
 							fifo_fetcher->sprite_fetch_y = offset_y;
 						}
 
-						ppu->mode3_delay += 11 - min(5, (fifo_fetcher->oam_sprite->x + ppu->scx) % 8);
+						if (!fifo_fetcher->window_fetch) {
+							ppu->mode3_delay += 11 - min(5, (fifo_fetcher->oam_sprite->x + ppu->scx) % 8);
+						} else {
+							ppu->mode3_delay += 11 - min(5, (fifo_fetcher->oam_sprite->x + (255 - ppu->wx)) % 8);
+						}
 					} else {
 						if (fifo_fetcher->window_fetch) {
 							if (ppu->wx >= 7) {
