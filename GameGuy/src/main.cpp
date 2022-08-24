@@ -7,6 +7,7 @@
 #include "Panels/ViewportPanel.h"
 #include "Panels/TileMapViewerPanel.h"
 #include "Panels/AudioPanel.h"
+#include "Panels/FileDialogPanel.h"
 
 #include "Graphics/BatchRenderer.h"
 
@@ -34,11 +35,16 @@ public:
 		mGameBoyVM.init(&mAudioPanel);
 		mBatchRenderer = std::make_shared<BatchRenderer>();
 
+		//memset(mBuffer, 0, sizeof(mBuffer));
+
 		mTileMapViewerPanel.setInstance(mGameBoyVM);
 		mMemoryEditorPanel.setInstance(mGameBoyVM);
 		mDisassemblerPanel.setInstance(&mGameBoyVM);
 		mCPUStatusPanel.setInstance(mGameBoyVM);
 		mViewportPanel.setInstance(mGameBoyVM);
+
+		mFileDialogPanel.setRoot("commons/roms");
+		mFileDialogPanel.setOnFileSelectedCallback(std::bind(&GameGuyApp::onFileSelected, this, std::placeholders::_1));
 
 		mGameBoyVM.setBreakFunction(std::bind(&DisassemblerPanel::breakFunction, &mDisassemblerPanel, std::placeholders::_1));
 		mDisassemblerPanel.disassembleBootRom();
@@ -50,6 +56,9 @@ public:
 	}
 
 	virtual void onRender() override {
+		/*if (mGameBoyVM.mInstance->ppu.state == GBZ80_PPU_STATE_VBLANK && mGameBoyVM.mInstance->ppu.ly == 144) {
+			memcpy(mBuffer, ((gbz80_t*)mGameBoyVM)->ppu.lcd, sizeof(mBuffer));
+		}**/
 
 		mViewportPanel.startFrame();
 		glClearColor(0, 0, 0, 1);
@@ -64,7 +73,7 @@ public:
 
 		for (size_t y = 0; y < 144; y++) {
 			for (size_t x = 0; x < 160; x++) {
-				uint8_t col = ((gbz80_t*)mGameBoyVM)->ppu.lcd[y * 160 + x];
+				uint8_t col = mGameBoyVM.mBuffer[y * 160 + x];
 				switch (col) {
 					case 0: color = { 1,1,1,1 }; break;
 					case 1: color = { .66f,.66f,.66f,1 }; break;
@@ -82,8 +91,13 @@ public:
 		mTileMapViewerPanel.onRender(mBatchRenderer);
 	}
 
-	virtual void onImGuiRender() override {
+	virtual void onImGuiRender(const std::shared_ptr<ImGuiManager>& pManager) override {
 		static bool p_open = true;
+
+		mFileDialogPanel.setIconForExtension(".*", pManager->LoadIconResource("commons/icons/file.png"));
+		mFileDialogPanel.setIconForExtension(".gb", pManager->LoadIconResource("commons/icons/rom.png"));
+		mFileDialogPanel.setIconForExtension(".rom", pManager->LoadIconResource("commons/icons/rom.png"));
+		mFileDialogPanel.setFolderIcon(pManager->LoadIconResource("commons/icons/folder.png"));
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -106,8 +120,9 @@ public:
 			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::MenuItem("Open", "CTRL+M")) {
-					mGameBoyVM.loadRom("commons/roms/gb240p.gb");
-					mDisassemblerPanel.disassembleCartridge();
+					mFileDialogPanel.open();
+					//mGameBoyVM.loadRom("commons/roms/gb-test-roms-master/instr_timing/instr_timing.gb");
+					//mDisassemblerPanel.disassembleCartridge();
 				}
 
 				ImGui::EndMenu();
@@ -139,14 +154,20 @@ public:
 
 		ImGui::End();
 
-		mMemoryEditorPanel.render();
-		mDisassemblerPanel.render();
-		mCPUStatusPanel.render();
-		mViewportPanel.render();
-		mTileMapViewerPanel.render();
-		mAudioPanel.render();
+		mMemoryEditorPanel.render(pManager);
+		mDisassemblerPanel.render(pManager);
+		mCPUStatusPanel.render(pManager);
+		mViewportPanel.render(pManager);
+		mTileMapViewerPanel.render(pManager);
+		mAudioPanel.render(pManager);
+		mFileDialogPanel.render(pManager);
 	}
 
+	void onFileSelected(const char* filePath) {
+		mGameBoyVM.loadRom(filePath);
+		mDisassemblerPanel.disassembleCartridge();
+		mGameBoyVM.setState(VMState::Start);
+	}
 
 private:
 	GameBoyVM mGameBoyVM;
@@ -157,6 +178,7 @@ private:
 	CPUStatusPanel mCPUStatusPanel;
 	ViewportPanel mViewportPanel;
 	TileMapViewerPanel mTileMapViewerPanel;
+	FileDialogPanel mFileDialogPanel;
 
 	Timer mTimer;
 	glm::mat4 mProjectionMatrix;

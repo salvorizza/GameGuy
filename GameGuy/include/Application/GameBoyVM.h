@@ -24,6 +24,8 @@ namespace GameGuy {
 
 	class GameBoyVM {
 	public:
+		uint8_t mBuffer[160 * 144];
+
 		GameBoyVM();
 		~GameBoyVM();
 
@@ -54,6 +56,9 @@ namespace GameGuy {
 
 		static GameBoyVM* sInstance;
 		AudioPanel* mAudioPanel;
+
+		uint32_t mRenderingSample;
+
 	};
 
 }

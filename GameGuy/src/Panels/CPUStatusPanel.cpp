@@ -83,14 +83,21 @@ namespace GameGuy {
 			ImGui::Text("%d", gbz80_cpu_get_flag(&mInstance->cpu, GBZ80_FLAG_C));
 
 			ImGui::EndTable();
-
 		}
 
+		ImGui::Text("Current Instruction: %s", mInstance->cpu.current_instruction.disassembled_name);
 		ImGui::Text("PC: 0x%04X", mInstance->cpu.registers.PC);
 		ImGui::Text("SP: 0x%04X", mInstance->cpu.registers.SP);
-		ImGui::Text("Current Instruction: %s", mInstance->cpu.current_instruction.disassembled_name);
-		ImGui::Text("Div: %d", mInstance->cpu.div);
-
+		ImGui::Text("Halted: %d", mInstance->cpu.halted);
+		ImGui::Text("Div: 0x%04X", mInstance->cpu.div);
+		ImGui::Text("TIMA: 0x%02X", mInstance->cpu.tima);
+		ImGui::Text("TMA: 0x%02X", mInstance->cpu.tma);
+		static const size_t freqs[] = { 4096,262144,65536,16384 };
+		uint8_t freq = common_get8_bit_range(mInstance->cpu.tac, 0, 1);
+		uint8_t enable = common_get8_bit(mInstance->cpu.tac, 2);
+		ImGui::Text("TAC");
+		ImGui::Text("\tEnable: %d", enable);
+		ImGui::Text("\tFrequency: %dhz", freqs[freq]);
 	}
 
 }

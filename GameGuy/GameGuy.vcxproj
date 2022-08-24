@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;vendor\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -98,7 +98,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;vendor\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -120,7 +120,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;GLFW_INCLUDE_NONE;GAME_GUY_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\GBZ80\include;..\GBZ80\src;vendor\GLFW\include;vendor\imgui;vendor\Glad\include;vendor\glm;vendor\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -152,6 +152,7 @@
     <ClInclude Include="include\Panels\AudioPanel.h" />
     <ClInclude Include="include\Panels\CPUStatusPanel.h" />
     <ClInclude Include="include\Panels\DisassemblerPanel.h" />
+    <ClInclude Include="include\Panels\FileDialogPanel.h" />
     <ClInclude Include="include\Panels\MemoryEditor.h" />
     <ClInclude Include="include\Panels\MemoryEditorPanel.h" />
     <ClInclude Include="include\Panels\Panel.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="src\Panels\AudioPanel.cpp" />
     <ClCompile Include="src\Panels\CPUStatusPanel.cpp" />
     <ClCompile Include="src\Panels\DisassemblerPanel.cpp" />
+    <ClCompile Include="src\Panels\FileDialogPanel.cpp" />
     <ClCompile Include="src\Panels\MemoryEditorPanel.cpp" />
     <ClCompile Include="src\Panels\Panel.cpp" />
     <ClCompile Include="src\Panels\TileMapViewerPanel.cpp" />
@@ -193,6 +195,9 @@
     </ProjectReference>
     <ProjectReference Include="vendor\imgui\ImGui.vcxproj">
       <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>
+    </ProjectReference>
+    <ProjectReference Include="vendor\stb\STB.vcxproj">
+      <Project>{0E1F880B-7A28-887C-03A4-9E7C6FAC937C}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

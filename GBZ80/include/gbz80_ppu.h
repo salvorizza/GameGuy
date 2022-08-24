@@ -40,6 +40,7 @@ extern "C" {
 	} gbz80_ppu_sprite_data_t;
 
 	typedef struct gbz80_ppu_fifo_fetcher_t {
+
 		gbz80_ppu_fifo_fetcher_state_t state;
 		uint16_t tile_address;
 		uint8_t tile_index;
@@ -74,7 +75,6 @@ extern "C" {
 
 	typedef struct gbz80_ppu_t {
 		uint8_t lcd[GBZ80_LCD_SIZE];
-		uint32_t num_dots;
 		uint8_t lcd_x;
 		gbz80_ppu_fifo_fetcher_t fifo_fetcher;
 		gbz80_ppu_sprite_data_t oam_sprites[10];
@@ -95,6 +95,8 @@ extern "C" {
 		uint8_t mode3_delay;
 
 		uint8_t scx_dec;
+		uint32_t num_dots;
+
 
 		gbz80_t* instance;
 	} gbz80_ppu_t;

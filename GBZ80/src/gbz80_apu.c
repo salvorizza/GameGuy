@@ -32,7 +32,7 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 	uint8_t apu_power= common_get8_bit(nr52, 7);
 
 	if (apu_power) {
-		//gbz80_apu_frame_sequencer_update(&apu->frame_sequencer);
+		gbz80_apu_frame_sequencer_update(&apu->frame_sequencer);
 
 		if (gbz80_update_timer(&apu->frame_sequencer.timer)) {
 			apu->frame_sequencer.length_counter_clock = apu->frame_sequencer.num_step % 2 == 0;

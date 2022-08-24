@@ -122,9 +122,11 @@ uint8_t gbz80_cartridge_write(gbz80_cartridge_t* cartridge, uint16_t address, ui
 void gbz80_cartridge_destroy(gbz80_cartridge_t* rom) {
 	if (rom->ram_banks) {
 		free(rom->ram_banks);
+		rom->ram_banks = NULL;
 	}
 	if (rom->rom_banks) {
 		free(rom->rom_banks);
+		rom->rom_banks = NULL;
 	}
 	gbz80_mbc_release(rom->mbc);
 	free(rom);

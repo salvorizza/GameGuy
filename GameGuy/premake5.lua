@@ -27,7 +27,8 @@ project "GameGuy"
         "%{IncludeDir.GLFW}",
         "%{IncludeDir.ImGui}",
 		"%{IncludeDir.Glad}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.stb}"
 	}
 
 	links
@@ -36,6 +37,7 @@ project "GameGuy"
 		"Glad",
 		"GLFW",
 		"ImGui",
+		"STB",
 		"opengl32.lib"
 	}
 	

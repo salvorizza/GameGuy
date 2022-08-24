@@ -1,10 +1,7 @@
 #include "gbz80_ppu.h"
 #include "gbz80.h"
 
-#define NUM_DOTS_PER_LINE 456
-#define NUM_DOTS_START_TWO 0
-#define NUM_DOTS_START_THREE 80
-#define NUM_DOTS_START_ZERO 252
+
 
 void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 	memset(ppu, 0, sizeof(gbz80_ppu_t));
@@ -19,6 +16,11 @@ void gbz80_ppu_init(gbz80_ppu_t* ppu, gbz80_t* instance) {
 }
 
 void gbz80_ppu_clock(gbz80_ppu_t* ppu){
+	static const size_t NUM_DOTS_PER_LINE = 456; /*LINE*/
+	static const size_t NUM_DOTS_START_TWO = 0;/*OAM SCAN*/
+	static const size_t NUM_DOTS_START_THREE = 80; /*PIXEL DRAW*/
+	static const size_t NUM_DOTS_START_ZERO = 252; /*HSCAN*/
+
 	if (common_get8_bit(ppu->lcdc, 7) == 1) {
 		uint8_t reset = 0;
 
@@ -63,6 +65,7 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 							ppu->fifo_fetcher.state = GBZ80_PPU_FIFO_FETCHER_STATE_READ_TILE_ID;
 							ppu->fifo_fetcher.tile_x = ppu->lcd_x / 8;
 							ppu->mode3_delay += 6;
+							ppu->scx_dec = 0;
 						}
 					}
 					else {
@@ -88,14 +91,19 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 							}
 						}
 
-						if (ppu->fifo_fetcher.fifo.size > 8 && ppu->fifo_fetcher.fifo.stopped == 0) {
+						if (ppu->fifo_fetcher.fifo.size > 8 && ppu->fifo_fetcher.fifo.stopped == 0 && ppu->lcd_x < 160) {
 							gbz80_ppu_fifo_element_t* element = gbz80_ppu_fifo_pop(&ppu->fifo_fetcher.fifo);
 
+							assert(ppu->lcd_x < 160 && "LCD X greater than 160");
+							assert(ppu->ly < 144 && "LCD Y greater than 144");
+
+							uint16_t lcd_index = ppu->ly * 160 + ppu->lcd_x;
+
 							if (!element->sprite) {
-								ppu->lcd[ppu->ly * 160 + ppu->lcd_x] = gbz80_ppu_get_bgp_color(ppu, element->pixel_value);
+								ppu->lcd[lcd_index] = gbz80_ppu_get_bgp_color(ppu, element->pixel_value);
 							}
 							else {
-								ppu->lcd[ppu->ly * 160 + ppu->lcd_x] = gbz80_ppu_get_sprite_color(ppu, element->palette, element->pixel_value);
+								ppu->lcd[lcd_index] = gbz80_ppu_get_sprite_color(ppu, element->palette, element->pixel_value);
 							}
 
 							ppu->lcd_x++;
@@ -157,6 +165,8 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 				break;
 			}
 		}
+
+		assert(ppu->num_dots < NUM_DOTS_PER_LINE);
 
 		ppu->num_dots++;
 		if (reset) {
@@ -404,6 +414,7 @@ void gbz80_ppu_draw_sprites(gbz80_ppu_t* ppu, uint8_t ly, uint8_t lcdc) {
 		for (uint8_t pixel_index = start_pixel; pixel_index < end_pixel; pixel_index++) {
 			uint8_t pixel_color = gbz80_ppu_get_sprite_color(ppu, palette_number, pixels[pixel_index]);;
 			if (pixel_color != 0x00) {
+				uint8_t lcd_index = ly * 160 + tile_index * 8 + pixel_index;
 				ppu->lcd[ly * 160 + tile_index * 8 + pixel_index] = pixel_color;
 			}
 		}

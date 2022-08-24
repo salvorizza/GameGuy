@@ -23,7 +23,7 @@ namespace GameGuy {
 			mApplication->onRender();
 
 			mImGuiManager->startFrame();
-			mApplication->onImGuiRender();
+			mApplication->onImGuiRender(mImGuiManager);
 			mImGuiManager->endFrame();
 
 			mWindow->update();

@@ -30,6 +30,8 @@ namespace GameGuy {
 		sInstance = this;
 		mInstance = gbz80_create();
 		gbz80_init(mInstance, mBiosPath);
+		mRenderingSample = 0;
+		memset(mBuffer, 0, sizeof(mBuffer));
 
 		gbz80_set_sample_rate(mInstance, 48000);
 		std::vector<std::wstring> devices = AudioManager<int16_t>::Enumerate();
@@ -74,6 +76,8 @@ namespace GameGuy {
 
 	void GameBoyVM::loadRom(const char* romPath)
 	{
+		gbz80_init(mInstance, mBiosPath);
+
 		if (mCurrentlyLoadedCartridge) {
 			gbz80_cartridge_destroy(mCurrentlyLoadedCartridge);
 			mCurrentlyLoadedCartridge = NULL;
@@ -98,9 +102,14 @@ namespace GameGuy {
 						break;
 					}
 				}*/
-
 			} while (sInstance->mInstance->apu.sample_ready == 0);
 			
+			sInstance->mRenderingSample++;
+			if (sInstance->mInstance->ppu.state == GBZ80_PPU_STATE_VBLANK && sInstance->mInstance->ppu.ly == 144) {
+				memcpy(sInstance->mBuffer,sInstance->mInstance->ppu.lcd, sizeof(mBuffer));
+				sInstance->mRenderingSample = 0;
+			}
+
 			double sample = sInstance->mInstance->apu.so_1;
 			//sInstance->mAudioPanel->addSample(dTime, sample, sample);
 
