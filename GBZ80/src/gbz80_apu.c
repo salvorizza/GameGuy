@@ -9,10 +9,7 @@ void gbz80_apu_init(gbz80_apu_t* apu, gbz80_t* instance){
 	gbz80_apu_channel_base_init(&apu->channel_1.base);
 	gbz80_apu_channel_base_init(&apu->channel_2.base);
 	gbz80_apu_channel_base_init(&apu->channel_3.base);
-
-	apu->channel_1.base.dac_output = 0;
-	apu->channel_2.base.dac_output = 0;
-	apu->channel_3.base.dac_output = 0;
+	gbz80_apu_channel_base_init(&apu->channel_4.base);
 
 	gbz80_apu_duty_init(&apu->channel_1.duty_cycler);
 	gbz80_apu_frequency_sweep_init(&apu->channel_1.sweeper, 0, 8, 0, 0);
@@ -33,21 +30,6 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 
 	if (apu_power) {
 		gbz80_apu_frame_sequencer_update(&apu->frame_sequencer);
-
-		if (gbz80_update_timer(&apu->frame_sequencer.timer)) {
-			apu->frame_sequencer.length_counter_clock = apu->frame_sequencer.num_step % 2 == 0;
-			apu->frame_sequencer.sweep_clock = apu->frame_sequencer.num_step == 2 || apu->frame_sequencer.num_step == 6;
-			apu->frame_sequencer.volume_envelope_clock = apu->frame_sequencer.num_step % 8 == 7;
-								
-			apu->frame_sequencer.num_step++;
-			apu->frame_sequencer.num_step %= 8;
-		}						
-		else {					
-			apu->frame_sequencer.length_counter_clock = 0;
-			apu->frame_sequencer.sweep_clock = 0;
-			apu->frame_sequencer.volume_envelope_clock = 0;
-		}
-
 
 		if (apu->frame_sequencer.sweep_clock && apu->channel_1.sweeper.enabled) {
 			uint8_t nr10 = gbz80_memory_read_internal(apu->instance, 0xFF10);
@@ -73,6 +55,7 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 			uint8_t nr14 = gbz80_memory_read_internal(apu->instance, 0xFF14);
 			uint8_t nr24 = gbz80_memory_read_internal(apu->instance, 0xFF19);
 			uint8_t nr34 = gbz80_memory_read_internal(apu->instance, 0xFF1E);
+			uint8_t nr44 = gbz80_memory_read_internal(apu->instance, 0xFF23);
 
 			gbz80_apu_length_counter_update(
 				&apu->channel_1.base.length_counter,
@@ -89,16 +72,22 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 				common_get8_bit(nr34, 6)
 			);
 
+			gbz80_apu_length_counter_update(
+				&apu->channel_4.base.length_counter,
+				common_get8_bit(nr44, 6)
+			);
+
 			common_change8_bit(&nr52, 0, apu->channel_1.base.length_counter.enabled);
 			common_change8_bit(&nr52, 1, apu->channel_2.base.length_counter.enabled);
 			common_change8_bit(&nr52, 2, apu->channel_3.base.length_counter.enabled);
-			common_change8_bit(&nr52, 3, 0);
+			common_change8_bit(&nr52, 3, apu->channel_4.base.length_counter.enabled);
 
 			gbz80_memory_write_internal(apu->instance, 0xFF26, nr52);
 		}
 		else if (apu->frame_sequencer.volume_envelope_clock) {
 			uint8_t nr12 = gbz80_memory_read_internal(apu->instance, 0xFF12);
 			uint8_t nr22 = gbz80_memory_read_internal(apu->instance, 0xFF17);
+			uint8_t nr42 = gbz80_memory_read_internal(apu->instance, 0xFF21);
 
 			gbz80_apu_volume_envelope_update(
 				&apu->channel_1.base.volume_envelope,
@@ -108,6 +97,11 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 			gbz80_apu_volume_envelope_update(
 				&apu->channel_2.base.volume_envelope,
 				common_get8_bit(nr22, 3)
+			);
+
+			gbz80_apu_volume_envelope_update(
+				&apu->channel_4.base.volume_envelope,
+				common_get8_bit(nr42, 3)
 			);
 		}
 
@@ -153,19 +147,43 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 				common_get8_bit_range(nr32, 5, 6)
 			);
 
+
 			if (common_get8_bit(nr30, 7) != 0)
 				apu->channel_3.base.dac_output = wave_output / 7.5 - 1;
 			else
 				apu->channel_3.base.dac_output = 0;
 		}
+
+		if (apu->channel_4.base.frequency_timer.period != 0 && apu->channel_4.base.length_counter.enabled == 1 && gbz80_update_timer(&apu->channel_4.base.frequency_timer)) {
+			uint8_t nr41 = gbz80_memory_read_internal(apu->instance, 0xFF20);
+			uint8_t nr42 = gbz80_memory_read_internal(apu->instance, 0xFF21);
+			uint8_t nr43 = gbz80_memory_read_internal(apu->instance, 0xFF22);
+
+			uint8_t xor_result = common_get8_bit(apu->channel_4.lfsr, 0) ^ common_get8_bit(apu->channel_4.lfsr, 1);
+			uint8_t low_byte = apu->channel_4.lfsr & 0xFF;
+			uint8_t high_byte = (apu->channel_4.lfsr >> 8) & 0x7F;
+
+			common_change8_bit(&high_byte, 7, xor_result);
+			if (common_get8_bit(nr43, 3) == 1)
+				common_change8_bit(&low_byte, 7, xor_result);
+			apu->channel_4.lfsr >>= 1;
+			
+			apu->channel_4.lfsr = low_byte | (high_byte << 8);
+
+			uint8_t wave_output_duty = common_get8_bit(low_byte, 0);
+			uint8_t wave_output = wave_output_duty * apu->channel_4.base.volume_envelope.counter;
+
+
+			apu->channel_4.base.dac_output = wave_output / 7.5 - 1;
+		}
 	}
 
 	if (apu->sample_timer.period != 0 && gbz80_update_timer(&apu->sample_timer)) {
 		double dac_outs[4] = {
-			apu->channel_1.base.dac_output,
-			apu->channel_2.base.dac_output,
-			apu->channel_3.base.dac_output,
-			0
+			apu->channel_1.base.dac_enable ? apu->channel_1.base.dac_output : 0,
+			apu->channel_2.base.dac_enable ? apu->channel_2.base.dac_output : 0,
+			apu->channel_3.base.dac_enable ? apu->channel_3.base.dac_output : 0,
+			apu->channel_4.base.dac_enable ? apu->channel_4.base.dac_output : 0,
 		};
 
 		apu->so_1 = apu->so_2 = 0.0;
@@ -204,8 +222,19 @@ void gbz80_apu_memory_read(gbz80_apu_t* apu, uint16_t address, uint8_t* readed_v
 uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t current_value, uint8_t* val) {
 	uint8_t nr52 = gbz80_memory_read_internal(apu->instance, 0xFF26);
 	
+	if (common_get8_bit(nr52, 7) == 0 && address != 0xFF26 && address >= 0xFF10 && address <= 0xFF25) {
+		*val = current_value;
+		return 1;
+	}
+
 
 	switch (address) {
+		// NRx0
+		case 0xFF1A:
+			apu->channel_3.base.dac_enable = common_get8_bit(*val, 7);
+			apu->channel_3.base.length_counter.enabled = apu->channel_3.base.dac_enable;
+		break;
+
 		//NRx1
 		case 0xFF11:
 			if (common_get8_bit(nr52, 7) == 1)
@@ -229,33 +258,58 @@ uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t curre
 			if (common_get8_bit(nr52, 7) == 1)
 				gbz80_apu_length_counter_init(
 					&apu->channel_3.base.length_counter,
-					256 - common_get8_bit_range(*val, 0, 5),
+					256 - common_get8_bit_range(*val, 0, 7),
 					apu->channel_3.base.length_counter.enabled
 				);
 			break;
 
 		case 0xFF20:
-			//TODO
+			if (common_get8_bit(nr52, 7) == 1)
+				gbz80_apu_length_counter_init(
+					&apu->channel_4.base.length_counter,
+					64 - common_get8_bit_range(*val, 0, 5),
+					apu->channel_4.base.length_counter.enabled
+				);
+			break;
+
+			//NRx2
+		case 0xFF12:
+			apu->channel_1.base.dac_enable = (*val & 0xF8) != 0;
+			apu->channel_1.base.length_counter.enabled = apu->channel_1.base.dac_enable;
+			break;
+
+		case 0xFF17:
+			apu->channel_2.base.dac_enable = (*val & 0xF8) != 0;
+			apu->channel_2.base.length_counter.enabled = apu->channel_2.base.dac_enable;
+			break;
+
+		case 0xFF1C:
+			//YOu cannot disable DAC using NR32
+			break;
+
+		case 0xFF21:
+			apu->channel_4.base.dac_enable = (*val & 0xF8) != 0;
+			apu->channel_4.base.length_counter.enabled = apu->channel_4.base.dac_enable;
 			break;
 
 		//NRx4
 		case 0xFF14:
-			if (common_get8_bit(*val, 7))
+			if (common_get8_bit(*val, 7) && apu->channel_1.base.dac_enable)
 				gbz80_apu_trigger_channel1(apu);
 			break;
 
 		case 0xFF19:
-			if (common_get8_bit(*val, 7))
+			if (common_get8_bit(*val, 7) && apu->channel_2.base.dac_enable)
 				gbz80_apu_trigger_channel2(apu);
 			break;
 
 		case 0xFF1E:
-			if (common_get8_bit(*val, 7))
+			if (common_get8_bit(*val, 7) && apu->channel_3.base.dac_enable)
 				gbz80_apu_trigger_channel3(apu);
 			break;
 
 		case 0xFF23:
-			if (common_get8_bit(*val, 7))
+			if (common_get8_bit(*val, 7) && apu->channel_4.base.dac_enable)
 				gbz80_apu_trigger_channel4(apu);
 			break;
 
@@ -272,10 +326,6 @@ uint8_t gbz80_apu_memory_write(gbz80_apu_t* apu, uint16_t address, uint8_t curre
 			}
 			break;
 		}
-	}
-
-	if (common_get8_bit(nr52, 7) == 0 && address != 0xFF26 && address >= 0xFF10 && address <= 0xFF25) {
-		*val = current_value;
 	}
 
 	return 1;
@@ -298,7 +348,7 @@ void gbz80_apu_trigger_channel1(gbz80_apu_t* apu) {
 
 	uint8_t channel_enabled = gbz80_apu_frequency_sweep_init(&apu->channel_1.sweeper, frequency, sweep_time, sweep_decrease, sweep_shift);
 	gbz80_apu_length_counter_init(&apu->channel_1.base.length_counter, length_counter_period, channel_enabled);
-	gbz80_init_timer(&apu->channel_1.base.frequency_timer, (2048 - (size_t)frequency) * 4);
+	gbz80_init_timer(&apu->channel_1.base.frequency_timer, (2048llu - frequency) * 4);
 	gbz80_apu_volume_envelope_init(&apu->channel_1.base.volume_envelope, volume, volume_period);
 
 	common_set8_bit(&nr52, 0);
@@ -315,11 +365,11 @@ void gbz80_apu_trigger_channel2(gbz80_apu_t* apu) {
 	uint16_t frequency = nr23 | ((uint16_t)common_get8_bit_range(nr24, 0, 2) << 8);
 	uint8_t volume = common_get8_bit_range(nr22, 4, 7);
 	uint8_t volume_period = common_get8_bit_range(nr22, 0, 2);
-	uint8_t length_counter_period = apu->channel_1.base.length_counter.counter == 0 ? 64 : apu->channel_1.base.length_counter.counter;
+	uint8_t length_counter_period = apu->channel_2.base.length_counter.counter == 0 ? 64 : apu->channel_2.base.length_counter.counter;
 
-	gbz80_apu_length_counter_init(&apu->channel_1.base.length_counter, length_counter_period, 1);
-	gbz80_init_timer(&apu->channel_1.base.frequency_timer, (2048 - (size_t)frequency) * 4);
-	gbz80_apu_volume_envelope_init(&apu->channel_1.base.volume_envelope, volume, volume_period);
+	gbz80_apu_length_counter_init(&apu->channel_2.base.length_counter, length_counter_period, 1);
+	gbz80_init_timer(&apu->channel_2.base.frequency_timer, (2048llu - frequency) * 4);
+	gbz80_apu_volume_envelope_init(&apu->channel_2.base.volume_envelope, volume, volume_period);
 
 	common_set8_bit(&nr52, 1);
 
@@ -333,10 +383,10 @@ void gbz80_apu_trigger_channel3(gbz80_apu_t* apu) {
 	uint8_t nr52 = gbz80_memory_read_internal(apu->instance, 0xFF26);
 
 	uint16_t frequency = nr33 | ((uint16_t)common_get8_bit_range(nr34, 0, 2) << 8);
-	uint8_t length_counter_period = apu->channel_3.base.length_counter.counter == 0 ? 256 : apu->channel_1.base.length_counter.counter;
+	uint8_t length_counter_period = apu->channel_3.base.length_counter.counter == 0 ? 256 : apu->channel_3.base.length_counter.counter;
 
 	gbz80_apu_length_counter_init(&apu->channel_3.base.length_counter, length_counter_period, 1);
-	gbz80_init_timer(&apu->channel_3.base.frequency_timer, (2048 - (size_t)frequency) * 2);
+	gbz80_init_timer(&apu->channel_3.base.frequency_timer, (2048llu - frequency) * 2);
 	gbz80_apu_wave_init(&apu->channel_3.wave_cycler);
 
 	common_set8_bit(&nr52, 2);
@@ -345,7 +395,34 @@ void gbz80_apu_trigger_channel3(gbz80_apu_t* apu) {
 }
 
 void gbz80_apu_trigger_channel4(gbz80_apu_t* apu) {
+	uint8_t nr42 = gbz80_memory_read_internal(apu->instance, 0xFF21);
+	uint8_t nr43 = gbz80_memory_read_internal(apu->instance, 0xFF22);
+	uint8_t nr44 = gbz80_memory_read_internal(apu->instance, 0xFF23);
 	uint8_t nr52 = gbz80_memory_read_internal(apu->instance, 0xFF26);
+
+	uint8_t s = common_get8_bit_range(nr43, 4, 7);
+	uint8_t r = common_get8_bit_range(nr43, 0, 2);
+
+	uint8_t frequency = 0;
+	switch (r) {
+		case 0: frequency = 8; break;
+		case 1: frequency = 16; break;
+		case 2: frequency = 32; break;
+		case 3: frequency = 48; break;
+		case 4: frequency = 64; break;
+		case 5: frequency = 80; break;
+		case 6: frequency = 96; break;
+		case 7: frequency = 112; break;
+	}
+
+	uint8_t volume = common_get8_bit_range(nr42, 4, 7);
+	uint8_t volume_period = common_get8_bit_range(nr42, 0, 2);
+	uint8_t length_counter_period = apu->channel_4.base.length_counter.counter == 0 ? 64 : apu->channel_4.base.length_counter.counter;
+
+	gbz80_apu_length_counter_init(&apu->channel_4.base.length_counter, length_counter_period, 1);
+	apu->channel_4.lfsr = 0x00;
+	gbz80_init_timer(&apu->channel_4.base.frequency_timer, frequency);
+	gbz80_apu_volume_envelope_init(&apu->channel_4.base.volume_envelope, volume, volume_period);
 
 	common_set8_bit(&nr52, 3);
 
@@ -354,6 +431,7 @@ void gbz80_apu_trigger_channel4(gbz80_apu_t* apu) {
 
 void gbz80_apu_channel_base_init(gbz80_apu_base_channel_t* channel) {
 	channel->dac_output = 0.0;
+	channel->dac_enable = 0;
 	gbz80_init_timer(&channel->frequency_timer, 0);
 	gbz80_apu_length_counter_init(&channel->length_counter, 0, 0);
 	gbz80_apu_volume_envelope_init(&channel->volume_envelope, 0, 0);
@@ -408,7 +486,7 @@ void gbz80_apu_volume_envelope_init(gbz80_apu_volume_envelope_t* volume_envelope
 
 void gbz80_apu_volume_envelope_update(gbz80_apu_volume_envelope_t* volume_envelope, uint8_t increment)
 {
-	if (volume_envelope->timer.period != 0 && gbz80_update_timer(&volume_envelope->timer)) {
+	if (gbz80_update_timer(&volume_envelope->timer) && volume_envelope->timer.period != 0) {
 		if ((volume_envelope->counter < 0xF && increment) || (volume_envelope->counter > 0x0 && !increment)) {
 			uint8_t adjustment = 0;
 			if(increment) {
@@ -426,16 +504,18 @@ uint16_t gbz80_apu_frequency_sweep_calc(gbz80_apu_frequency_sweep_t* frequency_s
 
 	if (decrease) {
 		new_frequency = frequency_sweep->frequency_shadow - new_frequency;
+		*channel_enabled = 1;
 	} else {
 		new_frequency = frequency_sweep->frequency_shadow + new_frequency;
+		if (new_frequency > 2047) {
+			*channel_enabled = 0;
+		}
+		else {
+			*channel_enabled = 1;
+		}
 	}
 
-	if(new_frequency > 2047) {
-		*channel_enabled = 0;
-	}
-	else {
-		*channel_enabled = 1;
-	}
+	
 
 	return new_frequency;
 }
@@ -479,9 +559,9 @@ void gbz80_apu_duty_init(gbz80_apu_duty_cycle_t* duty_cycler) {
 uint8_t gbz80_apu_duty_update(gbz80_apu_duty_cycle_t* duty_cycler, uint8_t wave_pattern_number) {
 	static uint8_t waves[4] = {
 		0b00000001,
-		0b00000011,
-		0b00001111,
-		0b11111100
+		0b10000001,
+		0b10000111,
+		0b01111110
 	};
 
 	uint8_t wave_output = common_get8_bit(waves[wave_pattern_number], duty_cycler->wave_position);
@@ -494,15 +574,28 @@ uint8_t gbz80_apu_duty_update(gbz80_apu_duty_cycle_t* duty_cycler, uint8_t wave_
 
 void gbz80_apu_wave_init(gbz80_apu_wave_cycle_t* wave_cycle)
 {
-	wave_cycle->wave_position = 0;
+	wave_cycle->byte_position = 0;
+	wave_cycle->nibble_position = 0;
 }
 
 uint8_t gbz80_apu_wave_update(gbz80_apu_wave_cycle_t* wave_cycle, gbz80_apu_t* apu, uint8_t volume_code)
 {
-	uint8_t two_samples = gbz80_memory_read_internal(apu->instance, 0xFF3F - (wave_cycle->wave_position / 2));
-	uint8_t bit_start = (wave_cycle->wave_position % 2) * 4;
+	wave_cycle->nibble_position++;
+	if (wave_cycle->nibble_position > 1) {
+		wave_cycle->byte_position++;
+		wave_cycle->nibble_position = 0;
+	}
+
+	uint8_t two_samples = gbz80_memory_read_internal(apu->instance, 0xFF30 + wave_cycle->byte_position);
+	uint8_t bit_start = 4 - (wave_cycle->nibble_position * 4);
 	uint8_t sample = common_get8_bit_range(two_samples, bit_start, bit_start + 3);
-	sample >>= (volume_code + 4) % 5;
+
+	switch (volume_code) {
+		case 0: sample >>= 4; break;
+		case 1: sample >>= 0; break;
+		case 2: sample >>= 1; break;
+		case 3: sample >>= 2; break;
+	}
 
 	return sample;
 }

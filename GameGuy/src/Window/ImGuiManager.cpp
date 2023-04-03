@@ -6,7 +6,6 @@
 #include <backends/imgui_impl_glfw.cpp>
 #include <backends/imgui_impl_opengl3.cpp>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 namespace GameGuy{

@@ -96,12 +96,12 @@ namespace GameGuy {
 
 				gbz80_clock(sInstance->mInstance);
 
-				/*if (sInstance->mInstance->cpu.cycles == 0) {
+				if (sInstance->mInstance->cpu.cycles == 0) {
 					if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
 						sInstance->setState(VMState::Pause);
 						break;
 					}
-				}*/
+				}
 			} while (sInstance->mInstance->apu.sample_ready == 0);
 			
 			sInstance->mRenderingSample++;

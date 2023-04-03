@@ -40,13 +40,15 @@ extern "C" {
 	} gbz80_apu_duty_cycle_t;
 
 	typedef struct gbz80_apu_wave_cycle_t {
-		uint8_t wave_position;
+		uint8_t nibble_position;
+		uint8_t byte_position;
 	} gbz80_apu_wave_cycle_t;
 
 	typedef struct gbz80_apu_base_channel_t {
 		gbz80_apu_length_counter_t length_counter;
 		gbz80_apu_volume_envelope_t volume_envelope;
 		double dac_output;
+		uint8_t dac_enable;
 		gbz80_timer_t frequency_timer;
 	} gbz80_apu_base_channel_t;
 
@@ -66,12 +68,20 @@ extern "C" {
 		gbz80_apu_wave_cycle_t wave_cycler;
 	} gbz80_apu_channel_3_t;
 
+	typedef struct gbz80_apu_channel_4_t {
+		gbz80_apu_base_channel_t base;
+		gbz80_apu_wave_cycle_t wave_cycler;
+		uint16_t lfsr;
+	} gbz80_apu_channel_4_t;
+
+
 	typedef struct gbz80_apu_t {
 		double so_1, so_2;
 		gbz80_apu_frame_sequencer_t frame_sequencer;
 		gbz80_apu_channel_1_t channel_1;
 		gbz80_apu_channel_2_t channel_2;
 		gbz80_apu_channel_3_t channel_3;
+		gbz80_apu_channel_4_t channel_4;
 		int32_t sample_ready;
 		gbz80_timer_t sample_timer;
 		gbz80_t* instance;
