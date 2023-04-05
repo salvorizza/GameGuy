@@ -111,7 +111,7 @@ namespace GameGuy {
 			}
 
 			double sample = sInstance->mInstance->apu.so_1;
-			//sInstance->mAudioPanel->addSample(dTime, sample, sample);
+			sInstance->mAudioPanel->addSample(dTime, sample, sample);
 
 			return sample;
 		}

@@ -8,6 +8,18 @@ extern "C" {
 
 	#define GBZ80_APU_FREQ 4194304llu
 
+	#define NR_BASE1() 0xFF10
+	#define NR_BASE2() 0xFF15
+	#define NR_BASE3() 0xFF1A
+	#define NR_BASE4() 0xFF1F
+    #define NRxy(x,y) (NR_BASE ## x() + y)
+	#define NRx0(x) NRxy(x,0)
+	#define NRx1(x) NRxy(x,1)
+	#define NRx2(x) NRxy(x,2)
+	#define NRx3(x) NRxy(x,3)
+	#define NRx4(x) NRxy(x,4)
+
+
 	typedef struct gbz80_t gbz80_t;	
 
 	typedef struct gbz80_apu_frame_sequencer_t {
@@ -15,8 +27,7 @@ extern "C" {
 		uint8_t length_counter_clock;
 		uint8_t volume_envelope_clock;
 		uint8_t sweep_clock;
-
-		gbz80_timer_t timer;
+		uint8_t div_last;
 	} gbz80_apu_frame_sequencer_t;
 
 	typedef struct gbz80_apu_length_counter_t {
@@ -103,7 +114,7 @@ extern "C" {
 	void gbz80_apu_channel_base_init(gbz80_apu_base_channel_t* channel);
 
 	void gbz80_apu_frame_sequencer_init(gbz80_apu_frame_sequencer_t* frame_sequencer);
-	void gbz80_apu_frame_sequencer_update(gbz80_apu_frame_sequencer_t* frame_sequencer);
+	void gbz80_apu_frame_sequencer_update(gbz80_apu_t* apu, gbz80_apu_frame_sequencer_t* frame_sequencer);
 
 	void gbz80_apu_length_counter_init(gbz80_apu_length_counter_t* length_counter, uint16_t counter, uint8_t enabled);
 	void gbz80_apu_length_counter_update(gbz80_apu_length_counter_t* length_counter,uint8_t length_enable);

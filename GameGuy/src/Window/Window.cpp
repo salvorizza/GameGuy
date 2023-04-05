@@ -8,7 +8,12 @@ namespace GameGuy {
 			return;
 		}
 
+		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
+		const GLFWvidmode* vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		glfwSetWindowPos(window, vidMode->width / 2 - width / 2, vidMode->height / 2 - height / 2);
+		glfwShowWindow(window);
 		glfwMakeContextCurrent(window);
 		gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		glfwSwapInterval(1);

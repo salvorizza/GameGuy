@@ -47,8 +47,8 @@ namespace GameGuy {
 		size_t attribIndex = mVertexBuffers.size();
 
 		for (const BufferElement& bufferElement : layout) {
-			glEnableVertexAttribArray(attribIndex);
-			glVertexAttribPointer(attribIndex, getShaderDataTypeNumComponents(bufferElement.Type), getShaderDataTypeOpenGLPrimitiveType(bufferElement.Type), bufferElement.Normalized, layout.getStride(), (const void*)bufferElement.Offset);
+			glEnableVertexAttribArray((GLuint)attribIndex);
+			glVertexAttribPointer((GLuint)attribIndex, getShaderDataTypeNumComponents(bufferElement.Type), getShaderDataTypeOpenGLPrimitiveType(bufferElement.Type), bufferElement.Normalized, layout.getStride(), (const void*)bufferElement.Offset);
 			attribIndex++;
 		}
 	}
