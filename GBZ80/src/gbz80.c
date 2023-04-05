@@ -87,8 +87,8 @@ void gbz80_load_cartridge(gbz80_t* instance, gbz80_cartridge_t* rom)
 
 void gbz80_clock(gbz80_t* instance){
 	gbz80_cpu_clock(&instance->cpu);
-	gbz80_ppu_clock(&instance->ppu);
 	gbz80_apu_clock(&instance->apu);
+	gbz80_ppu_clock(&instance->ppu);
 }
 
 size_t gbz80_utility_get_num_cycles_from_seconds(gbz80_t* instance, double seconds)

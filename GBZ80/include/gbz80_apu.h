@@ -20,7 +20,7 @@ extern "C" {
 	} gbz80_apu_frame_sequencer_t;
 
 	typedef struct gbz80_apu_length_counter_t {
-		uint8_t counter;
+		uint16_t counter;
 		uint8_t enabled;
 	} gbz80_apu_length_counter_t;
 
@@ -105,7 +105,7 @@ extern "C" {
 	void gbz80_apu_frame_sequencer_init(gbz80_apu_frame_sequencer_t* frame_sequencer);
 	void gbz80_apu_frame_sequencer_update(gbz80_apu_frame_sequencer_t* frame_sequencer);
 
-	void gbz80_apu_length_counter_init(gbz80_apu_length_counter_t* length_counter, uint8_t counter, uint8_t enabled);
+	void gbz80_apu_length_counter_init(gbz80_apu_length_counter_t* length_counter, uint16_t counter, uint8_t enabled);
 	void gbz80_apu_length_counter_update(gbz80_apu_length_counter_t* length_counter,uint8_t length_enable);
 	
 	void gbz80_apu_volume_envelope_init(gbz80_apu_volume_envelope_t* volume_envelope, uint8_t volume, uint8_t period);
