@@ -18,6 +18,10 @@ extern "C" {
 	#define NRx2(x) NRxy(x,2)
 	#define NRx3(x) NRxy(x,3)
 	#define NRx4(x) NRxy(x,4)
+	#define NR50 0xFF20
+	#define NR51 0xFF25
+	#define NR52 0xFF26
+	#define WAVE_BASE 0xFF30
 
 
 	typedef struct gbz80_t gbz80_t;	

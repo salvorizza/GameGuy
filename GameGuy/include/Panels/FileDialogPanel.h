@@ -16,7 +16,7 @@ namespace GameGuy {
 		inline void setOnFileSelectedCallback(const std::function<void(const char*)>& callback) { mOnFileSelected = callback; }
 		inline void setRoot(const char* relativeRoot) { mRootPath = std::filesystem::relative(relativeRoot); }
 
-		void setIconForExtension(const char* extension, const IconData& iconData);
+		void setIconForExtension(const char* extension, const IconData& iconData, std::string_view type);
 		void setFolderIcon(const IconData& iconData);
 
 	protected:
@@ -31,12 +31,17 @@ namespace GameGuy {
 		void refreshCurrentFolderContent();
 
 	private:
+		struct ExtensionData {
+			std::string type;
+			IconData iconData;
+		};
+
 		std::filesystem::path mRootPath;
 		std::vector<std::filesystem::path> mNavigatedPaths;
 		std::vector<std::filesystem::path>::iterator mNavigationIterator;
 		std::vector<std::filesystem::directory_entry> mCurrentFolderContent;
 
-		std::unordered_map<std::string, IconData> mExtensionsIcons;
+		std::unordered_map<std::string, ExtensionData> mExtensionsIcons;
 		IconData mFolderIcon;
 		std::function<void(const char*)> mOnFileSelected;
 

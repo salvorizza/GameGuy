@@ -94,9 +94,9 @@ public:
 	virtual void onImGuiRender(const std::shared_ptr<ImGuiManager>& pManager) override {
 		static bool p_open = true;
 
-		mFileDialogPanel.setIconForExtension(".*", pManager->LoadIconResource("commons/icons/file.png"));
-		mFileDialogPanel.setIconForExtension(".gb", pManager->LoadIconResource("commons/icons/rom.png"));
-		mFileDialogPanel.setIconForExtension(".rom", pManager->LoadIconResource("commons/icons/rom.png"));
+		mFileDialogPanel.setIconForExtension(".*", pManager->LoadIconResource("commons/icons/file.png"), "FILE");
+		mFileDialogPanel.setIconForExtension(".gb", pManager->LoadIconResource("commons/icons/rom.png"), "ROM");
+		mFileDialogPanel.setIconForExtension(".rom", pManager->LoadIconResource("commons/icons/rom.png"), "ROM");
 		mFileDialogPanel.setFolderIcon(pManager->LoadIconResource("commons/icons/folder.png"));
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;

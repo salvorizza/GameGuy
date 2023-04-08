@@ -43,7 +43,8 @@ gbz80_mbc_t* gbz80_mbc_create(gbz80_mbc_type_t type) {
 		}
 	}
 
-	mbc->type = type;
+	if(mbc != NULL)
+		mbc->type = type;
 
 	return mbc;
 }

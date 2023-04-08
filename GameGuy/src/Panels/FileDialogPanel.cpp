@@ -8,19 +8,24 @@
 namespace GameGuy {
 
 	FileDialogPanel::FileDialogPanel()
-		: Panel("FileDialog", false, false, false, true),
+		: Panel("FileDialog", false, false, true, false),
 		mNavigatedPaths()
 	{
 		mRootPath = std::filesystem::current_path();
+		onOpen();
 	}
 
 	FileDialogPanel::~FileDialogPanel()
 	{
 	}
 
-	void FileDialogPanel::setIconForExtension(const char* extension, const IconData& iconData)
+	void FileDialogPanel::setIconForExtension(const char* extension, const IconData& iconData, std::string_view type)
 	{
-		mExtensionsIcons[extension] = iconData;
+		ExtensionData extData;
+		extData.iconData = iconData;
+		extData.type = type;
+
+		mExtensionsIcons[extension] = extData;
 	}
 
 	void FileDialogPanel::setFolderIcon(const IconData& iconData)
@@ -62,7 +67,7 @@ namespace GameGuy {
 		ImVec2 windowPos = ImGui::GetWindowPos();
 
 
-		float thumbSize = 96;
+		float thumbSize = 72;
 		float padding = 10;
 		float margin = 10;
 
@@ -78,17 +83,31 @@ namespace GameGuy {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 
 		for (const auto& directoryPath : mCurrentFolderContent) {
-			std::string fileName = directoryPath.path().filename().string();
+			std::string fileName = directoryPath.path().stem().string();
 			std::string extension = directoryPath.path().extension().string();
 			std::string type = "FILE";
 
-			IconData iconData = directoryPath.is_directory() ? mFolderIcon : mExtensionsIcons.at(".*");
-			if (mExtensionsIcons.find(extension) != mExtensionsIcons.end()){
-				iconData = mExtensionsIcons.at(extension);
+			IconData iconData = directoryPath.is_directory() ? mFolderIcon : mExtensionsIcons.at(".*").iconData;
+			auto it = mExtensionsIcons.find(extension);
+			if (it != mExtensionsIcons.end()){
+				iconData = it->second.iconData;
+				type = it->second.type;
 			}
 
 			ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
 			ImVec2 screenPos = ImGui::GetCursorScreenPos();
+
+			bool hasBeenErased = false;
+			while (textSize.x >= (cellSize - padding)) {
+				fileName.erase(fileName.length() - 1);
+				textSize = ImGui::CalcTextSize(fileName.c_str());
+				hasBeenErased = true;
+			}
+
+			if (hasBeenErased) {
+				fileName.replace(fileName.length() - 3, fileName.length(), "...");
+				textSize = ImGui::CalcTextSize(fileName.c_str());
+			}
 
 			if (directoryPath.is_directory()) {
 				drawList->AddImageRounded(
@@ -114,7 +133,7 @@ namespace GameGuy {
 						IM_COL32(97, 84, 63, 255),
 						3,
 						0,
-						2
+						1
 					);
 				}
 
@@ -125,13 +144,6 @@ namespace GameGuy {
 				ImGui::NextColumn();
 			}
 			else {
-				/*Shadow Box*/
-				drawList->AddRectFilled(
-					{ screenPos.x,screenPos.y },
-					{ screenPos.x + size.x + 1,screenPos.y + size.y + 1 },
-					IM_COL32(0, 0, 0, 255),
-					1
-				);
 				/*BG Box*/
 				drawList->AddRectFilled(
 					{ screenPos.x,screenPos.y },
@@ -140,6 +152,13 @@ namespace GameGuy {
 					3
 				);
 				/*Label Box*/
+				drawList->AddRectFilled(
+					{ screenPos.x,screenPos.y + thumbSize + padding * 2 },
+					{ screenPos.x + size.x,screenPos.y + size.y -10 },
+					IM_COL32(47, 47, 47, 255),
+					0
+				);
+
 				drawList->AddRectFilled(
 					{ screenPos.x,screenPos.y + thumbSize + padding * 2 },
 					{ screenPos.x + size.x,screenPos.y + size.y },
@@ -189,7 +208,7 @@ namespace GameGuy {
 						IM_COL32(97, 84, 63, 255),
 						3,
 						0,
-						2
+						1
 					);
 				}
 
@@ -208,7 +227,7 @@ namespace GameGuy {
 
 	void FileDialogPanel::selectFile(const std::filesystem::path& filePath) {
 		mOnFileSelected(filePath.string().c_str());
-		mOpen = false;
+		//mOpen = false;
 	}
 
 	void FileDialogPanel::selectNewPath(const std::filesystem::path& newPath)
