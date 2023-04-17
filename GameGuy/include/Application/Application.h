@@ -14,7 +14,7 @@ namespace GameGuy {
 		virtual void onSetup() = 0;
 		virtual void onUpdate() = 0;
 		virtual void onRender() = 0;
-		virtual void onImGuiRender(const std::shared_ptr<ImGuiManager>& pManager) = 0;
+		virtual void onImGuiRender(const std::shared_ptr<ImGuiManager>& pManager, const std::shared_ptr<Window>& pWindow) = 0;
 
 		const std::string& getName() const { return mName; }
 

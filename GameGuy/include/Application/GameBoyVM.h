@@ -24,22 +24,27 @@ namespace GameGuy {
 
 	class GameBoyVM {
 	public:
-		uint8_t mBuffer[160 * 144];
 
 		GameBoyVM();
 		~GameBoyVM();
 
-		void init(AudioPanel* audioPanel);
+		void init(const std::shared_ptr<AudioPanel>& audioPanel);
 		void update();
 		void loadRom(const char* romPath);
 
 		inline void setState(VMState state) { mPrevState = (uint32_t)mState; mState = state; }
 		inline VMState getState() const { return (VMState)mState.load(); }
+		inline void waitOnLatch() { 
+			std::unique_lock<std::mutex> lm(mMutexLatch);
+			mLatch.wait(lm);
+		}
 
 		inline void setBreakFunction(const BreakFunction& breakFunction) { mBreakFunction = breakFunction; }
 
 		operator gbz80_t*() { return mInstance; }
+
 		gbz80_t* mInstance;
+		uint8_t mBuffer[160 * 144];
 
 	private:
 		static double sample(double dTime);
@@ -55,9 +60,11 @@ namespace GameGuy {
 		const char* mBiosPath;
 
 		static GameBoyVM* sInstance;
-		AudioPanel* mAudioPanel;
+		std::shared_ptr<AudioPanel> mAudioPanel;
 
 		uint32_t mRenderingSample;
+		std::condition_variable mLatch;
+		std::mutex mMutexLatch;
 
 	};
 

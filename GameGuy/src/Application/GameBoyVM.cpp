@@ -1,5 +1,7 @@
 #include "Application/GameBoyVM.h"
 
+#include "Window/InputManager.h"
+
 namespace GameGuy {
 
 	GameBoyVM* GameBoyVM::sInstance = nullptr;
@@ -24,7 +26,7 @@ namespace GameGuy {
 		gbz80_destroy(mInstance);
 	}
 
-	void GameBoyVM::init(AudioPanel* audioPanel)
+	void GameBoyVM::init(const std::shared_ptr<AudioPanel>& audioPanel)
 	{
 		mAudioPanel = audioPanel;
 		sInstance = this;
@@ -41,14 +43,14 @@ namespace GameGuy {
 
 	void GameBoyVM::update()
 	{
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_LEFT, GetAsyncKeyState(VK_LEFT) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_RIGHT, GetAsyncKeyState(VK_RIGHT) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_UP, GetAsyncKeyState(VK_UP) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_DOWN, GetAsyncKeyState(VK_DOWN) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_A, GetAsyncKeyState(0x5A) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_B, GetAsyncKeyState(0x58) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_SELECT, GetAsyncKeyState(0x4E) ? 1 : 0);
-		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_START, GetAsyncKeyState(0x4D) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_LEFT, InputManager::IsKeyPressed(GLFW_KEY_LEFT) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_RIGHT, InputManager::IsKeyPressed(GLFW_KEY_RIGHT) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_UP, InputManager::IsKeyPressed(GLFW_KEY_UP) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_DOWN, InputManager::IsKeyPressed(GLFW_KEY_DOWN) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_A, InputManager::IsKeyPressed(GLFW_KEY_Z) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_B, InputManager::IsKeyPressed(GLFW_KEY_X) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_SELECT, InputManager::IsKeyPressed(GLFW_KEY_BACKSPACE) ? 1 : 0);
+		gbz80_joypad_press_or_release_button(&mInstance->joypad, GBZ80_JOYPAD_BUTTON_START, InputManager::IsKeyPressed(GLFW_KEY_ENTER) ? 1 : 0);
 
 		mTimer.update();
 		switch (mState)
@@ -76,18 +78,24 @@ namespace GameGuy {
 
 	void GameBoyVM::loadRom(const char* romPath)
 	{
-		gbz80_init(mInstance, mBiosPath);
+		if (sInstance->getState() == VMState::Run) {
+			sInstance->setState(VMState::Stop);
+			waitOnLatch();
+		}
 
 		if (mCurrentlyLoadedCartridge) {
 			gbz80_cartridge_destroy(mCurrentlyLoadedCartridge);
 			mCurrentlyLoadedCartridge = NULL;
 		}
+
+		gbz80_init(mInstance, mBiosPath);
 		mCurrentlyLoadedCartridge = gbz80_cartridge_read_from_file(romPath);
 		gbz80_load_cartridge(mInstance, mCurrentlyLoadedCartridge);
 	}
 
 	double GameBoyVM::sample(double dTime)
 	{
+		double sample = 0;
 		if (sInstance->mState == VMState::Run) {
 			do {
 				if (sInstance->mState == VMState::Stop) {
@@ -110,13 +118,13 @@ namespace GameGuy {
 				sInstance->mRenderingSample = 0;
 			}
 
-			double sample = sInstance->mInstance->apu.so_1;
+			sample = sInstance->mInstance->apu.so_1;
 			sInstance->mAudioPanel->addSample(dTime, sample, sample);
+		}
 
-			return sample;
-		}
-		else {
-			return 0;
-		}
+		std::unique_lock<std::mutex> lm(sInstance->mMutexLatch);
+		sInstance->mLatch.notify_one();
+
+		return sample;
 	}
 }

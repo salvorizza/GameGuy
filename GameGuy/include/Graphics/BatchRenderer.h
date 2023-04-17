@@ -14,6 +14,7 @@ namespace GameGuy {
 	public:
 		struct QuadVertex {
 			glm::vec2 Position;
+			glm::vec2 UV;
 			uint32_t Color;
 		};
 
@@ -21,7 +22,7 @@ namespace GameGuy {
 		BatchRenderer();
 		~BatchRenderer();
 
-		void begin(const glm::mat4& projMatrix);
+		void begin(const glm::mat4& projMatrix, float borderWidth, float aspectRatio);
 		void end();
 		void flush();
 
@@ -41,7 +42,9 @@ namespace GameGuy {
 		QuadVertex* mVerticesBase;
 		QuadVertex* mCurrentVertex;
 		uint32_t mNumIndices;
+
 		glm::mat4 mProjectionMatrix;
+		float mBorderWidth, mAspectRatio;
 	};
 
 }

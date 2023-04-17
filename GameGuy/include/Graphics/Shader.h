@@ -8,6 +8,7 @@
 
 #include <map>
 #include <string>
+#include <memory>
 
 namespace GameGuy {
 
@@ -20,6 +21,10 @@ namespace GameGuy {
 		void stop();
 
 		void uploadUniform(const char* uniformName, const glm::mat4& mat);
+		void uploadUniform(const char* uniformName, float value);
+
+
+		static std::shared_ptr<Shader> LoadFromFile(const char* vertexPath, const char* fragmentPath);
 
 	private:
 		int32_t getLocation(const char* uniformName);

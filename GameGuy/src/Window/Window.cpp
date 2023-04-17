@@ -10,6 +10,8 @@ namespace GameGuy {
 
 		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+		
 		GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 		const GLFWvidmode* vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 		glfwSetWindowPos(window, vidMode->width / 2 - width / 2, vidMode->height / 2 - height / 2);
@@ -18,7 +20,21 @@ namespace GameGuy {
 		gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 		glfwSwapInterval(1);
 
+		glfwSetKeyCallback(window, [](GLFWwindow* windowRef, int key, int scancode, int action, int mods) {
+			switch (action) {
+				case GLFW_PRESS:
+					InputManager::SetKey(key, true);
+					break;
+
+				case GLFW_RELEASE:
+					InputManager::SetKey(key, false);
+					break;
+			}
+		});
+
 		mWindowHandle = window;
+		mMaximized = false;
+		mClosed = false;
 	}
 
 	Window::~Window()
@@ -40,6 +56,44 @@ namespace GameGuy {
 
 	bool Window::isClosed()
 	{
-		return glfwWindowShouldClose(mWindowHandle);
+		return mClosed;
+	}
+
+	void Window::Iconify() {
+		glfwIconifyWindow(mWindowHandle);
+	}
+
+	void Window::Maximize(){
+		glfwMaximizeWindow(mWindowHandle);
+		mMaximized = true;
+	}
+
+	void Window::Restore() {
+		glfwRestoreWindow(mWindowHandle);
+		mMaximized = false;
+	}
+
+	void Window::Close() {
+		mClosed = true;
+	}
+
+	void Window::GetPosition(int& x, int& y)
+	{
+		glfwGetWindowPos(mWindowHandle, &x, &y);
+	}
+
+	void Window::SetPosition(int x, int y)
+	{
+		glfwSetWindowPos(mWindowHandle, x, y);
+	}
+
+	void Window::GetSize(int& w, int& h)
+	{
+		glfwGetWindowSize(mWindowHandle, &w, &h);
+	}
+
+	void Window::SetSize(int w, int h)
+	{
+		glfwSetWindowSize(mWindowHandle, w, h);
 	}
 }

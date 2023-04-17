@@ -40,6 +40,11 @@ namespace GameGuy {
 
 	void DisassemblerPanel::disassembleCartridge()
 	{
+		VMState state = mVMInstance->getState();
+		mVMInstance->setState(Pause);
+		mVMInstance->waitOnLatch();
+
+
 		mInstructionsCartridgeKeys.clear();
 		uint8_t bootstrapMode = mInstance->bootstrap_mode;
 		mInstance->bootstrap_mode = 0;
@@ -48,6 +53,8 @@ namespace GameGuy {
 
 		for (auto& [address, debugInstruction] : mInstructionsCartridge)
 			mInstructionsCartridgeKeys.push_back(address);
+
+		mVMInstance->setState(state);
 	}
 
 	bool DisassemblerPanel::breakFunction(uint16_t address)
@@ -117,6 +124,7 @@ namespace GameGuy {
 
 			case DebugState::Stop:
 				setDebugState(DebugState::Idle);
+				mVMInstance->setState(VMState::Stop);
 				break;
 		}
 	}
@@ -129,11 +137,6 @@ namespace GameGuy {
 		float lineSize = oneCharSize * 4;
 		float addressingSize = oneCharSize * 7;
 		float contentCellsWidth = availWidth - (bulletSize + addressingSize + lineSize);
-
-		
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 
 		if (ImGui::Button(ICON_FA_PLAY)) onPlay();
 		ImGui::SameLine();
@@ -166,8 +169,6 @@ namespace GameGuy {
 		default:
 			break;
 		}
-
-		ImGui::PopStyleColor(3);
 
 		static bool p_open = true;
 		static bool p_open_2 = true;
@@ -242,13 +243,13 @@ namespace GameGuy {
 					}
 
 					ImGui::TableNextColumn();
-					ImGui::PushStyleColor(ImGuiCol_Text, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
-					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
-					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-					ImGui::PushID(row);
-					if (ImGui::Button(ICON_FA_CIRCLE)) {
+					ImGui::PushStyleColor(ImGuiCol_Button, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+					ImGui::PushStyleColor(ImGuiCol_ButtonActive, debugInstruction.Breakpoint ? ImVec4(1, 0, 0, 1) : ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+					ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0,0));
+					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,50);
+					ImGui::PushID(row + 1);
+					if (ImGui::Button("",ImVec2(18,18))) {
 						debugInstruction.Breakpoint = !debugInstruction.Breakpoint;
 						
 						if (debugInstruction.Breakpoint) {
@@ -258,8 +259,8 @@ namespace GameGuy {
 						}
 					}
 					ImGui::PopID();
-					ImGui::PopStyleColor(4);
-					ImGui::PopStyleVar(1);
+					ImGui::PopStyleColor(3);
+					ImGui::PopStyleVar(2);
 
 					ImGui::TableNextColumn();
 					ImGui::Text("%04u", row + 1);

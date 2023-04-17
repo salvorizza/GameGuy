@@ -27,6 +27,7 @@ namespace GameGuy {
 		mVBO = std::make_shared<VertexBuffer>();
 		mVBO->setLayout({
 			BufferElement("aPosition", ShaderType::Float2),
+			BufferElement("aUV", ShaderType::Float2),
 			BufferElement("aColor", ShaderType::Uint4, true)
 		});
 		mVBO->setData(NULL, QUAD_BUFFER_SIZE, VertexBufferDataUsage::Dynamic);
@@ -38,26 +39,7 @@ namespace GameGuy {
 		mVBO->unbind();
 		mIBO->unbind();
 
-		const char* vertexSource = "#version 450 core\n"
-			"layout(location = 0) in vec2 aPos;\n"
-			"layout(location = 1) in vec4 aColor;\n"
-			"uniform mat4 uProjectionMatrix;"
-			"out vec4 oColor;\n"
-			"void main()\n"
-			"{\n"
-			"	gl_Position = uProjectionMatrix * vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
-			"	oColor = aColor;\n"
-			"}";
-
-		const char* fragmentSource = "#version 450 core\n"
-			"layout(location = 0) in vec4 oColor;\n"
-			"out vec4 fragColor;\n"
-			"void main()\n"
-			"{\n"
-			"	fragColor = oColor;\n"
-			"}";
-
-		mShader = std::make_shared<Shader>(vertexSource, fragmentSource);
+		mShader = Shader::LoadFromFile("commons/shaders/quadShader.vert","commons/shaders/quadShader.frag");
 
 		delete[] indices;
 	}
@@ -67,9 +49,12 @@ namespace GameGuy {
 
 	}
 
-	void BatchRenderer::begin(const glm::mat4& projMatrix)
+	void BatchRenderer::begin(const glm::mat4& projMatrix, float borderWidth, float aspectRatio)
 	{
 		mProjectionMatrix = projMatrix;
+		mBorderWidth = borderWidth;
+		mAspectRatio = aspectRatio;
+
 		mVBO->bind();
 		mVerticesBase = (QuadVertex*)mVBO->map();
 		mCurrentVertex = mVerticesBase;
@@ -87,7 +72,11 @@ namespace GameGuy {
 		mVBO->unbind();
 
 		mShader->start();
+
 		mShader->uploadUniform("uProjectionMatrix", mProjectionMatrix);
+		mShader->uploadUniform("uBorderWidth", mBorderWidth);
+		mShader->uploadUniform("uAspectRatio", mAspectRatio);
+
 		mVAO->bind();
 		glDrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, NULL);
 	}
@@ -96,7 +85,7 @@ namespace GameGuy {
 	{
 		if (mNumIndices == QUAD_MAX_NUM_INDICES) {
 			flush();
-			begin(mProjectionMatrix);
+			begin(mProjectionMatrix, mBorderWidth, mAspectRatio);
 		}
 
 		uint32_t a = (uint32_t)(color.a * 255);
@@ -109,18 +98,22 @@ namespace GameGuy {
 
 		mCurrentVertex->Position = position;
 		mCurrentVertex->Color = u32color;
+		mCurrentVertex->UV = glm::vec2(0.0, 1.0);
 		mCurrentVertex++;
 
 		mCurrentVertex->Position = position + glm::vec2(size.x, 0);
 		mCurrentVertex->Color = u32color;
+		mCurrentVertex->UV = glm::vec2(1.0, 1.0);
 		mCurrentVertex++;
 
 		mCurrentVertex->Position = position + glm::vec2(size.x, size.y);
 		mCurrentVertex->Color = u32color;
+		mCurrentVertex->UV = glm::vec2(1.0, 0.0);
 		mCurrentVertex++;
 
 		mCurrentVertex->Position = position + glm::vec2(0, size.y);
 		mCurrentVertex->Color = u32color;
+		mCurrentVertex->UV = glm::vec2(0.0, 0.0);
 		mCurrentVertex++;
 
 		mNumIndices += 6;

@@ -2,6 +2,8 @@
 
 #include <glad/glad.h>
 
+#include "Utils.h"
+
 namespace GameGuy {
 	Shader::Shader(const char* vertexSource, const char* fragmentSource) 
 		:	mRendererID(0)
@@ -80,6 +82,29 @@ namespace GameGuy {
 	{
 		int32_t location = getLocation(uniformName);
 		glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mat));
+	}
+
+	void Shader::uploadUniform(const char* uniformName, float value)
+	{
+		int32_t location = getLocation(uniformName);
+		glUniform1f(location, value);
+	}
+
+	std::shared_ptr<Shader> Shader::LoadFromFile(const char* vertexPath, const char* fragmentPath)
+	{
+		char *vertexSource, *fragmentSource;
+		size_t vertexSourceSize, fragmentSourceSize;
+		errno_t err;
+
+		err = ReadFile(vertexPath, &vertexSource, &vertexSourceSize);
+		err = ReadFile(fragmentPath, &fragmentSource, &fragmentSourceSize);
+
+		std::shared_ptr<Shader> shader = std::make_shared<Shader>(vertexSource, fragmentSource);
+
+		free(vertexSource);
+		free(fragmentSource);
+
+		return shader;
 	}
 
 	int32_t Shader::getLocation(const char* uniformName)

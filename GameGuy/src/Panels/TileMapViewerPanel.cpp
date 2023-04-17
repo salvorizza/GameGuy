@@ -34,10 +34,12 @@ namespace GameGuy {
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			glm::mat4 projMatrix = glm::ortho(0.0f, (float)mFBO->width(), (float)mFBO->height(), 0.0f);
-			batchRenderer->begin(projMatrix);
 
 			float cellWidth = (float)mFBO->width() / 256.0f;
 			float cellHeight = (float)mFBO->height() / 256.0f;
+
+			batchRenderer->begin(projMatrix, 0.05, cellHeight / cellWidth);
+
 			glm::vec4 color;
 			uint8_t pixels[8];
 

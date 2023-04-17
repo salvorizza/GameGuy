@@ -8,11 +8,12 @@
 namespace GameGuy {
 
 	FileDialogPanel::FileDialogPanel()
-		: Panel("FileDialog", false, false, true, false),
-		mNavigatedPaths()
-	{
-		mRootPath = std::filesystem::current_path();
-		onOpen();
+		: Panel("FileDialog", false, ImVec4(0.14f, 0.14f, 0.14f, 1.00f), false, true, false)
+	{;
+		std::filesystem::path currentPath = std::filesystem::current_path();
+		mHistory.push_back(currentPath);
+		mSelectedPath = currentPath;
+		mCurrentPath = mHistory.begin();
 	}
 
 	FileDialogPanel::~FileDialogPanel()
@@ -34,194 +35,107 @@ namespace GameGuy {
 	}
 
 	void FileDialogPanel::onImGuiRender() {
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(1, 0, 0, 1));
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
-		if (ImGui::Button(ICON_FA_HOME)) {
-			mNavigationIterator = mNavigatedPaths.begin();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_FA_CHEVRON_LEFT)) {
-			if (mNavigationIterator > mNavigatedPaths.begin()) {
-				mNavigationIterator--;
-				refreshCurrentFolderContent();
+		{
+			bool condition = mCurrentPath > mHistory.begin();
+			if (!condition) {
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.14f, 0.14f, 0.14f, 1));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.14f, 0.14f, 1));
+			}
+
+			if (ImGui::Button(ICON_FA_ARROW_CIRCLE_LEFT) && condition) {
+				mCurrentPath--;
+			}
+			
+			if (!condition) {
+				ImGui::PopStyleColor(3);
 			}
 		}
 		ImGui::SameLine();
-		if (ImGui::Button(ICON_FA_CHEVRON_RIGHT)) {
-			if (mNavigationIterator < mNavigatedPaths.end() - 1) {
-				mNavigationIterator++;
-				refreshCurrentFolderContent();
+		{
+			bool condition = mCurrentPath < (mHistory.end() - 1);
+			if (!condition) {
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1));
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.14f, 0.14f, 0.14f, 1));
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.14f, 0.14f, 1));
+			}
+
+			if (ImGui::Button(ICON_FA_ARROW_CIRCLE_RIGHT) && condition) {
+				mCurrentPath++;
+			}
+
+			if (!condition) {
+				ImGui::PopStyleColor(3);
 			}
 		}
-		ImGui::SameLine();
-		if (ImGui::Button(ICON_FA_SYNC)) {
-			refreshCurrentFolderContent();
-		}
-		ImGui::PopStyleColor(1);
 
-		ImGui::SameLine();
-		ImGui::Text(mNavigationIterator->string().c_str());
+		std::filesystem::path buttonPath = "";
+		for (auto& directoryPath : *mCurrentPath) {
+			bool breakFor = false;
+
+			buttonPath /= directoryPath;
+
+			ImGui::PushID(buttonPath.string().c_str());
+			ImGui::SameLine();
+			if (ImGui::Button(directoryPath.string().c_str())) {
+				selectNewPath(buttonPath);
+				breakFor = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_CHEVRON_RIGHT)) ImGui::OpenPopup("FolderPopup");
+
+			ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.21f, 0.21f, 0.21f, 1));
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.00f, 0.43f, 0.87f, 1));
+			if (ImGui::BeginPopup("FolderPopup")) {
+				for (auto& folderPath : std::filesystem::directory_iterator{ buttonPath }) {
+					if (folderPath.is_directory()) {
+						std::string fileName = folderPath.path().stem().string();
+						if (ImGui::MenuItem((ICON_FA_FOLDER + std::string("  ") + fileName).c_str())) {
+							selectNewPath(folderPath);
+							breakFor = true;
+							break;
+						}
+					}
+				}
+				ImGui::EndPopup();
+			}
+			ImGui::PopStyleColor(2);
+
+			ImGui::PopID();
+
+			if (breakFor) {
+				break;
+			}
+		}
+		ImGui::PopStyleVar();
+
 		ImGui::Separator();
-
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		ImVec2 windowPos = ImGui::GetWindowPos();
 
 
 		float thumbSize = 72;
 		float padding = 10;
 		float margin = 10;
-
 		float cellSize = thumbSize + padding;
 
 		float availWidth = ImGui::GetContentRegionAvailWidth();
 		int columnCount = std::max((int)(availWidth / (cellSize + margin)), 1);
 		ImGui::Columns(columnCount, 0, false);
-		ImVec2 size = { cellSize,cellSize * 1.75f };
 
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
-
-		for (const auto& directoryPath : mCurrentFolderContent) {
-			std::string fileName = directoryPath.path().stem().string();
-			std::string extension = directoryPath.path().extension().string();
-			std::string type = "FILE";
-
-			IconData iconData = directoryPath.is_directory() ? mFolderIcon : mExtensionsIcons.at(".*").iconData;
-			auto it = mExtensionsIcons.find(extension);
-			if (it != mExtensionsIcons.end()){
-				iconData = it->second.iconData;
-				type = it->second.type;
-			}
-
-			ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
-			ImVec2 screenPos = ImGui::GetCursorScreenPos();
-
-			bool hasBeenErased = false;
-			while (textSize.x >= (cellSize - padding)) {
-				fileName.erase(fileName.length() - 1);
-				textSize = ImGui::CalcTextSize(fileName.c_str());
-				hasBeenErased = true;
-			}
-
-			if (hasBeenErased) {
-				fileName.replace(fileName.length() - 3, fileName.length(), "...");
-				textSize = ImGui::CalcTextSize(fileName.c_str());
-			}
-
+		for (auto& directoryPath : std::filesystem::directory_iterator{ *mCurrentPath }) {
 			if (directoryPath.is_directory()) {
-				drawList->AddImageRounded(
-					(void*)(intptr_t)iconData.textureID,
-					{ screenPos.x + padding / 2, screenPos.y + padding / 2 + (size.y - thumbSize) / 2 - textSize.y},
-					{ screenPos.x + (padding / 2) + thumbSize,screenPos.y + (padding / 2) + thumbSize + (size.y - thumbSize) / 2 - textSize.y },
-					{ 0,0 },
-					{ 1,1 },
-					IM_COL32(255, 255, 255, 255),
-					3
-				);
-				drawList->AddText(
-					{ screenPos.x + (padding / 2) + (thumbSize - textSize.x) / 2,screenPos.y + (padding / 2) + thumbSize + (size.y - thumbSize) / 2 },
-					IM_COL32(255, 255, 255, 255),
-					fileName.c_str()
-				);
-
-				ImGui::InvisibleButton(fileName.c_str(), size);
-				if (ImGui::IsItemHovered()) {
-					drawList->AddRect(
-						{ screenPos.x,screenPos.y },
-						{ screenPos.x + size.x,screenPos.y + size.y },
-						IM_COL32(97, 84, 63, 255),
-						3,
-						0,
-						1
-					);
-				}
-
-				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-					selectNewPath(directoryPath.path());
-					break;
-				}
-				ImGui::NextColumn();
-			}
-			else {
-				/*BG Box*/
-				drawList->AddRectFilled(
-					{ screenPos.x,screenPos.y },
-					{ screenPos.x + size.x,screenPos.y + size.y },
-					IM_COL32(26, 26, 26, 255),
-					3
-				);
-				/*Label Box*/
-				drawList->AddRectFilled(
-					{ screenPos.x,screenPos.y + thumbSize + padding * 2 },
-					{ screenPos.x + size.x,screenPos.y + size.y -10 },
-					IM_COL32(47, 47, 47, 255),
-					0
-				);
-
-				drawList->AddRectFilled(
-					{ screenPos.x,screenPos.y + thumbSize + padding * 2 },
-					{ screenPos.x + size.x,screenPos.y + size.y },
-					IM_COL32(47, 47, 47, 255),
-					3
-				);
-				/*Icon*/
-				drawList->AddImageRounded(
-					(void*)(intptr_t)iconData.textureID,
-					{ screenPos.x + padding / 2,screenPos.y + padding },
-					{ screenPos.x + (padding / 2) + thumbSize,screenPos.y + padding + thumbSize },
-					{ 0,0 },
-					{ 1,1 },
-					IM_COL32(255, 255, 255, 255),
-					3
-				);
-				/*Label*/
-				drawList->AddText(
-					{ screenPos.x + padding / 2,screenPos.y + thumbSize + padding * 2.5f },
-					IM_COL32(255, 255, 255, 255),
-					fileName.c_str()
-				);
-				/*Type*/
-				ImVec2 typeTextSize = ImGui::CalcTextSize(type.c_str());
-				drawList->AddText(
-					{ screenPos.x + size.x - typeTextSize.x - padding /2,screenPos.y + size.y - typeTextSize.y - padding /2 },
-					IM_COL32(255, 255, 255, 255),
-					type.c_str()
-				);
-
-
-				ImGui::InvisibleButton(fileName.c_str(), size);
-				if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::IsItemHovered()) {
-					drawList->AddRectFilled(
-						{ screenPos.x,screenPos.y },
-						{ screenPos.x + size.x,screenPos.y + size.y },
-						IM_COL32(255, 255, 255, 75),
-						3,
-						0
-					);
-				}
-
-				if (ImGui::IsItemHovered()) {
-					drawList->AddRect(
-						{ screenPos.x,screenPos.y },
-						{ screenPos.x + size.x,screenPos.y + size.y },
-						IM_COL32(97, 84, 63, 255),
-						3,
-						0,
-						1
-					);
-				}
-
-				
-				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-					selectFile(directoryPath.path());
-					break;
-				}
+				renderPath(directoryPath, thumbSize, padding, margin, cellSize);
 				ImGui::NextColumn();
 			}
 		}
 
-		ImGui::PopStyleColor(3);
+		for (auto& directoryPath : std::filesystem::directory_iterator{ *mCurrentPath }) {
+			if (!directoryPath.is_directory()) {
+				renderPath(directoryPath, thumbSize, padding, margin, cellSize);
+				ImGui::NextColumn();
+			}
+		}
 		ImGui::Columns(1);
 	}
 
@@ -232,25 +146,127 @@ namespace GameGuy {
 
 	void FileDialogPanel::selectNewPath(const std::filesystem::path& newPath)
 	{
-		mNavigatedPaths.push_back(newPath);
-		mNavigationIterator = mNavigatedPaths.end() - 1;
-		refreshCurrentFolderContent();
+		if (mCurrentPath < mHistory.end() - 1) {
+			mHistory.erase(mCurrentPath + 1, mHistory.end());
+		}
+		mHistory.push_back(newPath);
+		mCurrentPath = mHistory.end() - 1;
 	}
 
-	void FileDialogPanel::refreshCurrentFolderContent()
+	void FileDialogPanel::renderPath(const std::filesystem::directory_entry& path,float thumbSize,float padding, float margin,float cellSize)
 	{
-		mCurrentFolderContent.clear();
-		for (const auto& directoryPath : std::filesystem::directory_iterator(*mNavigationIterator)) {
-			mCurrentFolderContent.emplace_back(directoryPath);
+
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImVec2 windowPos = ImGui::GetWindowPos();
+
+		ImVec2 size = { cellSize,cellSize * 1.75f };
+
+		std::string fileName = path.path().stem().string();
+		std::string extension = path.path().extension().string();
+		std::string type = "FILE";
+		bool isDirectory = path.is_directory();
+		bool isSelected = mSelectedPath == path;
+
+
+		IconData iconData = path.is_directory() ? mFolderIcon : mExtensionsIcons.at(".*").iconData;
+		auto it = mExtensionsIcons.find(extension);
+		if (it != mExtensionsIcons.end()) {
+			iconData = it->second.iconData;
+			type = it->second.type;
 		}
 
-		std::sort(mCurrentFolderContent.begin(), mCurrentFolderContent.end(), [](auto a, auto b) {
-			return a.path().string() < b.path().string();
-			});
+		ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
+		ImVec2 screenPos = ImGui::GetCursorScreenPos();
 
-		std::sort(mCurrentFolderContent.begin(), mCurrentFolderContent.end(), [](auto a, auto b) {
-			return int(a.is_directory()) > int(b.is_directory());
-			});
+		bool hasBeenErased = false;
+		while (textSize.x >= (cellSize - padding)) {
+			fileName.erase(fileName.length() - 1);
+			textSize = ImGui::CalcTextSize(fileName.c_str());
+			hasBeenErased = true;
+		}
+
+		if (hasBeenErased) {
+			fileName.replace(fileName.length() - 3, fileName.length(), "...");
+			textSize = ImGui::CalcTextSize(fileName.c_str());
+		}
+
+		ImGui::InvisibleButton(fileName.c_str(), size);
+
+		ImU32 labelBoxColor = isSelected ? IM_COL32(0, 112, 224, 255) : (ImGui::IsItemHovered() ? IM_COL32(87, 87, 87, 255) : IM_COL32(56, 56, 56, 255));
+
+
+
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+			mSelectedPath = path;
+		}
+
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+			if (!isDirectory) {
+				selectFile(path);
+			}
+			else {
+				selectNewPath(path);
+			}
+			return;
+		}
+
+
+		/*BG Box*/
+		ImU32 bgBoxColor = isDirectory && !isSelected ? (!ImGui::IsItemHovered() ? IM_COL32(35, 35, 35, 255) : IM_COL32(56, 56, 56, 255)) : IM_COL32(23, 23, 23, 255);
+		drawList->AddRectFilled(
+			{ screenPos.x,screenPos.y },
+			{ screenPos.x + size.x,screenPos.y + size.y },
+			bgBoxColor,
+			3
+		);
+
+		if (!isDirectory || isSelected) {
+			/*Label Box*/
+			drawList->AddRectFilled(
+				{ screenPos.x,screenPos.y + thumbSize + padding * 2 },
+				{ screenPos.x + size.x,screenPos.y + size.y - 10 },
+				labelBoxColor,
+				0
+			);
+
+			drawList->AddRectFilled(
+				{ screenPos.x,screenPos.y + thumbSize + padding * 2 },
+				{ screenPos.x + size.x,screenPos.y + size.y },
+				labelBoxColor,
+				3
+			);
+
+			if (ImGui::IsItemHovered() || isSelected) {
+				drawList->AddRect(
+					{ screenPos.x,screenPos.y },
+					{ screenPos.x + size.x,screenPos.y + size.y },
+					labelBoxColor,
+					3,
+					0,
+					1
+				);
+			}
+		}
+
+		/*Icon*/
+		drawList->AddImageRounded(
+			(void*)(intptr_t)iconData.textureID,
+			{ screenPos.x + padding / 2,screenPos.y + padding },
+			{ screenPos.x + (padding / 2) + thumbSize,screenPos.y + padding + thumbSize },
+			{ 0,0 },
+			{ 1,1 },
+			IM_COL32(255, 255, 255, 255),
+			3
+		);
+
+
+
+		/*Label*/
+		drawList->AddText(
+			{ screenPos.x + padding / 2,screenPos.y + thumbSize + padding * 2.5f },
+			IM_COL32(255, 255, 255, 255),
+			fileName.c_str()
+		);
 	}
 
 }

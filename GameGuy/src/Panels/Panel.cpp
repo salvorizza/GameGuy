@@ -5,12 +5,24 @@
 namespace GameGuy {
 
 	Panel::Panel(const std::string& name, bool hasMenuBar, bool noPadding, bool defaultOpen, bool isModal)
-		:	mName(name),
+		: mName(name),
+		mOpen(defaultOpen),
+		mHasMenuBar(hasMenuBar),
+		mNoPadding(noPadding),
+		mIsModal(isModal),
+		mFirstOpen(false),
+		mBGColor(ImGui::GetStyleColorVec4(ImGuiCol_WindowBg))
+	{}
+
+
+	Panel::Panel(const std::string& name, bool hasMenuBar, ImVec4 bgColor, bool noPadding, bool defaultOpen, bool isModal)
+	:		mName(name),
 			mOpen(defaultOpen),
 			mHasMenuBar(hasMenuBar),
 			mNoPadding(noPadding),
 			mIsModal(isModal),
-			mFirstOpen(false)
+			mFirstOpen(false),
+			mBGColor(bgColor)
 	{}
 
 	Panel::~Panel()
@@ -50,9 +62,11 @@ namespace GameGuy {
 				}
 			}
 			else {
+				ImGui::PushStyleColor(ImGuiCol_WindowBg, mBGColor);
 				ImGui::Begin(mName.c_str(), &mOpen, window_flags);
 				onImGuiRender();
 				ImGui::End();
+				ImGui::PopStyleColor(1);
 				
 			}
 
