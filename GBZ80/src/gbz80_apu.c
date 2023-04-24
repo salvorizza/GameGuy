@@ -14,6 +14,7 @@ void gbz80_apu_init(gbz80_apu_t* apu, gbz80_t* instance){
 	apu->instance = instance;
 	gbz80_apu_frame_sequencer_init(&apu->frame_sequencer);
 	apu->so_1 = apu->so_2 = 0;
+	apu->hpf_1 = apu->hpf_2 = 0;
 	gbz80_apu_channel_base_init(&apu->channel_1.base);
 	gbz80_apu_channel_base_init(&apu->channel_2.base);
 	gbz80_apu_channel_base_init(&apu->channel_3.base);
@@ -25,6 +26,18 @@ void gbz80_apu_init(gbz80_apu_t* apu, gbz80_t* instance){
 
 	gbz80_apu_duty_init(&apu->channel_2.duty_cycler);
 	gbz80_apu_wave_init(&apu->channel_3.wave_cycler);
+}
+
+double high_pass(double in, double* capacitor, uint8_t dacs_enabled)
+{
+	double out = 0.0;
+	if (dacs_enabled) {
+		out = in - (*capacitor);
+
+		// capacitor slowly charges to 'in' via their difference
+		(*capacitor) = in - out * 0.999958; // use 0.998943 for MGB&CGB
+	}
+	return out;
 }
 
 void gbz80_apu_clock(gbz80_apu_t* apu){
@@ -182,27 +195,38 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 			uint8_t nr42 = gbz80_memory_read_internal(apu->instance, NRx2(4));
 			uint8_t nr43 = gbz80_memory_read_internal(apu->instance, NRx3(4));
 
-			uint8_t xor_result = common_get8_bit(common_get8_bit((uint8_t)apu->channel_4.lfsr, 0) ^ common_get8_bit((uint8_t)apu->channel_4.lfsr, 1),0);
+			uint8_t xor_result = common_get8_bit(apu->channel_4.lfsr ^ (apu->channel_4.lfsr >> 1) ^ 1,0);
 			uint8_t low_byte = apu->channel_4.lfsr & 0xFF;
 			uint8_t high_byte = (apu->channel_4.lfsr >> 8) & 0xFF;
 
 			apu->channel_4.lfsr >>= 1;
 
-			common_change8_bit(&high_byte, 14, xor_result);
+			common_change8_bit(&high_byte, 6, xor_result);
 			if (common_get8_bit(nr43, 3) == 1)
 				common_change8_bit(&low_byte, 6, xor_result);
-			
+
 			apu->channel_4.lfsr = low_byte | (high_byte << 8);
 
-			uint8_t wave_output_duty = common_get8_bit(~low_byte, 0);
+			uint8_t wave_output_duty = common_get8_bit(apu->channel_4.lfsr, 0);
 			uint8_t wave_output = wave_output_duty * apu->channel_4.base.volume_envelope.counter;
-
 
 			apu->channel_4.base.dac_output = wave_output / 7.5 - 1;
 		}
 	}
 
-	if (apu->sample_timer.period != 0 && gbz80_update_timer(&apu->sample_timer)) {
+	{
+		uint8_t nr50 = gbz80_memory_read_internal(apu->instance, NR50);
+
+		uint8_t right_master_volume = common_get8_bit_range(nr50, 0, 2);
+		uint8_t right_master_volume_enable = common_get8_bit(nr50, 3);
+		uint8_t left_master_volume = common_get8_bit_range(nr50, 4, 6);
+		uint8_t left_master_volume_enable = common_get8_bit(nr50, 7);
+
+		uint8_t dacs_enabled = apu->channel_1.base.dac_enable ||
+			apu->channel_2.base.dac_enable ||
+			apu->channel_3.base.dac_enable ||
+			apu->channel_4.base.dac_enable;
+
 		double dac_outs[4] = {
 			apu->channel_1.base.dac_enable ? apu->channel_1.base.dac_output : 0,
 			apu->channel_2.base.dac_enable ? apu->channel_2.base.dac_output : 0,
@@ -211,6 +235,7 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 		};
 
 		apu->so_1 = apu->so_2 = 0.0;
+		//Panning
 		for (uint8_t channel_number = 0; channel_number < 4; channel_number++) {
 			if (common_get8_bit(nr51, channel_number)) {
 				apu->so_1 += dac_outs[channel_number];
@@ -220,9 +245,21 @@ void gbz80_apu_clock(gbz80_apu_t* apu){
 				apu->so_2 += dac_outs[channel_number];
 			}
 		}
-		apu->so_1 /= 4.0;
-		apu->so_2 /= 4.0;
 
+		//Mixing
+		apu->so_1 /= 4;
+		apu->so_2 /= 4;
+
+		apu->so_1 *= left_master_volume_enable ? left_master_volume + 1 : 1;
+		apu->so_2 *= right_master_volume_enable ? right_master_volume + 1 : 1;
+
+		apu->so_1 = high_pass(apu->so_1, &apu->hpf_1, dacs_enabled);
+		apu->so_2 = high_pass(apu->so_2, &apu->hpf_2, dacs_enabled);
+
+
+	}
+
+	if (apu->sample_timer.period != 0 && gbz80_update_timer(&apu->sample_timer)) {
 		apu->sample_ready = 1;
 	}
 }
@@ -503,7 +540,7 @@ void gbz80_apu_trigger_channel4(gbz80_apu_t* apu) {
 
 
 	gbz80_apu_length_counter_init(&apu->channel_4.base.length_counter, length_counter_period, channel_enabled);
-	apu->channel_4.lfsr = 0xFF;
+	apu->channel_4.lfsr = 0x00;
 	gbz80_init_timer(&apu->channel_4.base.frequency_timer, frequency);
 	gbz80_apu_volume_envelope_init(&apu->channel_4.base.volume_envelope, volume, volume_period);
 

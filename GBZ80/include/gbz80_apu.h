@@ -92,6 +92,7 @@ extern "C" {
 
 	typedef struct gbz80_apu_t {
 		double so_1, so_2;
+		double hpf_1, hpf_2;
 		gbz80_apu_frame_sequencer_t frame_sequencer;
 		gbz80_apu_channel_1_t channel_1;
 		gbz80_apu_channel_2_t channel_2;
@@ -99,6 +100,7 @@ extern "C" {
 		gbz80_apu_channel_4_t channel_4;
 		int32_t sample_ready;
 		gbz80_timer_t sample_timer;
+		
 		gbz80_t* instance;
 	} gbz80_apu_t;
 
