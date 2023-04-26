@@ -188,9 +188,10 @@ namespace GameGuy {
 
 	IconData& FileDialogPanel::getCoverFromTitle(const std::string& title)
 	{
-		IconData iconData = mManager->GetIconResource(title.c_str());
-		if (iconData.textureID != 0) {
-			return iconData;
+		IconData iconData = IconData();
+
+		if (mManager->ExistsIconResource(title.c_str())) {
+			return mManager->GetIconResource(title.c_str());
 		}
 
 		std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";

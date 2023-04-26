@@ -223,7 +223,6 @@ namespace GameGuy{
 	IconData& ImGuiManager::GetIconResource(const char* name)
 	{
 		IconData iconData;
-		iconData.textureID = 0;
 
 		if (mIcons.find(name) == mIcons.end()) {
 			return iconData;
@@ -231,6 +230,11 @@ namespace GameGuy{
 
 		return mIcons.at(name);
 	}
+
+	bool ImGuiManager::ExistsIconResource(const char* name) {
+		return mIcons.find(name) != mIcons.end();
+	}
+
 }
 
 
