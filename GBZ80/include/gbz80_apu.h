@@ -47,6 +47,8 @@ extern "C" {
 	typedef struct gbz80_apu_frequency_sweep_t {
 		uint8_t enabled;
 		uint16_t frequency_shadow;
+		uint8_t shift;
+		uint8_t negate;
 		gbz80_timer_t timer;
 	} gbz80_apu_frequency_sweep_t;
 
@@ -129,16 +131,19 @@ extern "C" {
 	void gbz80_apu_volume_envelope_init(gbz80_apu_volume_envelope_t* volume_envelope, uint8_t volume, uint8_t period);
 	void gbz80_apu_volume_envelope_update(gbz80_apu_volume_envelope_t* volume_envelope, uint8_t increment);
 
-	uint16_t gbz80_apu_frequency_sweep_calc(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency, uint8_t decrease, uint8_t sweep_shift, uint8_t* channel_enabled);
+	uint16_t gbz80_apu_frequency_sweep_calc(gbz80_apu_frequency_sweep_t* frequency_sweep, uint8_t* channel_enabled);
 
 	uint8_t gbz80_apu_frequency_sweep_init(gbz80_apu_frequency_sweep_t* frequency_sweep, uint16_t frequency, uint8_t sweep_time, uint8_t decrease, uint8_t sweep_shift);
-	uint8_t gbz80_apu_frequency_sweep_update(gbz80_apu_frequency_sweep_t* frequency_sweep, uint8_t decrease, uint8_t sweep_shift);
+	uint8_t gbz80_apu_frequency_sweep_update(gbz80_apu_frequency_sweep_t* frequency_sweep);
 
 	void gbz80_apu_duty_init(gbz80_apu_duty_cycle_t* duty_cycler);
 	uint8_t gbz80_apu_duty_update(gbz80_apu_duty_cycle_t* duty_cycler, uint8_t wave_pattern_number);
 
 	void gbz80_apu_wave_init(gbz80_apu_wave_cycle_t* wave_cycle);
 	uint8_t gbz80_apu_wave_update(gbz80_apu_wave_cycle_t* wave_cycle, gbz80_apu_t* apu, uint8_t volume_code);
+
+
+	void gbz80_apu_length_enable_obscure_behavior(gbz80_apu_frame_sequencer_t* frame_sequencer, gbz80_apu_base_channel_t* channel, uint8_t channel_number , uint8_t nrx4, uint8_t prev_nrx4, uint8_t* nrx1, uint8_t* nr52);
 
 #ifdef __cplusplus
 }

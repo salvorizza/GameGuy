@@ -118,8 +118,12 @@ namespace GameGuy {
 				sInstance->mRenderingSample = 0;
 			}
 
-			sample = sInstance->mInstance->apu.so_1;
-			sInstance->mAudioPanel->addSample(dTime, sample, sample);
+			sample = sInstance->mInstance->apu.so_2;
+			sInstance->mAudioPanel->addSample(dTime, 
+				sInstance->mInstance->apu.channel_1.base.dac_output,
+				sInstance->mInstance->apu.channel_2.base.dac_output,
+				sInstance->mInstance->apu.channel_3.base.dac_output,
+				sInstance->mInstance->apu.channel_4.base.dac_output);
 		}
 
 		std::unique_lock<std::mutex> lm(sInstance->mMutexLatch);

@@ -24,6 +24,9 @@ namespace GameGuy {
 
 		void onUpdate();
 
+	private:
+		void search(const std::string& key);
+
 	protected:
 		virtual void onImGuiRender() override;
 
@@ -81,11 +84,15 @@ namespace GameGuy {
 		std::vector<uint16_t> mInstructionsCartridgeKeys;
 		std::vector<uint16_t> mInstructionsBootRomKeys;
 
+		std::map<uint16_t, size_t> mSearchResults;
+		std::map<uint16_t, size_t>::iterator mSearchResultsIterator;
+
 		DebugState mDebugState;
 		DebugState mPrevDebugState;
 		DebugTab mDebugTab,mSelectTab;
 
 		bool mScrollToCurrent;
+		uint16_t mCurrent;
 	};
 
 }

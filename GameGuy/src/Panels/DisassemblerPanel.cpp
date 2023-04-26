@@ -63,6 +63,7 @@ namespace GameGuy {
 		if (it != mInstructionsBreaks.end()) {
 			setDebugState(DebugState::Breakpoint);
 			mScrollToCurrent = true;
+			mCurrent = mInstance->cpu.registers.PC;
 			return true;
 		}
 		return false;
@@ -115,6 +116,7 @@ namespace GameGuy {
 						gbz80_clock(mInstance);
 					} while (mInstance->cpu.cycles != 0);
 					mScrollToCurrent = true;
+					mCurrent = mInstance->cpu.registers.PC;
 					setDebugState(DebugState::Breakpoint);
 				}
 				else {
@@ -129,8 +131,27 @@ namespace GameGuy {
 		}
 	}
 
+	void DisassemblerPanel::search(const std::string& key)
+	{
+		mSearchResults.clear();
+
+		if (key.empty()) {
+			return;
+		}
+
+		auto& instructionMap = getCurrentInstructionMap();
+		for (const auto& pair : instructionMap) {
+			size_t offset = pair.second.Instruction.find(key);
+			if (offset != pair.second.Instruction.npos) {
+				mSearchResults[pair.first] = offset;
+			}
+		}
+		mSearchResultsIterator = mSearchResults.begin();
+	}
+
 	void DisassemblerPanel::onImGuiRender()
 	{
+
 		float availWidth = ImGui::GetContentRegionAvail().x;
 		float oneCharSize = ImGui::CalcTextSize("A").x;
 		float bulletSize = oneCharSize * 2;
@@ -146,6 +167,7 @@ namespace GameGuy {
 		ImGui::SameLine();
 		if (ImGui::Button(ICON_FA_SYNC)) disassembleCartridge();
 		ImGui::SameLine();
+
 		switch (mDebugState)
 		{
 		case GameGuy::DisassemblerPanel::DebugState::Idle:
@@ -169,6 +191,47 @@ namespace GameGuy {
 		default:
 			break;
 		}
+
+
+		ImGui::Text("Search:");
+		ImGui::SameLine();
+		static char searchBuffer[32];
+		if (ImGui::InputText("##search", searchBuffer, 32)) {
+			search(searchBuffer);
+			if (!mSearchResults.empty()) {
+				mScrollToCurrent = true;
+				mCurrent = mSearchResultsIterator->first;
+			}
+		}
+		ImVec2 searchTextUISize = ImGui::CalcTextSize(searchBuffer);
+
+
+		ImGui::SameLine();
+
+		bool condition = mSearchResults.empty();
+		if (condition) {
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.14f, 0.14f, 0.14f, 0.0f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.14f, 0.14f, 0.0f));
+		}
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, condition);
+
+		if (ImGui::Button(ICON_FA_ARROW_RIGHT)) {
+			mSearchResultsIterator++;
+			if (mSearchResultsIterator == mSearchResults.end()) {
+				mSearchResultsIterator = mSearchResults.begin();
+			}
+
+			mScrollToCurrent = true;
+			mCurrent = mSearchResultsIterator->first;
+		}
+
+		ImGui::PopItemFlag();
+
+		if (condition) {
+			ImGui::PopStyleColor(3);
+		}
+		
 
 		static bool p_open = true;
 		static bool p_open_2 = true;
@@ -218,7 +281,7 @@ namespace GameGuy {
 			clipper.Begin(instructionMap.size());
 
 			if (mScrollToCurrent) {
-				auto it = std::find(keys.begin(), keys.end(), mInstance->cpu.registers.PC);
+				auto it = std::find(keys.begin(), keys.end(), mCurrent);
 				size_t val = std::distance(keys.begin(), it);
 				clipper.ForceDisplayRangeByIndices(val - 1, val + 1);
 			}
@@ -231,15 +294,17 @@ namespace GameGuy {
 					uint16_t address = it->first;
 					DebugInstruction& debugInstruction = it->second;
 
+					
+
 					ImGui::TableNextRow();
+					if (mScrollToCurrent && address == mCurrent) {
+						ImGui::SetScrollHereY(0.75);
+						mScrollToCurrent = false;
+					}
+
 					if (mDebugState != DebugState::Idle && address == mInstance->cpu.registers.PC) {
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, IM_COL32(230, 100, 120, 125));
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(180, 50, 70, 125));
-
-						if (mScrollToCurrent && address == mInstance->cpu.registers.PC) {
-							ImGui::SetScrollHereY(0.75);
-							mScrollToCurrent = false;
-						}
 					}
 
 					ImGui::TableNextColumn();
@@ -268,7 +333,27 @@ namespace GameGuy {
 					ImGui::TableNextColumn();
 					ImGui::Text("0x%04X", address);
 
+					
+
 					ImGui::TableNextColumn();
+					ImVec2 cursorPos = ImGui::GetCursorPos();
+					if (strlen(searchBuffer) != 0) {
+						auto searchIterator = mSearchResults.find(keys[row]);
+						if (searchIterator != mSearchResults.end()) {
+							std::string subString = debugInstruction.Instruction.substr(0, searchIterator->second);
+							ImVec2 subStringUIOffset = ImGui::CalcTextSize(subString.c_str());
+							ImVec2 windowPos = ImGui::GetWindowPos();
+							ImVec2 min = ImVec2(windowPos.x + cursorPos.x + subStringUIOffset.x, windowPos.y + cursorPos.y - ImGui::GetScrollY());
+							ImVec2 max = ImVec2(windowPos.x + cursorPos.x + subStringUIOffset.x + searchTextUISize.x, windowPos.y + cursorPos.y + searchTextUISize.y - ImGui::GetScrollY());
+							
+							ImU32 color = IM_COL32(0, 112, 224, 100);
+							if (mSearchResultsIterator->first == keys[row]) {
+								color = IM_COL32(0, 112, 224, 255);
+							}
+
+							ImGui::GetWindowDrawList()->AddRectFilled(min,max, color);
+						}
+					}
 					ImGui::Text("%s", debugInstruction.Instruction.c_str());
 				}
 			}
