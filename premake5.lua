@@ -23,6 +23,7 @@ group "Dependencies"
 	include "GameGuy/vendor/GLFW"
 	include "GameGuy/vendor/imgui"
 	include "GameGuy/vendor/stb"
+	include "GameGuy/vendor/curl"
 group ""
 
 include "GBZ80"

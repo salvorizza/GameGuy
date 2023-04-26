@@ -32,7 +32,7 @@ namespace GameGuy {
 	private:
 		void selectFile(const std::filesystem::path& filePath);
 		void selectNewPath(const std::filesystem::path& newPath);
-		void refreshCurrentFolderContent();
+		IconData& getCoverFromTitle(const std::string& title);
 
 		void renderPath(const std::filesystem::directory_entry& path, float thumbSize, float padding, float margin, float cellSize);
 

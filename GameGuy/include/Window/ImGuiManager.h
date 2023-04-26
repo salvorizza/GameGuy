@@ -29,6 +29,8 @@ namespace GameGuy {
 		ImFont* getLargeIconFont() { return mLargeIconFont; }
 
 		IconData& LoadIconResource(const char* imagePath);
+		IconData& LoadIconResource(const char* name, const std::vector<uint8_t>& data);
+		IconData& GetIconResource(const char* name);
 	private:
 		std::shared_ptr<Window> mWindow;
 

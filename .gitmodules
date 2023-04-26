@@ -11,3 +11,6 @@
 [submodule "GameGuy/vendor/stb"]
 	path = GameGuy/vendor/stb
 	url = https://github.com/salvorizza/stb
+[submodule "GameGuy/vendor/curl"]
+	path = GameGuy/vendor/curl
+	url = https://github.com/salvorizza/curl

@@ -3,9 +3,27 @@
 
 #include <imgui.h>
 
-
+#include <curl/curl.h>
 
 namespace GameGuy {
+
+	static size_t writefunc(void* ptr, size_t size, size_t nmemb, std::vector<uint8_t>* v)
+	{
+		size_t newLength = size * nmemb;
+		try
+		{
+			size_t oldSize = v->size();
+			v->resize(oldSize + newLength);
+			memcpy(v->data() + oldSize, ptr, newLength);
+		}
+		catch (std::bad_alloc& e)
+		{
+			//handle memory problem
+			return 0;
+		}
+		return newLength;
+	}
+
 
 	FileDialogPanel::FileDialogPanel()
 		: Panel("FileDialog", false, ImVec4(0.14f, 0.14f, 0.14f, 1.00f), false, true, false)
@@ -14,6 +32,21 @@ namespace GameGuy {
 		mHistory.push_back(currentPath);
 		mSelectedPath = currentPath;
 		mCurrentPath = mHistory.begin();
+
+		std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";
+		std::string title = "4-in-1 Fun Pak (Japan).png";
+
+		CURL* curl = curl_easy_init();
+		std::string encodedTitle = curl_easy_escape(curl, title.c_str(), title.length());
+		std::vector<uint8_t> data;
+
+		curl_easy_setopt(curl, CURLOPT_URL, (baseURL + encodedTitle).c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+		CURLcode code = curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
+
+
 	}
 
 	FileDialogPanel::~FileDialogPanel()
@@ -120,7 +153,7 @@ namespace GameGuy {
 		float cellSize = thumbSize + padding;
 
 		float availWidth = ImGui::GetContentRegionAvailWidth();
-		int columnCount = std::max((int)(availWidth / (cellSize + margin)), 1);
+		int columnCount = max((int)(availWidth / (cellSize + margin)), 1);
 		ImGui::Columns(columnCount, 0, false);
 
 		for (auto& directoryPath : std::filesystem::directory_iterator{ *mCurrentPath }) {
@@ -153,6 +186,34 @@ namespace GameGuy {
 		mCurrentPath = mHistory.end() - 1;
 	}
 
+	IconData& FileDialogPanel::getCoverFromTitle(const std::string& title)
+	{
+		IconData iconData = mManager->GetIconResource(title.c_str());
+		if (iconData.textureID != 0) {
+			return iconData;
+		}
+
+		std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";
+		CURL* curl = curl_easy_init();
+		std::string extensionedTitle = title + ".png";
+		std::string encodedTitle = curl_easy_escape(curl, extensionedTitle.c_str(), extensionedTitle.length());
+		std::vector<uint8_t> data;
+		long http_code = 0;
+
+		curl_easy_setopt(curl, CURLOPT_URL, (baseURL + encodedTitle).c_str());
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+		CURLcode code = curl_easy_perform(curl);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+		curl_easy_cleanup(curl);
+
+		if (code != CURLE_OK || http_code != 200) {
+			return iconData;
+		}
+
+		return mManager->LoadIconResource(title.c_str(), data);
+	}
+
 	void FileDialogPanel::renderPath(const std::filesystem::directory_entry& path,float thumbSize,float padding, float margin,float cellSize)
 	{
 
@@ -161,7 +222,8 @@ namespace GameGuy {
 
 		ImVec2 size = { cellSize,cellSize * 1.75f };
 
-		std::string fileName = path.path().stem().string();
+		std::string stem = path.path().stem().string();
+		std::string fileName = stem;
 		std::string extension = path.path().extension().string();
 		std::string type = "FILE";
 		bool isDirectory = path.is_directory();
@@ -193,8 +255,6 @@ namespace GameGuy {
 		ImGui::InvisibleButton(fileName.c_str(), size);
 
 		ImU32 labelBoxColor = isSelected ? IM_COL32(0, 112, 224, 255) : (ImGui::IsItemHovered() ? IM_COL32(87, 87, 87, 255) : IM_COL32(56, 56, 56, 255));
-
-
 
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 			mSelectedPath = path;
@@ -247,10 +307,21 @@ namespace GameGuy {
 				);
 			}
 		}
+		
+
+		ImTextureID textureID = (void*)(intptr_t)iconData.textureID;
+		bool noImagePadding = false;
+		if (!path.is_directory()) {
+			IconData& coverData = getCoverFromTitle(stem.c_str());
+			if (coverData.textureID != 0) {
+				textureID = (void*)(intptr_t)coverData.textureID;
+				noImagePadding = true;
+			}
+		}
 
 		/*Icon*/
 		drawList->AddImageRounded(
-			(void*)(intptr_t)iconData.textureID,
+			textureID,
 			{ screenPos.x + padding / 2,screenPos.y + padding },
 			{ screenPos.x + (padding / 2) + thumbSize,screenPos.y + padding + thumbSize },
 			{ 0,0 },
@@ -259,6 +330,7 @@ namespace GameGuy {
 			3
 		);
 
+		
 
 
 		/*Label*/

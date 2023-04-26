@@ -16,7 +16,8 @@ project "GameGuy"
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
-		"GLFW_INCLUDE_NONE"
+		"GLFW_INCLUDE_NONE",
+		"CURL_STATICLIB"
 	}
 	
 	includedirs
@@ -28,7 +29,8 @@ project "GameGuy"
         "%{IncludeDir.ImGui}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.glm}",
-		"%{IncludeDir.stb}"
+		"%{IncludeDir.stb}",
+		"%{IncludeDir.curl}"
 	}
 
 	links
@@ -38,6 +40,7 @@ project "GameGuy"
 		"GLFW",
 		"ImGui",
 		"STB",
+		"Curl",
 		"opengl32.lib"
 	}
 	
@@ -45,6 +48,7 @@ project "GameGuy"
 	flags { "NoPCH" }
 
 	filter "system:windows"
+		links { "ws2_32" }
 		systemversion "latest"
 
 	filter "configurations:Debug"
