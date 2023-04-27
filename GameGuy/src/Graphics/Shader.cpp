@@ -2,10 +2,9 @@
 
 #include <glad/glad.h>
 
-#include "Utils.h"
 
 namespace GameGuy {
-	Shader::Shader(const char* vertexSource, const char* fragmentSource) 
+	Shader::Shader(DataBuffer vertexSource, DataBuffer fragmentSource)
 		:	mRendererID(0)
 	{
 		int32_t isCompiled = 0;
@@ -13,7 +12,7 @@ namespace GameGuy {
 		int32_t isLinked = 0;
 
 		uint32_t vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertexShaderID, 1, &vertexSource, NULL);
+		glShaderSource(vertexShaderID, 1, (const GLchar**)&vertexSource.Data, (const GLint*)&vertexSource.Size);
 		glCompileShader(vertexShaderID);
 		glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &isCompiled);
 		if (isCompiled == GL_FALSE) {
@@ -27,7 +26,7 @@ namespace GameGuy {
 		}
 
 		uint32_t fragentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragentShaderID, 1, &fragmentSource, NULL);
+		glShaderSource(fragentShaderID, 1, (const GLchar**)&fragmentSource.Data, (const GLint*)&fragmentSource.Size);
 		glCompileShader(fragentShaderID);
 		glGetShaderiv(fragentShaderID, GL_COMPILE_STATUS, &isCompiled);
 		if (isCompiled == GL_FALSE) {
@@ -92,17 +91,17 @@ namespace GameGuy {
 
 	std::shared_ptr<Shader> Shader::LoadFromFile(const char* vertexPath, const char* fragmentPath)
 	{
-		char *vertexSource, *fragmentSource;
-		size_t vertexSourceSize, fragmentSourceSize;
+
+		DataBuffer vertexSource, fragmentSource;
 		errno_t err;
 
-		err = ReadFile(vertexPath, &vertexSource, &vertexSourceSize);
-		err = ReadFile(fragmentPath, &fragmentSource, &fragmentSourceSize);
+		err = ReadFile(vertexPath, vertexSource);
+		err = ReadFile(fragmentPath, fragmentSource);
 
 		std::shared_ptr<Shader> shader = std::make_shared<Shader>(vertexSource, fragmentSource);
 
-		free(vertexSource);
-		free(fragmentSource);
+		DeleteBuffer(vertexSource);
+		DeleteBuffer(fragmentSource);
 
 		return shader;
 	}

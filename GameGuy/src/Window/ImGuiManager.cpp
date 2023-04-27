@@ -208,11 +208,11 @@ namespace GameGuy{
 		return mIcons[imagePath];
 	}
 
-	IconData& ImGuiManager::LoadIconResource(const char* name, const std::vector<uint8_t>& data)
+	IconData& ImGuiManager::LoadIconResource(const char* name, const uint8_t* data, size_t size)
 	{
 		if (mIcons.find(name) == mIcons.end()) {
 			IconData iconData;
-			bool ret = LoadTextureFromMemory(data.data(), data.size(), & iconData.textureID, &iconData.Width, &iconData.Height);
+			bool ret = LoadTextureFromMemory(data, size, & iconData.textureID, &iconData.Width, &iconData.Height);
 			IM_ASSERT(ret);
 			if (ret) {
 				mIcons[name] = iconData;

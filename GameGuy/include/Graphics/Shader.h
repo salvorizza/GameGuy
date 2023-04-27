@@ -10,11 +10,13 @@
 #include <string>
 #include <memory>
 
+#include "Utils.h"
+
 namespace GameGuy {
 
 	class Shader {
 	public:
-		Shader(const char* vertexSource, const char* fragmentSource);
+		Shader(DataBuffer vertexSource, DataBuffer fragmentSource);
 		~Shader();
 
 		void start();

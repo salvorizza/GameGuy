@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Panel.h"
+#include "Utils.h"
 
 #include <filesystem>
 #include <functional>

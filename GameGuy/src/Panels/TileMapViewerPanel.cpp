@@ -92,7 +92,7 @@ namespace GameGuy {
 		ImVec2 size = ImGui::GetContentRegionAvail();
 		float offsetX, offsetY;
 
-		float bestSize = std::min(size.x, size.y);
+		float bestSize = min(size.x, size.y);
 		ImVec2 newSize = { bestSize,bestSize };
 		offsetX = (size.x - newSize.x) / 2;
 		offsetY = (size.y - newSize.y) / 2;

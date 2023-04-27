@@ -33,7 +33,7 @@ namespace GameGuy {
 		ImFont* getLargeIconFont() { return mLargeIconFont; }
 
 		IconData& LoadIconResource(const char* imagePath);
-		IconData& LoadIconResource(const char* name, const std::vector<uint8_t>& data);
+		IconData& LoadIconResource(const char* name, const uint8_t* data, size_t size);
 		IconData& GetIconResource(const char* name);
 		bool ExistsIconResource(const char* name);
 

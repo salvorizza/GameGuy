@@ -7,23 +7,6 @@
 
 namespace GameGuy {
 
-	static size_t writefunc(void* ptr, size_t size, size_t nmemb, std::vector<uint8_t>* v)
-	{
-		size_t newLength = size * nmemb;
-		try
-		{
-			size_t oldSize = v->size();
-			v->resize(oldSize + newLength);
-			memcpy(v->data() + oldSize, ptr, newLength);
-		}
-		catch (std::bad_alloc& e)
-		{
-			//handle memory problem
-			return 0;
-		}
-		return newLength;
-	}
-
 
 	FileDialogPanel::FileDialogPanel()
 		: Panel("FileDialog", false, ImVec4(0.14f, 0.14f, 0.14f, 1.00f), false, true, false)
@@ -32,21 +15,6 @@ namespace GameGuy {
 		mHistory.push_back(currentPath);
 		mSelectedPath = currentPath;
 		mCurrentPath = mHistory.begin();
-
-		std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";
-		std::string title = "4-in-1 Fun Pak (Japan).png";
-
-		CURL* curl = curl_easy_init();
-		std::string encodedTitle = curl_easy_escape(curl, title.c_str(), title.length());
-		std::vector<uint8_t> data;
-
-		curl_easy_setopt(curl, CURLOPT_URL, (baseURL + encodedTitle).c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
-		CURLcode code = curl_easy_perform(curl);
-		curl_easy_cleanup(curl);
-
-
 	}
 
 	FileDialogPanel::~FileDialogPanel()
@@ -188,31 +156,28 @@ namespace GameGuy {
 
 	IconData& FileDialogPanel::getCoverFromTitle(const std::string& title)
 	{
-		IconData iconData = IconData();
+		IconData result;
 
 		if (mManager->ExistsIconResource(title.c_str())) {
 			return mManager->GetIconResource(title.c_str());
 		}
 
+		HTTPInit();
+
 		std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";
-		CURL* curl = curl_easy_init();
-		std::string extensionedTitle = title + ".png";
-		std::string encodedTitle = curl_easy_escape(curl, extensionedTitle.c_str(), extensionedTitle.length());
-		std::vector<uint8_t> data;
-		long http_code = 0;
+		std::string httpURL = baseURL + HTTPURLEncode(title.c_str()) + ".png";
+		DataBuffer dataBuffer;
 
-		curl_easy_setopt(curl, CURLOPT_URL, (baseURL + encodedTitle).c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
-		CURLcode code = curl_easy_perform(curl);
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-		curl_easy_cleanup(curl);
-
-		if (code != CURLE_OK || http_code != 200) {
-			return iconData;
+		int32_t httpCode = HTTPGet(httpURL.c_str(), dataBuffer);
+		if (httpCode == 200) {
+			result = mManager->LoadIconResource(title.c_str(), dataBuffer.Data, dataBuffer.Size);
 		}
 
-		return mManager->LoadIconResource(title.c_str(), data);
+		DeleteBuffer(dataBuffer);
+
+		HTTPClose();
+
+		return result;
 	}
 
 	void FileDialogPanel::renderPath(const std::filesystem::directory_entry& path,float thumbSize,float padding, float margin,float cellSize)
@@ -311,25 +276,39 @@ namespace GameGuy {
 		
 
 		ImTextureID textureID = (void*)(intptr_t)iconData.textureID;
-		bool noImagePadding = false;
+		bool imageXtended = false;
 		if (!path.is_directory()) {
-			IconData& coverData = getCoverFromTitle(stem.c_str());
+			/*IconData& coverData = getCoverFromTitle(stem.c_str());
 			if (coverData.textureID != 0) {
 				textureID = (void*)(intptr_t)coverData.textureID;
-				noImagePadding = true;
-			}
+				imageXtended = true;
+			}*/
 		}
 
 		/*Icon*/
-		drawList->AddImageRounded(
-			textureID,
-			{ screenPos.x + padding / 2,screenPos.y + padding },
-			{ screenPos.x + (padding / 2) + thumbSize,screenPos.y + padding + thumbSize },
-			{ 0,0 },
-			{ 1,1 },
-			IM_COL32(255, 255, 255, 255),
-			3
-		);
+		if (imageXtended) {
+			drawList->AddImageRounded(
+				textureID,
+				{ screenPos.x,screenPos.y },
+				{ screenPos.x + size.x,screenPos.y + thumbSize + padding * 2 },
+				{ 0,0 },
+				{ 1,1 },
+				IM_COL32(255, 255, 255, 255),
+				3
+			);
+			
+		}
+		else {
+			drawList->AddImageRounded(
+				textureID,
+				{ screenPos.x + padding / 2,screenPos.y + padding },
+				{ screenPos.x + (padding / 2) + thumbSize,screenPos.y + padding + thumbSize },
+				{ 0,0 },
+				{ 1,1 },
+				IM_COL32(255, 255, 255, 255),
+				3
+			);
+		}
 
 		
 
