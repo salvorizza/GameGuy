@@ -5,6 +5,8 @@
 
 #include <filesystem>
 #include <functional>
+#include <set>
+#include <future>
 
 namespace GameGuy {
 
@@ -33,7 +35,7 @@ namespace GameGuy {
 	private:
 		void selectFile(const std::filesystem::path& filePath);
 		void selectNewPath(const std::filesystem::path& newPath);
-		IconData& getCoverFromTitle(const std::string& title);
+		HTTPResponse loadCoverFromTitle(const std::string& title);
 
 		void renderPath(const std::filesystem::directory_entry& path, float thumbSize, float padding, float margin, float cellSize);
 
@@ -46,6 +48,11 @@ namespace GameGuy {
 		std::filesystem::path mSelectedPath;
 		std::vector<std::filesystem::path> mHistory;
 		std::vector<std::filesystem::path>::iterator mCurrentPath;
+		std::mutex mIconsCacheMutex;
+		std::set<std::string> mIconsCache;
+
+		std::unordered_map<std::string, std::future<HTTPResponse> > mFutures;
+		
 
 		std::unordered_map<std::string, ExtensionData> mExtensionsIcons;
 		IconData mFolderIcon;

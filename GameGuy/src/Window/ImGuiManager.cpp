@@ -235,6 +235,19 @@ namespace GameGuy{
 		return mIcons.find(name) != mIcons.end();
 	}
 
+	bool ImGuiManager::ReleaseIconResource(const char* name) {
+		auto it = mIcons.find(name);
+
+		if (it == mIcons.end()) {
+			return false;
+		}
+
+		glDeleteTextures(1, &it->second.textureID);
+		mIcons.erase(it);
+
+		return true;
+	}
+
 }
 
 

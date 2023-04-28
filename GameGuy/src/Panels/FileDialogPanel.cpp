@@ -12,9 +12,8 @@ namespace GameGuy {
 		: Panel("FileDialog", false, ImVec4(0.14f, 0.14f, 0.14f, 1.00f), false, true, false)
 	{;
 		std::filesystem::path currentPath = std::filesystem::current_path();
-		mHistory.push_back(currentPath);
-		mSelectedPath = currentPath;
-		mCurrentPath = mHistory.begin();
+		mCurrentPath = mHistory.end();
+		selectNewPath(currentPath);
 	}
 
 	FileDialogPanel::~FileDialogPanel()
@@ -147,37 +146,35 @@ namespace GameGuy {
 
 	void FileDialogPanel::selectNewPath(const std::filesystem::path& newPath)
 	{
-		if (mCurrentPath < mHistory.end() - 1) {
+		if (mCurrentPath != mHistory.end() && mCurrentPath < mHistory.end() - 1) {
 			mHistory.erase(mCurrentPath + 1, mHistory.end());
 		}
 		mHistory.push_back(newPath);
 		mCurrentPath = mHistory.end() - 1;
+
+		for (auto& title : mIconsCache) {
+			if (mManager->ExistsIconResource(title.c_str())) {
+				mManager->ReleaseIconResource(title.c_str());
+			}
+		}
+		mIconsCache.clear();
 	}
 
-	IconData& FileDialogPanel::getCoverFromTitle(const std::string& title)
+	HTTPResponse FileDialogPanel::loadCoverFromTitle(const std::string& title)
 	{
-		IconData result;
+		CURL* curl = HTTPInit();
 
-		if (mManager->ExistsIconResource(title.c_str())) {
-			return mManager->GetIconResource(title.c_str());
-		}
-
-		HTTPInit();
-
-		std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";
-		std::string httpURL = baseURL + HTTPURLEncode(title.c_str()) + ".png";
+		static std::string baseURL = "https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/Nintendo%20-%20Game%20Boy/Named_Boxarts/";
+		std::string httpURL = baseURL + HTTPURLEncode(curl, title.c_str()) + ".png";
 		DataBuffer dataBuffer;
 
-		int32_t httpCode = HTTPGet(httpURL.c_str(), dataBuffer);
-		if (httpCode == 200) {
-			result = mManager->LoadIconResource(title.c_str(), dataBuffer.Data, dataBuffer.Size);
-		}
+		HTTPResponse response = HTTPGet(curl, httpURL.c_str());
+		HTTPClose(curl);
 
-		DeleteBuffer(dataBuffer);
+		std::lock_guard lc(mIconsCacheMutex);
+		mIconsCache.insert(title);
 
-		HTTPClose();
-
-		return result;
+		return response;
 	}
 
 	void FileDialogPanel::renderPath(const std::filesystem::directory_entry& path,float thumbSize,float padding, float margin,float cellSize)
@@ -203,20 +200,7 @@ namespace GameGuy {
 			type = it->second.type;
 		}
 
-		ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
 		ImVec2 screenPos = ImGui::GetCursorScreenPos();
-
-		bool hasBeenErased = false;
-		while (textSize.x >= (cellSize - padding)) {
-			fileName.erase(fileName.length() - 1);
-			textSize = ImGui::CalcTextSize(fileName.c_str());
-			hasBeenErased = true;
-		}
-
-		if (hasBeenErased) {
-			fileName.replace(fileName.length() - 3, fileName.length(), "...");
-			textSize = ImGui::CalcTextSize(fileName.c_str());
-		}
 
 		ImGui::InvisibleButton(fileName.c_str(), size);
 
@@ -276,29 +260,46 @@ namespace GameGuy {
 		
 
 		ImTextureID textureID = (void*)(intptr_t)iconData.textureID;
-		bool imageXtended = false;
+		bool isLoading = false;
 		if (!path.is_directory()) {
-			/*IconData& coverData = getCoverFromTitle(stem.c_str());
+			isLoading = true;
+
+			IconData coverData;
+
+			std::lock_guard lc(mIconsCacheMutex);
+			auto it = std::find(mIconsCache.begin(), mIconsCache.end(), stem);
+			auto itFuture = mFutures.find(stem);
+
+			if (it != mIconsCache.end()) {
+				isLoading = false;
+				if (itFuture != mFutures.end()) {
+					HTTPResponse response = itFuture->second.get();
+					if (response.Status == 200) {
+						coverData = mManager->LoadIconResource(stem.c_str(), response.Body.Data, response.Body.Size);
+						DeleteBuffer(response.Body);
+					}
+					mFutures.erase(itFuture);
+				} else {
+					coverData = mManager->GetIconResource(stem.c_str());
+				}
+			} else {
+				if (itFuture == mFutures.end()) {
+					mFutures[stem] = std::async(std::launch::async, &FileDialogPanel::loadCoverFromTitle, this, stem);
+				}
+			}
+			
 			if (coverData.textureID != 0) {
 				textureID = (void*)(intptr_t)coverData.textureID;
-				imageXtended = true;
-			}*/
+			}
 		}
 
-		/*Icon*/
-		if (imageXtended) {
-			drawList->AddImageRounded(
-				textureID,
-				{ screenPos.x,screenPos.y },
-				{ screenPos.x + size.x,screenPos.y + thumbSize + padding * 2 },
-				{ 0,0 },
-				{ 1,1 },
-				IM_COL32(255, 255, 255, 255),
-				3
-			);
-			
-		}
-		else {
+		if (isLoading) {
+			drawList->PathClear();
+			float angle = 2 * 3.1415f * sinf(ImGui::GetTime());
+			drawList->PathArcTo({ screenPos.x + padding / 2 + thumbSize / 2,screenPos.y + padding + thumbSize / 2 }, thumbSize / 3, angle, angle + 3.1415f);
+			drawList->PathStroke(IM_COL32(0, 112, 224, 255), 0, 4);
+		} else {
+			/*Icon*/
 			drawList->AddImageRounded(
 				textureID,
 				{ screenPos.x + padding / 2,screenPos.y + padding },
@@ -310,14 +311,21 @@ namespace GameGuy {
 			);
 		}
 
-		
-
+		ImVec4 labelClipRect = ImVec4(
+			screenPos.x + padding / 2, screenPos.y + thumbSize + padding * 2.5f,
+			screenPos.x + padding / 2 + size.x, screenPos.y + size.y - (ImGui::GetFontSize() - 4)
+		);
 
 		/*Label*/
 		drawList->AddText(
+			ImGui::GetFont(),
+			ImGui::GetFontSize() - 2,
 			{ screenPos.x + padding / 2,screenPos.y + thumbSize + padding * 2.5f },
 			IM_COL32(255, 255, 255, 255),
-			fileName.c_str()
+			fileName.c_str(),
+			(const char*)0,
+			size.x,
+			&labelClipRect
 		);
 	}
 

@@ -26,7 +26,7 @@ namespace GameGuy {
 	private:
 		std::deque<std::pair<size_t, std::array<double,4>>> mSamples;
 		std::mutex mMutex;
-		const size_t MAX_SAMPLES = 1024;
+		const size_t MAX_SAMPLES = 512;
 	};
 
 }

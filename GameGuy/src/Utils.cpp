@@ -38,20 +38,20 @@ namespace GameGuy {
 		return err;
 	}
 
-	void HTTPInit()
+	CURL* HTTPInit()
 	{
-		gCurl = curl_easy_init();
+		return curl_easy_init();
 	}
 
-	char* HTTPURLEncode(const char* string)
+	char* HTTPURLEncode(CURL* curl, const char* string)
 	{
-		char* encodedURLResource = curl_easy_escape(gCurl, string, strlen(string));
+		char* encodedURLResource = curl_easy_escape(curl, string, strlen(string));
 		return encodedURLResource;
 	}
 
-	void HTTPClose()
+	void HTTPClose(CURL* curl)
 	{
-		curl_easy_cleanup(gCurl);
+		curl_easy_cleanup(curl);
 	}
 
 	void DeleteBuffer(DataBuffer& buffer)
@@ -84,20 +84,24 @@ namespace GameGuy {
 		return newLength;
 	}
 
-	int32_t HTTPGet(const char* HTTPUrl, DataBuffer& outBuffer)
+	HTTPResponse HTTPGet(CURL* curl, const char* HTTPUrl)
 	{
+		HTTPResponse response;
+
 		long http_code = 0;
 
-		curl_easy_setopt(gCurl, CURLOPT_URL, HTTPUrl);
-		curl_easy_setopt(gCurl, CURLOPT_WRITEFUNCTION, writefunc);
-		curl_easy_setopt(gCurl, CURLOPT_WRITEDATA, &outBuffer);
-		CURLcode code = curl_easy_perform(gCurl);
-		curl_easy_getinfo(gCurl, CURLINFO_RESPONSE_CODE, &http_code);
+		curl_easy_setopt(curl, CURLOPT_URL, HTTPUrl);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writefunc);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response.Body);
+		CURLcode code = curl_easy_perform(curl);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
 		if (code != CURLE_OK) {
-			return -1;
+			return response;
 		}
 
-		return http_code;
+		response.Status = http_code;
+
+		return response;
 	}
 }

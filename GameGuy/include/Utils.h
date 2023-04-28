@@ -20,21 +20,30 @@ namespace GameGuy {
 			:	Data(data),
 				Size(size)
 		{}
-
-		~DataBuffer() {
-			int i = 0;
-		}
 	};
 
-	inline CURL* gCurl = NULL;
+	struct HTTPResponse {
+		int32_t Status;
+		DataBuffer Body;
+
+		HTTPResponse()
+			:	Status(-1),
+				Body()
+		{}
+
+		HTTPResponse(int32_t status, DataBuffer body)
+			:	Status(status),
+				Body(body)
+		{}
+	};
 
 	errno_t ReadFile(const char* fileName, DataBuffer& outBuffer);
 	errno_t WriteFile(const char* fileName, DataBuffer buffer);
 
-	void HTTPInit();
-	char* HTTPURLEncode(const char* string);
-	int32_t HTTPGet(const char* HTTPBaseUrl, DataBuffer& outBuffer);
-	void HTTPClose();
+	CURL* HTTPInit();
+	char* HTTPURLEncode(CURL* curl, const char* string);
+	HTTPResponse HTTPGet(CURL* curl, const char* HTTPBaseUrl);
+	void HTTPClose(CURL* curl);
 
 	void DeleteBuffer(DataBuffer& buffer);
 

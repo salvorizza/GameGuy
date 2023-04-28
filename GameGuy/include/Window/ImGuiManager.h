@@ -35,6 +35,8 @@ namespace GameGuy {
 		IconData& LoadIconResource(const char* imagePath);
 		IconData& LoadIconResource(const char* name, const uint8_t* data, size_t size);
 		IconData& GetIconResource(const char* name);
+		bool ReleaseIconResource(const char* name);
+
 		bool ExistsIconResource(const char* name);
 
 	private:
