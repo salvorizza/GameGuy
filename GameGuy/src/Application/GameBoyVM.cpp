@@ -102,10 +102,12 @@ namespace GameGuy {
 					break;
 				}
 
+				uint16_t prevAddress = sInstance->mInstance->cpu.current_instruction.address;
+
 				gbz80_clock(sInstance->mInstance);
 
-				if (sInstance->mInstance->cpu.cycles == 0) {
-					if (sInstance->mBreakFunction(sInstance->mInstance->cpu.registers.PC)) {
+				if (prevAddress != sInstance->mInstance->cpu.current_instruction.address) {
+					if (sInstance->mBreakFunction(sInstance->mInstance->cpu.current_instruction.address)) {
 						sInstance->setState(VMState::Pause);
 						break;
 					}

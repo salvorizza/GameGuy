@@ -80,19 +80,29 @@ extern "C" {
 		uint16_t address;
 		uint8_t prefix;
 		uint8_t opcode;
+
+		gbz80_register_t left_r;
+		gbz80_register_t right_r;
+		gbz80_execute_function_t execute_function;
+
 		uint8_t n;
 		uint16_t nn;
 		int8_t d;
-		gbz80_execute_function_t execute_function;
-		gbz80_register_t left_r;
-		gbz80_register_t right_r;
-		size_t cycles;
+
+		uint8_t bp;
+
+		uint8_t read_cycle, execution_cycle, write_cycle;
+		uint16_t read_address, write_address;
+
+		uint8_t num_total_cycles;
+		uint8_t num_current_cycle;
+
+		uint8_t completed;
 
 		char disassembled_name[32];
 	} gbz80_instruction_t;
 
 	typedef struct gbz80_cpu_t {
-		size_t cycles;
 		gbz80_t* instance;
 		gbz80_registers_t registers;
 		gbz80_instruction_t current_instruction;
@@ -104,8 +114,14 @@ extern "C" {
 		uint8_t tima, tac, tma;
 		uint8_t prev_timer_and_result;
 		uint8_t cycles_to_tima_interrupt,cycles_to_tima_interrupt_enable;
+		uint8_t read_value;
 
 		uint8_t halted;
+
+		uint8_t write_db;
+
+
+		uint8_t wait_cycles;
 	} gbz80_cpu_t;
 
 	
@@ -129,7 +145,7 @@ extern "C" {
 
 	void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction);
 	void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_t get_instruction_name);
-	size_t gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
+	void gbz80_cpu_execute(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 
 	void gbz80_cpu_load8_r_n(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);
 	void gbz80_cpu_load8_r_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction);

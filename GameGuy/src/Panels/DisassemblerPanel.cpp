@@ -63,7 +63,7 @@ namespace GameGuy {
 		if (it != mInstructionsBreaks.end()) {
 			setDebugState(DebugState::Breakpoint);
 			mScrollToCurrent = true;
-			mCurrent = mInstance->cpu.registers.PC;
+			mCurrent = address;
 			return true;
 		}
 		return false;
@@ -111,12 +111,14 @@ namespace GameGuy {
 				break;
 
 			case DebugState::Step:
-				if (getCurrentInstructionMap().find(mInstance->cpu.registers.PC) != getCurrentInstructionMap().end()) {
-					do {
+				if (getCurrentInstructionMap().find(mInstance->cpu.current_instruction.address) != getCurrentInstructionMap().end()) {
+					uint16_t prevAddress = mInstance->cpu.current_instruction.address;
+					while (mInstance->cpu.current_instruction.address == prevAddress) {
 						gbz80_clock(mInstance);
-					} while (mInstance->cpu.cycles != 0);
+					} 
+
 					mScrollToCurrent = true;
-					mCurrent = mInstance->cpu.registers.PC;
+					mCurrent = mInstance->cpu.current_instruction.address;
 					setDebugState(DebugState::Breakpoint);
 				}
 				else {
@@ -302,7 +304,7 @@ namespace GameGuy {
 						mScrollToCurrent = false;
 					}
 
-					if (mDebugState != DebugState::Idle && address == mInstance->cpu.registers.PC) {
+					if (mDebugState != DebugState::Idle && address == mInstance->cpu.current_instruction.address) {
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, IM_COL32(230, 100, 120, 125));
 						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(180, 50, 70, 125));
 					}
