@@ -67,10 +67,10 @@ extern "C" {
 
 
 	typedef enum gbz80_ppu_state_t {
-		GBZ80_PPU_STATE_OAM_SCAN,
-		GBZ80_PPU_STATE_DRAWING_PIXELS,
-		GBZ80_PPU_STATE_HMODE,
-		GBZ80_PPU_STATE_VBLANK
+		GBZ80_PPU_STATE_HMODE = 0,
+		GBZ80_PPU_STATE_VBLANK = 1,
+		GBZ80_PPU_STATE_OAM_SCAN = 2,
+		GBZ80_PPU_STATE_DRAWING_PIXELS = 3
 	} gbz80_ppu_state_t;
 
 	typedef struct gbz80_ppu_t {
@@ -96,6 +96,9 @@ extern "C" {
 
 		uint8_t scx_dec;
 		uint32_t num_dots;
+
+		uint8_t vram_blocked;
+		uint8_t oam_blocked;
 
 
 		gbz80_t* instance;
@@ -129,6 +132,8 @@ extern "C" {
 	void gbz80_ppu_fifo_fetcher_clock(gbz80_ppu_t* ppu, gbz80_ppu_fifo_fetcher_t* fifo_fetcher, uint8_t clock);
 	void gbz80_ppu_util_convert_2bpp(uint8_t low, uint8_t high, uint8_t out_pixels[8]);
 
+	void gbz80_ppu_change_state(gbz80_ppu_t* ppu, gbz80_ppu_state_t new_state);
+	void gbz80_apply_current_state(gbz80_ppu_t* ppu);
 
 #ifdef __cplusplus
 }

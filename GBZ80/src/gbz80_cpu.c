@@ -131,8 +131,8 @@ uint8_t gbz80_cpu_memory_write(gbz80_cpu_t* cpu, uint16_t address, uint8_t curre
 			uint16_t source_address = ((uint16_t)*val << 8);
 			uint16_t dst_address = 0xFE00;
 
-			for (uint16_t i = 0; i < 0x100; i++) {
-				uint8_t val = gbz80_memory_read8(cpu->instance, source_address);
+			for (uint16_t i = 0; i < 0xA0; i++) {
+				uint8_t val = gbz80_memory_read_internal(cpu->instance, source_address);
 				gbz80_memory_write_internal(cpu->instance, dst_address, val);
 
 				source_address++;
@@ -349,32 +349,23 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 
 	if (cpu->wait_cycles == 0) {
 		if (!cpu->halted && gbz80_cpu_handle_interrupts(cpu)) {
-			 if (cpu->current_instruction.num_current_cycle >= cpu->current_instruction.num_total_cycles){
-				memset(&cpu->current_instruction, 0, sizeof(gbz80_instruction_t));
-				gbz80_cpu_fetch(cpu, &cpu->current_instruction);
+			if (cpu->current_instruction.num_current_cycle >= cpu->current_instruction.num_total_cycles) {
+				gbz80_cpu_fetch(cpu, &cpu->current_instruction);//Pre fetch
 				gbz80_cpu_decode(cpu, &cpu->current_instruction, 0);
-
-				cpu->current_instruction.execution_cycle = cpu->current_instruction.num_total_cycles - 4;
-
-				if (cpu->current_instruction.read_cycle != 0) {
-					cpu->current_instruction.execution_cycle = cpu->current_instruction.read_cycle + 1;
-				}
-
-				if (cpu->current_instruction.write_cycle != 0 && cpu->current_instruction.execution_cycle > cpu->current_instruction.write_cycle) {
-					cpu->current_instruction.write_cycle = cpu->current_instruction.write_cycle - 4;
-				}
-			 }
+			}
 
 			if (cpu->current_instruction.num_current_cycle < cpu->current_instruction.num_total_cycles) {
-				//Sub states 
+				//Read 
 				if (cpu->current_instruction.read_cycle != 0 && cpu->current_instruction.num_current_cycle == cpu->current_instruction.read_cycle) {
 					cpu->current_instruction.n = gbz80_memory_read8(cpu->instance, cpu->current_instruction.read_address);
 				}
 				
+				//Execute
 				if (cpu->current_instruction.num_current_cycle == cpu->current_instruction.execution_cycle) {
 					gbz80_cpu_execute(cpu, &cpu->current_instruction);
 				}
 
+				//Write
 				if (cpu->current_instruction.write_cycle != 0 && cpu->current_instruction.num_current_cycle == cpu->current_instruction.write_cycle) {
 					gbz80_memory_write8(cpu->instance, cpu->current_instruction.write_address, cpu->write_db);
 				}
@@ -423,6 +414,8 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 
 void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
 {
+	memset(out_instruction, 0, sizeof(gbz80_instruction_t));
+
 	out_instruction->address = cpu->registers.PC;
 	uint8_t opcode = gbz80_memory_read8(cpu->instance, cpu->registers.PC++);
 	out_instruction->prefix = 0x00;
@@ -432,6 +425,7 @@ void gbz80_cpu_fetch(gbz80_cpu_t* cpu, gbz80_instruction_t* out_instruction)
 	}
 	out_instruction->opcode = opcode;
 }
+
 
 void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_t get_instruction_name) {
 	uint8_t opcode = instruction->opcode;
@@ -1947,7 +1941,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "SWAP (HL)");
 				instruction->num_total_cycles = 16;
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 				instruction->write_cycle = 12;
@@ -2071,7 +2065,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "RLC (HL)");
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 				instruction->write_cycle = 12;
@@ -2123,7 +2117,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "RL (HL)");
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 				instruction->write_cycle = 12;
@@ -2175,7 +2169,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "RRC (HL)");
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 
@@ -2228,7 +2222,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "RR (HL)");
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 
@@ -2281,7 +2275,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 			instruction->left_r = GBZ80_REGISTER_HL;
 			instruction->num_total_cycles = 16;
 			if(get_instruction_name) sprintf(instruction->disassembled_name, "SLA (HL)");
-			instruction->read_cycle = 4;
+			instruction->read_cycle = 8;
 			instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 
@@ -2334,7 +2328,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "SRA (HL)");
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 
@@ -2387,7 +2381,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->left_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "SRL (HL)");
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
 
@@ -2491,10 +2485,10 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->right_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "RES %d,(HL)", instruction->n);
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
-				instruction->write_cycle = 8;
+				instruction->write_cycle = 12;
 				instruction->write_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 				break;
 		}
@@ -2544,10 +2538,10 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 				instruction->right_r = GBZ80_REGISTER_HL;
 				instruction->num_total_cycles = 16;
 				if(get_instruction_name) sprintf(instruction->disassembled_name, "SET %d,(HL)", instruction->n);
-				instruction->read_cycle = 4;
+				instruction->read_cycle = 8;
 				instruction->read_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 
-				instruction->write_cycle = 8;
+				instruction->write_cycle = 12;
 				instruction->write_address = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 				break;
 		}
@@ -2748,6 +2742,13 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		instruction->num_total_cycles = 16;
 		instruction->execute_function = &gbz80_cpu_rtrns_reti;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "RETI");
+	}
+
+	instruction->execution_cycle = instruction->num_total_cycles - 4;
+	if (instruction->write_cycle != 0) {
+		instruction->execution_cycle = instruction->write_cycle;
+	}else if (instruction->read_cycle != 0) {
+		instruction->execution_cycle = instruction->read_cycle;
 	}
 }
 

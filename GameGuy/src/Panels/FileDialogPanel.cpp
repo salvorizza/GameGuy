@@ -313,7 +313,7 @@ namespace GameGuy {
 
 		ImVec4 labelClipRect = ImVec4(
 			screenPos.x + padding / 2, screenPos.y + thumbSize + padding * 2.5f,
-			screenPos.x + padding / 2 + size.x, screenPos.y + size.y - (ImGui::GetFontSize() - 4)
+			screenPos.x + size.x - padding / 2, screenPos.y + size.y - (ImGui::GetFontSize() - 4)
 		);
 
 		/*Label*/
@@ -322,7 +322,7 @@ namespace GameGuy {
 			ImGui::GetFontSize() - 2,
 			{ screenPos.x + padding / 2,screenPos.y + thumbSize + padding * 2.5f },
 			IM_COL32(255, 255, 255, 255),
-			fileName.c_str(),
+			path.path().filename().string().c_str(),
 			(const char*)0,
 			size.x,
 			&labelClipRect
