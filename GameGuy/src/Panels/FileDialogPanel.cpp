@@ -121,6 +121,8 @@ namespace GameGuy {
 
 		float availWidth = ImGui::GetContentRegionAvailWidth();
 		int columnCount = max((int)(availWidth / (cellSize + margin)), 1);
+		ImGui::BeginChild("Content");
+
 		ImGui::Columns(columnCount, 0, false);
 
 		for (auto& directoryPath : std::filesystem::directory_iterator{ *mCurrentPath }) {
@@ -136,6 +138,7 @@ namespace GameGuy {
 				ImGui::NextColumn();
 			}
 		}
+		ImGui::EndChild();
 		ImGui::Columns(1);
 	}
 
@@ -307,7 +310,7 @@ namespace GameGuy {
 				{ 0,0 },
 				{ 1,1 },
 				IM_COL32(255, 255, 255, 255),
-				3
+				0
 			);
 		}
 

@@ -24,35 +24,31 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 			fread(&out_rom->header, sizeof(gbz80_cartridge_header_t), 1, file_stream);
 			fread(out_rom->code.data, sizeof(uint8_t) * code_size, 1, file_stream);
 
-			switch (out_rom->header.cartridge_type)
-			{
-				case GBZ80_CARTRIDGE_TYPE_ROM_ONLY:
-					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_NULL);
+			switch (out_rom->header.rom_size) {
+				case 0x00:
+				case 0x01:
+				case 0x02:
+				case 0x03:
+				case 0x04:
+				case 0x05:
+				case 0x06:
+				case 0x07:
+				case 0x08:
+					out_rom->rom_banks_size = KIBI(32) * (1 << out_rom->header.rom_size);
 					break;
 
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1:
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1_AND_RAM:
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1_AND_RAM_AND_BATT:
-					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_1);
+				case 0x52:
+					out_rom->rom_banks_size = 72 * KIBI(4);
 					break;
-
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3:
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_RAM:
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_RAM_AND_BATT:
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_BATT:
-				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_RAM_AND_BATT:
-					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_3);
+				case 0x53:
+					out_rom->rom_banks_size = 80 * KIBI(4);
+					break;
+				case 0x54:
+					out_rom->rom_banks_size = 96 * KIBI(4);
 					break;
 			}
-
-			//if (out_rom->header.rom_size != GBZ80_ROM_SIZE_32K) {
-				out_rom->rom_banks_size = KIBI(32) << (size_t)out_rom->header.rom_size;
-				out_rom->rom_banks = (uint8_t*)malloc(out_rom->rom_banks_size);
-				memset(out_rom->rom_banks, 0, out_rom->rom_banks_size);
-			/* } else {
-				out_rom->rom_banks = NULL;
-				out_rom->rom_banks_size = 0;
-			}*/
+			out_rom->rom_banks = (uint8_t*)malloc(out_rom->rom_banks_size);
+			if(out_rom->rom_banks) memset(out_rom->rom_banks, 0, out_rom->rom_banks_size);
 
 			switch (out_rom->header.ram_size) {
 				case GBZ80_RAM_SIZE_NONE:
@@ -74,15 +70,34 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 
 			if (out_rom->ram_banks_size != 0) {
 				out_rom->ram_banks = (uint8_t*)malloc(out_rom->ram_banks_size);
-				memset(out_rom->ram_banks, 0, out_rom->ram_banks_size);
+				if(out_rom->ram_banks) memset(out_rom->ram_banks, 0, out_rom->ram_banks_size);
 			} else {
 				out_rom->ram_banks = NULL;
 			}
 
 			fseek(file_stream, 0, SEEK_SET);
-			fread(out_rom->rom_banks, out_rom->rom_banks_size, 1, file_stream);
+			if (out_rom->rom_banks) fread(out_rom->rom_banks, out_rom->rom_banks_size, 1, file_stream);
 
-			
+			switch (out_rom->header.cartridge_type)
+			{
+				case GBZ80_CARTRIDGE_TYPE_ROM_ONLY:
+					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_NULL, out_rom->rom_banks_size, out_rom->ram_banks_size);
+					break;
+
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1_AND_RAM:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC1_AND_RAM_AND_BATT:
+					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_1, out_rom->rom_banks_size, out_rom->ram_banks_size);
+					break;
+
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_RAM:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_RAM_AND_BATT:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_BATT:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_RAM_AND_BATT:
+					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_3, out_rom->rom_banks_size, out_rom->ram_banks_size);
+					break;
+			}
 
 		}
 
@@ -96,14 +111,27 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 }
 
 uint8_t gbz80_cartridge_read(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t* out_val) {
-	uint32_t mapped_address;
-	if (cartridge && cartridge->mbc->read_func(cartridge->mbc, address, &mapped_address) == 1) {
-		if (address >= 0x0000 && address <= 0x7FFF) {
-			*out_val = cartridge->rom_banks[mapped_address];
-		} else if (address >= 0xA000 && address <= 0xBFFF) {
-			*out_val = cartridge->ram_banks[mapped_address];
+	uint32_t mapped_address, read_res;
+	if (cartridge) {
+		read_res = cartridge->mbc->read_func(cartridge->mbc, address, &mapped_address);
+		if (read_res == 1) {
+			if (address >= 0x0000 && address <= 0x7FFF) {
+				assert(mapped_address < cartridge->rom_banks_size && "Out of bound ROM");
+
+				*out_val = cartridge->rom_banks[mapped_address];
+			}
+			else if (address >= 0xA000 && address <= 0xBFFF) {
+				assert(mapped_address < cartridge->ram_banks_size && "Out of bound RAM");
+
+				*out_val = cartridge->ram_banks[mapped_address];
+			}
+			return 1;
 		}
-		return 1;
+		else if (read_res == 2) {
+			*out_val = 0xFF;
+			return 1;
+		}
+		return read_res;
 	}
 	return 0;
 }

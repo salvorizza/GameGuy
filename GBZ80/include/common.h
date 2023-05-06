@@ -13,8 +13,8 @@ extern "C" {
 #include <string.h>
 
 #define BYTE(x) (x)
-#define KIBI(x) (1024llu * BYTE(x))
-#define MIBI(x) (1024llu * KIBI(x))
+#define KIBI(x) (x * BYTE(1024))
+#define MEBI(x) (x * KIBI(1024))
 
 	typedef struct gbz80_timer_t {
 		size_t counter;

@@ -195,7 +195,7 @@ namespace GameGuy{
 		ImGui::GetStyle().FrameRounding = 5.0f;
 	}
 
-	IconData& ImGuiManager::LoadIconResource(const char* imagePath)
+	IconData ImGuiManager::LoadIconResource(const char* imagePath)
 	{
 		if (mIcons.find(imagePath) == mIcons.end()) {
 			IconData data;
@@ -208,7 +208,7 @@ namespace GameGuy{
 		return mIcons[imagePath];
 	}
 
-	IconData& ImGuiManager::LoadIconResource(const char* name, const uint8_t* data, size_t size)
+	IconData ImGuiManager::LoadIconResource(const char* name, const uint8_t* data, size_t size)
 	{
 		if (mIcons.find(name) == mIcons.end()) {
 			IconData iconData;
@@ -220,7 +220,7 @@ namespace GameGuy{
 		}
 		return mIcons[name];
 	}
-	IconData& ImGuiManager::GetIconResource(const char* name)
+	IconData ImGuiManager::GetIconResource(const char* name)
 	{
 		IconData iconData;
 

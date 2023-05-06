@@ -152,7 +152,9 @@ void gbz80_cpu_request_interrupt(gbz80_cpu_t* cpu, gbz80_interrupt_type_t interr
 	uint8_t register_if = gbz80_memory_read_internal(cpu->instance, 0xFF0F);
 	common_set8_bit(&register_if, (uint8_t)interrupt_type);
 	gbz80_memory_write_internal(cpu->instance, 0xFF0F, register_if);
-	cpu->halted = 0;
+	if (cpu->ime) {
+		cpu->halted = 0;
+	}
 }
 
 uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu) {
@@ -166,6 +168,8 @@ uint8_t gbz80_cpu_handle_interrupts(gbz80_cpu_t* cpu) {
 
 			for (uint8_t i = 0; i < (uint8_t)GBZ80_INTERRUPT_MAX; i++) {
 				if (common_get8_bit(ie, i) == 1 && common_get8_bit(register_if, i) == 1) {
+					cpu->halted = 0;
+
 					common_reset8_bit(&register_if, i);
 					gbz80_memory_write_internal(cpu->instance, 0xFF0F, register_if);
 					cpu->ime = 0;
@@ -351,7 +355,7 @@ void gbz80_cpu_clock(gbz80_cpu_t* cpu)
 		if (!cpu->halted && gbz80_cpu_handle_interrupts(cpu)) {
 			if (cpu->current_instruction.num_current_cycle >= cpu->current_instruction.num_total_cycles) {
 				gbz80_cpu_fetch(cpu, &cpu->current_instruction);//Pre fetch
-				gbz80_cpu_decode(cpu, &cpu->current_instruction, 0);
+				gbz80_cpu_decode(cpu, &cpu->current_instruction, 1);
 			}
 
 			if (cpu->current_instruction.num_current_cycle < cpu->current_instruction.num_total_cycles) {
@@ -1664,7 +1668,7 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 			case 0xB9:
 				instruction->left_r = GBZ80_REGISTER_A;
 				instruction->right_r = GBZ80_REGISTER_C;
-				if(get_instruction_name) sprintf(instruction->disassembled_name, "XOR C");
+				if(get_instruction_name) sprintf(instruction->disassembled_name, "CP C");
 				break;
 
 			case 0xBA:
@@ -2743,6 +2747,9 @@ void gbz80_cpu_decode(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction, uint8_
 		instruction->execute_function = &gbz80_cpu_rtrns_reti;
 		if(get_instruction_name) sprintf(instruction->disassembled_name, "RETI");
 	}
+	else {
+		if (get_instruction_name) sprintf(instruction->disassembled_name, ".BYTE $%02X", instruction->opcode);
+	}
 
 	instruction->execution_cycle = instruction->num_total_cycles - 4;
 	if (instruction->write_cycle != 0) {
@@ -2785,6 +2792,7 @@ void gbz80_cpu_load8_n_r(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 void gbz80_cpu_load8_a_hl_dec(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 	uint8_t val = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_HL);
+
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_A, val);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl - 1);
 }
@@ -2792,6 +2800,7 @@ void gbz80_cpu_load8_a_hl_dec(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 void gbz80_cpu_load8_hl_dec_a(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 	uint8_t a = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
+
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_HL, a);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl - 1);
 }
@@ -2807,6 +2816,7 @@ void gbz80_cpu_load8_a_hl_inc(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction
 void gbz80_cpu_load8_hl_inc_a(gbz80_cpu_t* cpu, gbz80_instruction_t* instruction) {
 	uint16_t hl = gbz80_cpu_get_register16(cpu, GBZ80_REGISTER_HL);
 	uint8_t a = gbz80_cpu_get_register8(cpu, GBZ80_REGISTER_A);
+
 	gbz80_cpu_set_register8(cpu, GBZ80_REGISTER_HL, a);
 	gbz80_cpu_set_register16(cpu, GBZ80_REGISTER_HL, hl + 1);
 }

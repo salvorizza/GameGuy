@@ -66,7 +66,7 @@ extern "C" {
 			};
 		};
 		uint16_t SP;
-		uint16_t PC;
+		uint32_t PC;
 	} gbz80_registers_t;
 
 	typedef struct gbz80_instruction_t gbz80_instruction_t;

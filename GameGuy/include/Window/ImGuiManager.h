@@ -32,9 +32,9 @@ namespace GameGuy {
 		ImFont* getSmallIconFont() { return mSmallIconFont; }
 		ImFont* getLargeIconFont() { return mLargeIconFont; }
 
-		IconData& LoadIconResource(const char* imagePath);
-		IconData& LoadIconResource(const char* name, const uint8_t* data, size_t size);
-		IconData& GetIconResource(const char* name);
+		IconData LoadIconResource(const char* imagePath);
+		IconData LoadIconResource(const char* name, const uint8_t* data, size_t size);
+		IconData GetIconResource(const char* name);
 		bool ReleaseIconResource(const char* name);
 
 		bool ExistsIconResource(const char* name);

@@ -48,7 +48,8 @@ namespace GameGuy {
 		mInstructionsCartridgeKeys.clear();
 		uint8_t bootstrapMode = mInstance->bootstrap_mode;
 		mInstance->bootstrap_mode = 0;
-		disassemble(mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xE000);
+		disassemble(mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xFFFE);
+
 		mInstance->bootstrap_mode = bootstrapMode;
 
 		for (auto& [address, debugInstruction] : mInstructionsCartridge)
@@ -335,8 +336,6 @@ namespace GameGuy {
 					ImGui::TableNextColumn();
 					ImGui::Text("0x%04X", address);
 
-					
-
 					ImGui::TableNextColumn();
 					ImVec2 cursorPos = ImGui::GetCursorPos();
 					if (strlen(searchBuffer) != 0) {
@@ -370,7 +369,7 @@ namespace GameGuy {
 
 		uint16_t pc = mInstance->cpu.registers.PC;
 
-		mInstance->cpu.registers.PC = 0;
+		mInstance->cpu.registers.PC = 0x0;
 		while (&base[mInstance->cpu.registers.PC] <= end) {
 			gbz80_instruction_t instruction;
 			gbz80_cpu_fetch(&mInstance->cpu, &instruction);

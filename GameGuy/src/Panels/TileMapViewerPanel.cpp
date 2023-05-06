@@ -38,7 +38,7 @@ namespace GameGuy {
 			float cellWidth = (float)mFBO->width() / 256.0f;
 			float cellHeight = (float)mFBO->height() / 256.0f;
 
-			batchRenderer->begin(projMatrix, 0.05, cellHeight / cellWidth);
+			batchRenderer->begin(projMatrix, 0.1f, 1);
 
 			glm::vec4 color;
 			uint8_t pixels[8];
@@ -90,21 +90,20 @@ namespace GameGuy {
 		ImGui::Checkbox("Relative adressing", &mRelativeAdressing);
 
 		ImVec2 size = ImGui::GetContentRegionAvail();
+		ImVec2 newSize = { 0,0 };
 		float offsetX, offsetY;
 
-		float bestSize = min(size.x, size.y);
-		ImVec2 newSize = { bestSize,bestSize };
+		float scale = min(size.x / 256.0f, size.y / 256.0f);
+		newSize.x = 256.0f * scale;
+		newSize.y = 256.0f * scale;
 		offsetX = (size.x - newSize.x) / 2;
 		offsetY = (size.y - newSize.y) / 2;
 
+		uint32_t newWidth = (uint32_t)floor(newSize.x);
+		uint32_t newHeight = (uint32_t)floor(newSize.y);
 		if (!mFBO) {
-			uint32_t newWidth = (uint32_t)floor(size.x);
-			uint32_t newHeight = (uint32_t)floor(size.y);
 			mFBO = std::make_shared<FrameBuffer>(newWidth, newHeight);
-		}
-		else {
-			uint32_t newWidth = (uint32_t)floor(size.x);
-			uint32_t newHeight = (uint32_t)floor(size.y);
+		} else {
 			uint32_t fboWidth, fboHeight;
 
 			mFBO->getSize(fboWidth, fboHeight);
@@ -121,19 +120,5 @@ namespace GameGuy {
 		cursorPos.y += offsetY;
 		ImGui::SetCursorPos(cursorPos);
 		ImGui::Image(reinterpret_cast<void*>(textureID), ImVec2{ newSize.x, newSize.y }, ImVec2{ 0, 1 }, ImVec2{ 1, 0 });
-
-		ImVec2 pos = ImGui::GetWindowPos();
-		ImVec2 vMin;
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		float cellWidth = (float)newSize.x / 32.0f;
-		float cellHeight = (float)newSize.y / 32.0f;
-
-		vMin.x = pos.x + offsetX;
-		vMin.y = pos.y + cursorPos.y;
-
-		for (int i = 0; i <= 32; i++) {
-			drawList->AddLine(ImVec2(vMin.x + cellWidth * i, vMin.y), ImVec2(vMin.x + cellWidth * i, vMin.y + newSize.y), IM_COL32(0, 255, 0, 255));
-			drawList->AddLine(ImVec2(vMin.x, vMin.y + cellHeight * i), ImVec2(vMin.x + newSize.x, vMin.y + cellHeight * i), IM_COL32(0, 255, 0, 255));
-		}
 	}
 }

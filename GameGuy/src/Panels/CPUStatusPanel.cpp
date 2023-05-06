@@ -86,6 +86,8 @@ namespace GameGuy {
 		}
 
 		ImGui::Text("Current Instruction: %s", mInstance->cpu.current_instruction.disassembled_name);
+		ImGui::Text("\tCycles: 0x%02X", mInstance->cpu.current_instruction.num_total_cycles);
+
 		ImGui::Text("PC: 0x%04X", mInstance->cpu.registers.PC);
 		ImGui::Text("SP: 0x%04X", mInstance->cpu.registers.SP);
 		ImGui::Text("Halted: %d", mInstance->cpu.halted);
