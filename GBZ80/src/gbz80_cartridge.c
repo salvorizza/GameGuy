@@ -68,15 +68,9 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 					break;
 			}
 
-			if (out_rom->ram_banks_size != 0) {
-				out_rom->ram_banks = (uint8_t*)malloc(out_rom->ram_banks_size);
-				if(out_rom->ram_banks) memset(out_rom->ram_banks, 0, out_rom->ram_banks_size);
-			} else {
-				out_rom->ram_banks = NULL;
-			}
 
 			fseek(file_stream, 0, SEEK_SET);
-			if (out_rom->rom_banks) fread(out_rom->rom_banks, out_rom->rom_banks_size, 1, file_stream);
+			if (out_rom->rom_banks) fread(out_rom->rom_banks, out_rom->rom_banks_size + out_rom->header.cartridge_type, 1, file_stream);
 
 			switch (out_rom->header.cartridge_type)
 			{
@@ -99,6 +93,14 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 					break;
 			}
 
+
+			if (out_rom->ram_banks_size != 0) {
+				out_rom->ram_banks = (uint8_t*)malloc(out_rom->ram_banks_size);
+				if (out_rom->ram_banks) memset(out_rom->ram_banks, 0, out_rom->ram_banks_size);
+			}
+			else {
+				out_rom->ram_banks = NULL;
+			}
 		}
 
 		fclose(file_stream);
@@ -111,26 +113,21 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 }
 
 uint8_t gbz80_cartridge_read(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t* out_val) {
-	uint32_t mapped_address, read_res;
+	uint32_t read_res;
 	if (cartridge) {
-		read_res = cartridge->mbc->read_func(cartridge->mbc, address, &mapped_address);
-		if (read_res == 1) {
-			if (address >= 0x0000 && address <= 0x7FFF) {
-				assert(mapped_address < cartridge->rom_banks_size && "Out of bound ROM");
-
-				*out_val = cartridge->rom_banks[mapped_address];
-			}
-			else if (address >= 0xA000 && address <= 0xBFFF) {
-				assert(mapped_address < cartridge->ram_banks_size && "Out of bound RAM");
-
-				*out_val = cartridge->ram_banks[mapped_address];
-			}
-			return 1;
+		uint8_t* memory = NULL;
+		if (address >= 0x0000 && address <= 0x7FFF) {
+			memory = cartridge->rom_banks;
+		} else if (address >= 0xA000 && address <= 0xBFFF) {
+			memory = cartridge->ram_banks;
 		}
-		else if (read_res == 2) {
+
+		read_res = gbz80_mbc_read(cartridge->mbc, address, memory, out_val);
+		if (read_res == 2) {
 			*out_val = 0xFF;
 			return 1;
 		}
+
 		return read_res;
 	}
 	return 0;
@@ -138,7 +135,7 @@ uint8_t gbz80_cartridge_read(gbz80_cartridge_t* cartridge, uint16_t address, uin
 
 uint8_t gbz80_cartridge_write(gbz80_cartridge_t* cartridge, uint16_t address, uint8_t val) {
 	uint32_t ram_address;
-	if (cartridge && cartridge->mbc->write_func(cartridge->mbc, address, val, &ram_address)) {
+	if (cartridge && gbz80_mbc_write(cartridge->mbc, address, val, &ram_address)) {
 		if (address >= 0xA000 && address <= 0xBFFF) {
 			if(cartridge->ram_banks)
 				cartridge->ram_banks[ram_address] = val;

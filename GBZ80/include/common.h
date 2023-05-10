@@ -3,7 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define GBZ80_CLOCK_HERTZ 4194304llu
+#define GBZ80_CLOCK_HERTZ 0x400000
 
 #include <stdint.h>
 #include <stdio.h>
