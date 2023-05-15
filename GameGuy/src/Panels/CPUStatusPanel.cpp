@@ -86,11 +86,14 @@ namespace GameGuy {
 		}
 
 		ImGui::Text("Current Instruction: %s", mInstance->cpu.current_instruction.disassembled_name);
-		ImGui::Text("\tCycles: 0x%02X", mInstance->cpu.current_instruction.num_total_cycles);
+		ImGui::Text("\tCurrent cycle/Total cycles: %d/%d", mInstance->cpu.current_instruction.num_current_cycle,mInstance->cpu.current_instruction.num_total_cycles);
+		ImGui::Text("\tRead Cycle: %d", mInstance->cpu.current_instruction.read_cycle);
+		ImGui::Text("\tWrite Cycle: %d", mInstance->cpu.current_instruction.write_cycle);
 
 		ImGui::Text("PC: 0x%04X", mInstance->cpu.registers.PC);
 		ImGui::Text("SP: 0x%04X", mInstance->cpu.registers.SP);
 		ImGui::Text("Halted: %d", mInstance->cpu.halted);
+		ImGui::Text("IME: %d", mInstance->cpu.ime);
 		ImGui::Text("Div: 0x%04X", mInstance->cpu.div);
 		ImGui::Text("TIMA: 0x%02X", mInstance->cpu.tima);
 		ImGui::Text("TMA: 0x%02X", mInstance->cpu.tma);
@@ -100,6 +103,11 @@ namespace GameGuy {
 		ImGui::Text("TAC");
 		ImGui::Text("\tEnable: %d", enable);
 		ImGui::Text("\tFrequency: %dhz", freqs[freq]);
+		ImGui::Text("DMA Enabled: %d", mInstance->cpu.dma_enabled);
+		ImGui::Text("\tDMA Next write: 0x%04X", ((uint16_t)mInstance->cpu.dma << 8) | mInstance->cpu.dma_next_write_address);
+		ImGui::Text("\tDMA Cycles: %d", mInstance->cpu.dma_cycle_count);
+		ImGui::Text("PPU num dots: %d", mInstance->ppu.num_dots);
+		ImGui::Text("PPU LY: %d", mInstance->ppu.ly);
 	}
 
 }

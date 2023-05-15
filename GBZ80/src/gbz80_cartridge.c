@@ -91,6 +91,19 @@ gbz80_cartridge_t* gbz80_cartridge_read_from_file(const char* rom_path) {
 				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC3_AND_TIMER_AND_RAM_AND_BATT:
 					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_3, out_rom->rom_banks_size, out_rom->ram_banks_size);
 					break;
+
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC5:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC5_AND_RAM:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC5_AND_RAM_AND_BATT:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC5_AND_RUMBLE:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC5_AND_RUMBLE_AND_SRAM:
+				case GBZ80_CARTRIDGE_TYPE_ROM_AND_MBC5_AND_RUMBLE_AND_SRAM_AND_BATT:
+					out_rom->mbc = gbz80_mbc_create(GBZ80_MBC_TYPE_5, out_rom->rom_banks_size, out_rom->ram_banks_size);
+					break;
+
+				default: {
+					assert(0 && "MBC Not managed ");
+				}
 			}
 
 

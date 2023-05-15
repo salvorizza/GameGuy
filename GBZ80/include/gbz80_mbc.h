@@ -16,7 +16,8 @@ extern "C" {
 	typedef enum gbz80_mbc_type_t {
 		GBZ80_MBC_TYPE_NULL,
 		GBZ80_MBC_TYPE_1,
-		GBZ80_MBC_TYPE_3
+		GBZ80_MBC_TYPE_3,
+		GBZ80_MBC_TYPE_5
 	} gbz80_mbc_type_t;
 
 	typedef struct gbz80_mbc_t {
@@ -59,6 +60,14 @@ extern "C" {
 		uint8_t prev_latch;
 	} gbz80_mbc_003_t;
 
+	typedef struct gbz80_mbc_005_t {
+		gbz80_mbc_t base;
+
+		uint8_t ramg;
+		uint8_t romb0, romb1;
+		uint8_t ramb;
+	} gbz80_mbc_005_t;
+
 	
 	
 	gbz80_mbc_t* gbz80_mbc_create(gbz80_mbc_type_t type, size_t rom_size, size_t ram_size);
@@ -78,6 +87,10 @@ extern "C" {
 	uint8_t gbz80_mbc_003_read(void* mbc_003, uint16_t address, uint8_t* memory, uint8_t* val);
 	uint8_t gbz80_mbc_003_write(void* mbc_003, uint16_t address, uint8_t val, uint32_t* ram_address);
 	void gbz80_mbc_003_clock(void* mbc_003);
+
+	uint8_t gbz80_mbc_005_read(void* mbc_005, uint16_t address, uint8_t* memory, uint8_t* val);
+	uint8_t gbz80_mbc_005_write(void* mbc_005, uint16_t address, uint8_t val, uint32_t* ram_address);
+	void gbz80_mbc_005_clock(void* mbc_005);
 
 #ifdef __cplusplus
 }

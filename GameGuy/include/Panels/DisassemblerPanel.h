@@ -40,8 +40,8 @@ namespace GameGuy {
 				Instruction()
 			{}
 
-			DebugInstruction(const std::string& instruction)
-				: Breakpoint(false),
+			DebugInstruction(const std::string& instruction, bool breakpoint = false)
+				: Breakpoint(breakpoint),
 				Instruction(instruction)
 			{}
 		};
@@ -63,7 +63,7 @@ namespace GameGuy {
 		};
 
 	private:
-		void disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionMap, uint8_t* base, uint8_t* end);
+		void disassemble(DebugTab tab,std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionMap, uint8_t* base, uint8_t* end);
 		inline std::map<uint16_t, DisassemblerPanel::DebugInstruction>& getCurrentInstructionMap() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRom : mInstructionsCartridge; }
 		inline std::vector<uint16_t>& getCurrentInstructionMapKeys() { return (mDebugTab == DebugTab::BootRom) ? mInstructionsBootRomKeys : mInstructionsCartridgeKeys; }
 

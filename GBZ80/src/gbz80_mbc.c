@@ -46,6 +46,21 @@ gbz80_mbc_t* gbz80_mbc_create(gbz80_mbc_type_t type, size_t rom_size, size_t ram
 			}
 			break;
 		}
+
+		case GBZ80_MBC_TYPE_5: {
+			gbz80_mbc_005_t* mbc_005 = (gbz80_mbc_005_t*)malloc(sizeof(gbz80_mbc_005_t));
+			if (mbc_005) {
+				mbc_005->base.read_func = &gbz80_mbc_005_read;
+				mbc_005->base.write_func = &gbz80_mbc_005_write;
+				mbc_005->base.clock_func = &gbz80_mbc_005_clock;
+				mbc_005->ramb = 0;
+				mbc_005->ramg = 0;
+				mbc_005->romb0 = 1;
+				mbc_005->romb1 = 0;
+				mbc = (gbz80_mbc_t*)mbc_005;
+			}
+			break;
+		}
 	}
 
 	if (mbc != NULL) {
@@ -323,4 +338,82 @@ void gbz80_mbc_003_clock(void* mbc_003)
 			mbc->rtc_clock++;
 		}
 	}
+}
+
+uint8_t gbz80_mbc_005_read(void* mbc_005, uint16_t address, uint8_t* memory, uint8_t* val)
+{
+	gbz80_mbc_005_t* mbc = (gbz80_mbc_005_t*)mbc_005;
+
+
+	if (address >= 0x0000 && address <= 0x3FFF) {
+		uint32_t mapped_address = (uint32_t)(address & 0x3FFF);
+		mapped_address &= mbc->base.rom_size - 1;
+
+		assert(mapped_address < mbc->base.rom_size && "Out of bound ROM");
+		*val = memory[mapped_address];
+
+		return 1;
+	}
+	else if (address >= 0x4000 && address <= 0x7FFF) {
+		uint32_t bank = mbc->romb1 << 8 | mbc->romb0;
+		uint32_t mapped_address = bank << 14 | (uint32_t)(address & 0x3FFF);
+		mapped_address &= mbc->base.rom_size - 1;
+
+
+		assert(mapped_address < mbc->base.rom_size && "Out of bound ROM");
+		*val = memory[mapped_address];
+
+		return 1;
+	}
+	else if (address >= 0xA000 && address <= 0xBFFF) {
+		if (mbc->ramg && mbc->base.ram_size != 0) {
+			uint32_t bank = mbc->ramb;
+			uint32_t mapped_address = bank << 13 | (uint32_t)(address & 0x1FFF);
+			mapped_address &= mbc->base.ram_size - 1;
+
+			*val = memory[mapped_address];
+			return 1;
+		}
+		else {
+			return 2;
+		}
+	}
+
+	return 0;
+}
+
+uint8_t gbz80_mbc_005_write(void* mbc_005, uint16_t address, uint8_t val, uint32_t* ram_address)
+{
+	gbz80_mbc_005_t* mbc = (gbz80_mbc_005_t*)mbc_005;
+
+	if (address >= 0x0000 && address <= 0x1FFF) {
+		mbc->ramg = (val & 0x0F) == 0x0A;
+		return 1;
+	}
+	else if (address >= 0x2000 && address <= 0x2FFF) {
+		mbc->romb0 = val;
+		return 1;
+	}
+	else if (address >= 0x3000 && address <= 0x3FFF) {
+		mbc->romb1 = val & 0x1;
+		return 1;
+	}
+	else if (address >= 0x4000 && address <= 0x5FFF) {
+		mbc->ramb = val & 0xF;
+		return 1;
+	}
+	else if (address >= 0xA000 && address <= 0xBFFF) {
+		if (mbc->ramg && mbc->base.ram_size != 0) {
+			*ram_address = mbc->ramb << 13 | (uint32_t)(address & 0x1FFF);
+			*ram_address &= mbc->base.ram_size - 1;
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+void gbz80_mbc_005_clock(void* mbc_005)
+{
 }

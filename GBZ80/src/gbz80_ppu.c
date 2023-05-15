@@ -30,6 +30,7 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			case GBZ80_PPU_STATE_OAM_SCAN: {
 				if (ppu->num_dots == 0) {
 					gbz80_apply_current_state(ppu);
+					gbz80_ppu_update_stat_register(ppu, ppu->state);
 				}
 
 				if (ppu->num_dots == (NUM_DOTS_START_THREE - 1)) {
@@ -45,8 +46,10 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			}
 
 			case GBZ80_PPU_STATE_DRAWING_PIXELS: {
-				if (ppu->num_dots == NUM_DOTS_START_THREE)
+				if (ppu->num_dots == NUM_DOTS_START_THREE) {
 					gbz80_apply_current_state(ppu);
+					gbz80_ppu_update_stat_register(ppu, ppu->state);
+				}
 
 				if (ppu->fifo_fetcher.fifo.size > 8 && ppu->scx_dec > 0 && ppu->lcd_x == 0) {
 					gbz80_ppu_fifo_pop(&ppu->fifo_fetcher.fifo);
@@ -125,6 +128,7 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			case GBZ80_PPU_STATE_HMODE: {
 				if (ppu->num_dots == (NUM_DOTS_START_ZERO + ppu->mode3_delay)) {
 					gbz80_apply_current_state(ppu);
+					gbz80_ppu_update_stat_register(ppu, ppu->state);
 
 					ppu->lcd_x = 0;
 					ppu->fifo_fetcher.tile_x = 0;
@@ -150,6 +154,7 @@ void gbz80_ppu_clock(gbz80_ppu_t* ppu){
 			case GBZ80_PPU_STATE_VBLANK: {
 				if (ppu->num_dots == 0) {
 					gbz80_apply_current_state(ppu);
+					gbz80_ppu_update_stat_register(ppu, ppu->state);
 
 					if (ppu->ly == 144) {
 						gbz80_cpu_request_interrupt(&ppu->instance->cpu, GBZ80_INTERRUPT_VBLANK);
@@ -223,6 +228,7 @@ void gbz80_ppu_memory_read(gbz80_ppu_t* ppu, uint16_t address, uint8_t* val) {
 
 		case 0xFF41:
 			*val = ppu->lcd_status;
+			*val |= 0x80;
 			break;
 
 		case 0xFF42:
@@ -671,5 +677,4 @@ void gbz80_apply_current_state(gbz80_ppu_t* ppu)
 		ppu->vram_blocked = 0;
 		ppu->oam_blocked = 0;
 	}
-	gbz80_ppu_update_stat_register(ppu, ppu->state);
 }

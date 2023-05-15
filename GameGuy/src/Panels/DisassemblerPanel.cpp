@@ -32,7 +32,7 @@ namespace GameGuy {
 
 		uint8_t bootstrapMode = mInstance->bootstrap_mode;
 		mInstance->bootstrap_mode = 1;
-		disassemble(mInstructionsBootRom, mInstance->bootstrap_rom, mInstance->bootstrap_rom + BYTE(256));
+		disassemble(DebugTab::BootRom,mInstructionsBootRom, mInstance->bootstrap_rom, mInstance->bootstrap_rom + BYTE(256));
 		mInstance->bootstrap_mode = bootstrapMode;
 		for (auto& [address, debugInstruction] : mInstructionsBootRom)
 			mInstructionsBootRomKeys.push_back(address);
@@ -48,7 +48,7 @@ namespace GameGuy {
 		mInstructionsCartridgeKeys.clear();
 		uint8_t bootstrapMode = mInstance->bootstrap_mode;
 		mInstance->bootstrap_mode = 0;
-		disassemble(mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xFFFE);
+		disassemble(DebugTab::Cartridge, mInstructionsCartridge, mInstance->inserted_cartridge->rom_banks, mInstance->inserted_cartridge->rom_banks + 0xFFFE);
 
 		mInstance->bootstrap_mode = bootstrapMode;
 
@@ -234,6 +234,18 @@ namespace GameGuy {
 		if (condition) {
 			ImGui::PopStyleColor(3);
 		}
+
+		ImGui::Text("Go To:  ");
+		ImGui::SameLine();
+		static char gotoBuffer[32];
+		if (ImGui::InputText("##goto", gotoBuffer, IM_ARRAYSIZE(gotoBuffer), ImGuiInputTextFlags_CharsHexadecimal))
+		{
+			uint32_t gotoAddr;
+			if (sscanf(gotoBuffer, "%04X", &gotoAddr) == 1) {
+				mScrollToCurrent = true;
+				mCurrent = gotoAddr;
+			}
+		}
 		
 
 		static bool p_open = true;
@@ -296,8 +308,6 @@ namespace GameGuy {
 
 					uint16_t address = it->first;
 					DebugInstruction& debugInstruction = it->second;
-
-					
 
 					ImGui::TableNextRow();
 					if (mScrollToCurrent && address == mCurrent) {
@@ -364,7 +374,7 @@ namespace GameGuy {
 		ImGui::EndChild();
 	}
 
-	void DisassemblerPanel::disassemble(std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionsMap,uint8_t* base, uint8_t* end){
+	void DisassemblerPanel::disassemble(DebugTab tab, std::map<uint16_t, DisassemblerPanel::DebugInstruction>& instructionsMap,uint8_t* base, uint8_t* end){
 		instructionsMap.clear();
 
 		uint16_t pc = mInstance->cpu.registers.PC;
@@ -375,7 +385,9 @@ namespace GameGuy {
 			gbz80_cpu_fetch(&mInstance->cpu, &instruction);
 			gbz80_cpu_decode(&mInstance->cpu, &instruction, 1);
 
-			instructionsMap.emplace(instruction.address, instruction.disassembled_name);
+			auto pair = std::pair<DebugTab, uint16_t>(tab, instruction.address);
+			DebugInstruction di(instruction.disassembled_name, mInstructionsBreaks.find(pair) != mInstructionsBreaks.end());
+			instructionsMap.emplace(instruction.address, di);
 		}
 
 		mInstance->cpu.registers.PC = pc;

@@ -107,7 +107,8 @@ extern "C" {
 		gbz80_registers_t registers;
 		gbz80_instruction_t current_instruction;
 
-		uint16_t oam_transfer_count;
+		uint8_t dma,dma_enabled;
+		uint8_t dma_next_write_address,dma_setup_delay,dma_cycle_count;
 
 		uint8_t ime,ime_ready;
 		uint16_t div;
@@ -115,11 +116,15 @@ extern "C" {
 		uint8_t prev_timer_and_result;
 		uint8_t cycles_to_tima_interrupt,cycles_to_tima_interrupt_enable;
 		uint8_t read_value;
+		uint8_t p1;
+		uint8_t sb, sc;
+		gbz80_timer_t serial_clock;
+		uint8_t serial_div_last,serial_shifts;
+		uint8_t interrupt_flag;
 
-		uint8_t halted;
+		uint8_t halted, halt_bug;
 
 		uint8_t write_db;
-
 
 		uint8_t wait_cycles;
 	} gbz80_cpu_t;
